@@ -1,0 +1,12 @@
+.DS_Store
+__pycache__/
+.mypy_cache/
+.pytest_cache/
+.venv/
+*.log
+
+.planning/.lock
+.planning/WAITING.json
+.planning/current-agent-id.txt
+.planning/agent-history.json
+.planning/tmp/

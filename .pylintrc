@@ -1,0 +1,5 @@
+[MAIN]
+# Archivos temporales generados por algunos formateadores/editores.
+# Su nombre contiene guiones y puede disparar "module name ... snake_case".
+ignore-patterns=^\.?kilo-format-temp-.*\.py$
+
