@@ -4,17 +4,17 @@ milestone: v1.0
 milestone_name: Stabilization
 current_phase: 1
 current_phase_name: Validacion automatica del conversor
-current_plan: 1
+current_plan: 2
 status: executing
-stopped_at: Completed 01-01-PLAN.md
-last_updated: "2026-06-03T13:48:21.243Z"
-last_activity: 2026-06-03 -- Phase 01 planning complete
+stopped_at: Completed 01-02-PLAN.md
+last_updated: "2026-06-03T13:53:35.255Z"
+last_activity: 2026-06-03
 progress:
   total_phases: 1
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 2
-  completed_plans: 1
-  percent: 50
+  completed_plans: 2
+  percent: 100
 ---
 
 # Project State
@@ -31,15 +31,15 @@ See: .planning/PROJECT.md (updated 2026-06-03)
 Current Phase: 1
 Current Phase Name: Validacion automatica del conversor
 Total Phases: 1
-Current Plan: 1
+Current Plan: 2
 Total Plans in Phase: 2
-Status: Ready to execute
-Last activity: 2026-06-03 -- Phase 01 planning complete
-Last Activity Description: Phase 01 planning complete — 2 plans ready
+Status: Phase complete
+Last activity: 2026-06-03 -- Plan 01-02 completado cerrando gaps de pytest y documentación
+Last Activity Description: Phase 01 complete — gaps de ejecutabilidad y documentación cerrados
 
 Phase: 1 of 1 (Validacion automatica del conversor)
-Plan: 1 of 1 in current phase
-Last activity: 2026-06-03 -- Plan 01-01 completado con tests locales y documentación alineada
+Plan: 2 of 2
+Last activity: 2026-06-03 -- Plan 01-02 completado cerrando gaps de pytest y documentación
 
 Progress: [██████████] 100%
 
@@ -63,6 +63,7 @@ Progress: [██████████] 100%
 - Trend: Stable
 
 | Phase 01 P01 | 2 min | 2 tasks | 5 files |
+| Phase 01 P02 | 1 min | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -74,6 +75,8 @@ Recent decisions affecting current work:
 - [Phase 1]: Priorizar tests y artefactos mínimos GSD antes de nuevas features.
 - [Phase 01]: Validar el conversor con fixtures HTML estáticos y monkeypatch sobre _fetch_raw para evitar red real.
 - [Phase 01]: Actualizar CLAUDE.md y NOTEBOOK.md al pipeline actual con trafilatura, markdownify, selector CSS y threading en GUI.
+- [Phase 01]: Usar tests/conftest.py con la raíz resuelta desde __file__ para que pytest cargue extractor_url sin instalación editable.
+- [Phase 01]: Corregir NOTEBOOK.md contra el contenido literal de requirements.txt para eliminar deriva documental.
 
 ### Pending Todos
 
@@ -91,6 +94,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-06-03T12:11:23.275Z
-Stopped at: Completed 01-01-PLAN.md
+Last session: 2026-06-03T13:53:35.252Z
+Stopped at: Completed 01-02-PLAN.md
 Resume file: None

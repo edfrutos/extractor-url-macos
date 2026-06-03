@@ -24,7 +24,7 @@ Primero se estabiliza el extractor y su conversor Markdown con pruebas y documen
 
 Plans:
 - [x] 01-01: Crear base de tests y alinear documentación de la fase
-- [ ] 01-02: Cerrar gaps de `pytest tests/` y desajuste documental en `NOTEBOOK.md`
+- [x] 01-02: Cerrar gaps de `pytest tests/` y desajuste documental en `NOTEBOOK.md`
 
 ## Progress
 
@@ -33,4 +33,4 @@ Phases execute in numeric order: 1
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Validacion automatica del conversor | 1/2 | In Progress | — |
+| 1. Validacion automatica del conversor | 2/2 | Complete | 2026-06-03 |
