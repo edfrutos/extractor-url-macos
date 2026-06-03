@@ -19,7 +19,9 @@ Convertir páginas web en Markdown útil y limpio de forma fiable, repetible y s
 
 ### Active
 
-(None yet)
+- [ ] REQ-04: Permitir `--gui` sin URL posicional y validar la URL solo cuando haga falta en modo CLI.
+- [ ] REQ-05: Hacer explícitos los errores de guardado y de selector CSS inválido, sin fallbacks silenciosos.
+- [ ] REQ-06: Cubrir con tests la interfaz pública CLI y sus caminos de error principales.
 
 ### Out of Scope
 
@@ -33,6 +35,8 @@ El proyecto vive hoy en un único archivo `extractor_url.py` con CLI y GUI `tkin
 ## Current State
 
 Phase 1 complete: el proyecto dispone de una suite `pytest` local con fixtures HTML deterministas, el comando `pytest tests/ -q` funciona desde la raíz y la documentación principal quedó alineada con la implementación real.
+
+La siguiente fase prioriza robustez de la CLI pública: corregir `--gui`, endurecer los códigos de salida en error y evitar ampliaciones silenciosas cuando falla un selector CSS explícito.
 
 ## Constraints
 
@@ -48,6 +52,7 @@ Phase 1 complete: el proyecto dispone de una suite `pytest` local con fixtures H
 | Priorizar tests antes que nuevas features | Evita regresiones sobre el pipeline Markdown ya mejorado | ✓ Good |
 | Usar GSD mínimo para la fase 1 | Permite ejecutar workflows sin inventar una planificación pesada | ✓ Good |
 | Hacer que `pytest tests/` funcione desde la raíz con `tests/conftest.py` | Resuelve el gap sin tocar la lógica funcional ni exigir instalación editable | ✓ Good |
+| Priorizar robustez de CLI antes de empaquetado macOS | Corrige primero contratos visibles para usuario y automatización | ✓ Good |
 
 ---
 *Last updated: 2026-06-03 after Phase 1 completion*
