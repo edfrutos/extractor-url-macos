@@ -8,7 +8,7 @@ Primero se estabiliza el extractor y su conversor Markdown con pruebas y documen
 
 ## Phases
 
-- [x] **Phase 1: Validacion automatica del conversor** - Base de pruebas y validación de comportamiento actual.
+- [ ] **Phase 1: Validacion automatica del conversor** - Base de pruebas y validación de comportamiento actual.
 
 ## Phase Details
 
@@ -20,10 +20,11 @@ Primero se estabiliza el extractor y su conversor Markdown con pruebas y documen
   1. Existe un directorio `tests/` con fixtures HTML locales y pruebas ejecutables.
   2. El flujo Markdown actual queda cubierto en los casos de limpieza DOM, selector CSS y URLs relativas.
   3. La documentación principal deja claro qué está implementado y qué queda pendiente.
-**Plans**: 1 plan
+**Plans**: 2 plans
 
 Plans:
 - [x] 01-01: Crear base de tests y alinear documentación de la fase
+- [ ] 01-02: Cerrar gaps de `pytest tests/` y desajuste documental en `NOTEBOOK.md`
 
 ## Progress
 
@@ -32,4 +33,4 @@ Phases execute in numeric order: 1
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Validacion automatica del conversor | 1/1 | Complete | 2026-06-03 |
+| 1. Validacion automatica del conversor | 1/2 | In Progress | — |
