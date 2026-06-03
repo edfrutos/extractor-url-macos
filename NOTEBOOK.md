@@ -18,7 +18,7 @@ Un único archivo Python (`extractor_url.py`, ~520 líneas) con cuatro capas:
 | `_run_gui()` / `main()` | GUI tkinter + CLI argparse; la extracción GUI corre en `threading.Thread` |
 
 **Stack**: Python 3.12, requests, BeautifulSoup4, lxml, tkinter, `markdownify`, `trafilatura`.  
-**Entorno**: `.venv` local; sigue pendiente dejar `requirements.txt` reducido a dependencias reales.  
+**Entorno**: `.venv` local; `requirements.txt` ya está reducido a dependencias reales actuales.  
 **Artefactos de prueba**: fixtures HTML locales en `tests/fixtures/`, suite `pytest` en `tests/test_converter.py` y muestras históricas en `pruebas/`.
 
 ---
