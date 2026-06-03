@@ -8,18 +8,18 @@ Análisis del estado actual, diagnóstico de problemas y plan de evolución haci
 
 ### Arquitectura
 
-Un único archivo Python (`extractor_url.py`, ~400 líneas) con cuatro capas:
+Un único archivo Python (`extractor_url.py`, ~520 líneas) con cuatro capas:
 
 | Función | Rol |
 |---|---|
-| `_fetch_soup(url)` | Descarga HTTP con User-Agent, fallback lxml→html.parser |
-| `extract_formatted_content(url, return_type)` | Dispatcher: text / html\_string / soup\_object / markdown\_structure |
-| `extract_html_structure_to_markdown(url)` | Conversor HTML→Markdown mediante recursión DOM manual |
-| `_run_gui()` / `main()` | GUI tkinter + CLI argparse |
+| `_fetch_raw(url)` + `_fetch_soup(url)` | Descarga HTTP con User-Agent, URL final tras redirecciones y fallback lxml→html.parser |
+| `_clean_soup()` / `_main_content()` / `_apply_selector()` | Limpieza DOM, resolución de URLs relativas, auto-detección de contenido principal y selector CSS opcional |
+| `extract_formatted_content()` / `extract_html_structure_to_markdown()` | Dispatcher y pipeline Markdown con `trafilatura` + fallback `markdownify` |
+| `_run_gui()` / `main()` | GUI tkinter + CLI argparse; la extracción GUI corre en `threading.Thread` |
 
-**Stack**: Python 3.12, requests, BeautifulSoup4, lxml, tkinter.  
-**Entorno**: `.venv` local, `requirements.txt` limpio (3 dependencias).  
-**Artefactos de prueba**: 4 HTML guardados de webs reales + `pruebas/edefrutos_me.md` (salida real del conversor).
+**Stack**: Python 3.12, requests, BeautifulSoup4, lxml, tkinter, `markdownify`, `trafilatura`.  
+**Entorno**: `.venv` local; sigue pendiente dejar `requirements.txt` reducido a dependencias reales.  
+**Artefactos de prueba**: fixtures HTML locales en `tests/fixtures/`, suite `pytest` en `tests/test_converter.py` y muestras históricas en `pruebas/`.
 
 ---
 
@@ -54,9 +54,9 @@ El fichero `pruebas/edefrutos_me.md` evidencia los problemas reales del converso
 #### Funcionalidad (importante)
 
 10. **Sin renderizado JavaScript**: no funciona con webs SPA/React/Vue.
-11. **Sin resolución de URLs relativas**: los `href="/ruta"` y `src="./img.png"` quedan rotos en el Markdown.
-12. **GUI congelada durante la descarga**: la llamada HTTP es síncrona en el hilo principal de tkinter.
-13. **Sin selector de contenido**: no se puede apuntar a un `<article>`, `<main>` o selector CSS específico para ignorar sidebars.
+11. ✅ **Resolución de URLs relativas ya implementada** en `_clean_soup()` con `urljoin`.
+12. ✅ **GUI ya no se bloquea**: la extracción corre en `threading.Thread` y vuelve al hilo principal con `root.after(...)`.
+13. ✅ **Selector de contenido ya implementado**: CLI y GUI aceptan selector CSS para acotar el contenido.
 14. **Sin historial ni favoritos** en la GUI.
 15. **Sin progreso en CLI** (solo silencio o error).
 
@@ -134,7 +134,8 @@ SwiftUI app  →  subprocess / local HTTP (FastAPI)  →  Python scraper
 
 **Tareas pendientes de esta fase:**
 
-- [ ] **Crear tests** en `tests/test_converter.py` con HTML fixtures locales (no webs reales).
+- [x] **Crear tests** en `tests/test_converter.py` con HTML fixtures locales (no webs reales).
+- [ ] Ampliar la suite para más edge cases antes de abrir nuevas fases funcionales.
 
 **Librerías a evaluar:**
 
@@ -155,7 +156,7 @@ HTML → trafilatura (extrae <article>/<main>) → markdownify (convierte a Mark
 
 ### Fase 1 — Descarga robusta
 
-- [ ] **Threading**: mover la petición HTTP a un hilo separado (`threading.Thread`) para no bloquear la UI.
+- [x] **Threading**: la petición ya se mueve a un hilo separado (`threading.Thread`) para no bloquear la UI.
 - [ ] **Renderizado JS opcional**: integrar `playwright` con flag `--js` / opción en UI. Playwright headless descarga la página tras ejecutar JavaScript.
 - [ ] **Reintentos**: `requests` con `urllib3.Retry` (3 intentos, backoff exponencial).
 - [ ] **Timeout configurable**: exponer el timeout en la UI / argumento CLI.
@@ -166,7 +167,8 @@ HTML → trafilatura (extrae <article>/<main>) → markdownify (convierte a Mark
 
 ### Fase 2 — CLI mejorado
 
-- [ ] **`--selector` / `--main-only`**: permitir apuntar a un selector CSS (`article`, `#content`, `.post-body`).
+- [x] **`--selector`**: ya disponible en CLI y GUI para apuntar a un selector CSS (`article`, `#content`, `.post-body`).
+- [ ] **`--main-only`**: valorar si aporta algo distinto a la auto-detección actual.
 - [ ] **`--no-images`**: omitir imágenes en el Markdown.
 - [ ] **`--no-links`**: convertir enlaces a texto plano.
 - [ ] **`--lang`**: forzar idioma para detección de encoding.

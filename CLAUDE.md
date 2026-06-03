@@ -8,17 +8,17 @@ Comunícate siempre en **español de España**. Mantén en inglés: nombres de l
 
 ## Arquitectura
 
-Herramienta de un solo archivo (`extractor_url.py`) sin paquete ni carpeta `tests/`. Tres capas:
+Herramienta de un solo archivo (`extractor_url.py`) con carpeta `tests/` para validación automatizada local. Tres capas:
 
-1. **`_fetch_soup(url)`** — descarga la URL y devuelve un `BeautifulSoup`. Maneja `https://` implícito, `User-Agent` de navegador, y fallback `lxml → html.parser`.
-2. **`extract_formatted_content(url, return_type)`** — API pública. `return_type` acepta `"text"`, `"html_string"`, `"soup_object"` o `"markdown_structure"` (esta última delega a `extract_html_structure_to_markdown`).
-3. **`_run_gui()`** + **`main()`** — GUI tkinter y CLI argparse. El punto de entrada `__main__` arranca la GUI si no hay argumentos CLI.
+1. **Descarga y parseo** — `_fetch_raw(url)` devuelve `(html_text, url_final)` y `_fetch_soup(url)` construye `BeautifulSoup` con fallback `lxml → html.parser`.
+2. **Extracción y conversión** — `extract_formatted_content(url, return_type, selector)` expone texto, HTML, `BeautifulSoup` o Markdown. El flujo Markdown usa `trafilatura` como primera opción y `markdownify` como fallback sobre `_clean_soup()` + `_main_content()`. También soporta `selector` CSS explícito.
+3. **Interfaces** — `_run_gui()` + `main()` cubren GUI tkinter y CLI argparse. La GUI usa `threading.Thread` para no bloquear la ventana durante la extracción.
 
 ## Entorno
 
 ```bash
 source .venv/bin/activate        # activar venv existente
-pip install requests beautifulsoup4 lxml   # instalar dependencias
+pip install requests beautifulsoup4 lxml markdownify trafilatura pytest
 ```
 
 ## Ejecución
@@ -27,6 +27,7 @@ pip install requests beautifulsoup4 lxml   # instalar dependencias
 python extractor_url.py https://example.com                  # texto limpio (stdout)
 python extractor_url.py https://example.com --type html      # HTML completo
 python extractor_url.py https://example.com --type markdown  # estructura Markdown
+python extractor_url.py https://example.com --type markdown --selector article
 python extractor_url.py https://example.com -o salida.txt    # guardar en archivo
 python extractor_url.py                                      # GUI tkinter
 python extractor_url.py --gui                                # GUI tkinter (explícito)
@@ -41,12 +42,15 @@ mypy extractor_url.py      # verificación de tipos
 
 ## Tests
 
-No hay directorio `tests/` aún. Cuando se creen, usar mocks de `requests.get` (no webs reales):
+La base de pruebas actual vive en `tests/test_converter.py` con fixtures HTML locales en `tests/fixtures/`. Las pruebas validan limpieza DOM, detección de contenido principal, postprocesado Markdown y el flujo con `selector` CSS sin depender de webs reales.
 
 ```bash
+pytest tests/
 pytest tests/ -k nombre_del_test -v
 pytest tests/ --cov=extractor_url
 ```
+
+Prioridad inmediata: ampliar esta base de tests antes de introducir nuevas mejoras funcionales en el extractor.
 
 ## Estilo de código
 
