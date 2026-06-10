@@ -71,25 +71,25 @@
 | REQ-04 | Complete | Phase 02 |
 | REQ-05 | Complete | Phase 02 |
 | REQ-06 | Complete | Phase 02 |
-| APP-01 | Active | — |
-| APP-02 | Active | — |
-| APP-03 | Active | — |
-| APP-04 | Active | — |
-| APP-05 | Active | — |
-| BRIDGE-01 | Active | — |
-| BRIDGE-02 | Active | — |
-| BRIDGE-03 | Active | — |
-| BRIDGE-04 | Active | — |
-| SETTINGS-01 | Active | — |
-| SETTINGS-02 | Active | — |
-| SETTINGS-03 | Active | — |
-| UI-01 | Active | — |
-| UI-02 | Active | — |
-| UI-03 | Active | — |
-| EXPORT-01 | Active | — |
-| EXPORT-02 | Active | — |
-| EXPORT-03 | Active | — |
-| EXPORT-04 | Active | — |
+| APP-01 | Active | Phase 04 |
+| APP-02 | Active | Phase 04 |
+| APP-03 | Active | Phase 04 |
+| APP-04 | Active | Phase 07 |
+| APP-05 | Active | Phase 03 |
+| BRIDGE-01 | Active | Phase 03 |
+| BRIDGE-02 | Active | Phase 03 |
+| BRIDGE-03 | Active | Phase 03 |
+| BRIDGE-04 | Active | Phase 03 |
+| SETTINGS-01 | Active | Phase 03 |
+| SETTINGS-02 | Active | Phase 03 |
+| SETTINGS-03 | Active | Phase 03 |
+| UI-01 | Active | Phase 04 |
+| UI-02 | Active | Phase 05 |
+| UI-03 | Active | Phase 04 |
+| EXPORT-01 | Active | Phase 05 |
+| EXPORT-02 | Active | Phase 05 |
+| EXPORT-03 | Active | Phase 05 |
+| EXPORT-04 | Active | Phase 06 |
 
 ## Notes
 
