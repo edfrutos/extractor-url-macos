@@ -27,7 +27,14 @@ El bridge subprocess es la dependencia bloqueante de todo el milestone. Las fase
   2. Llamar a `PythonBridge.run(url:type:)` con una URL válida devuelve un `ExtractionResult` con contenido, sin congelar la UI.
   3. Si Python no está en la ruta configurada o el CLI falla, el error tipado se propaga y es inspeccionable (no se silencia).
   4. La extracción corre en `Task.detached` — la ventana responde a eventos durante los 5-30 segundos que dura el proceso.
-**Plans**: TBD
+**Plans**: 3 planes
+
+Plans:
+
+- [ ] 03-01-PLAN.md — Proyecto Xcode + entitlements + modelos ExtractionResult y ExtractionError
+- [ ] 03-02-PLAN.md — PythonBridge (subprocess async paralelo) + ExtractorApp entry point
+- [ ] 03-03-PLAN.md — SettingsView con validación reactiva + verificación end-to-end del bridge
+
 **UI hint**: yes
 
 ### Phase 4: SwiftUI UI de Extracción
@@ -82,7 +89,7 @@ Phases execute in numeric order: 3 → 4 → 5 → 6 → 7
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 3. Python Bridge y Preferencias | 0/? | Not started | - |
+| 3. Python Bridge y Preferencias | 0/3 | In progress | - |
 | 4. SwiftUI UI de Extracción | 0/? | Not started | - |
 | 5. Preview y Export MD/HTML | 0/? | Not started | - |
 | 6. Export PDF | 0/? | Not started | - |
