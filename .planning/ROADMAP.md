@@ -46,7 +46,13 @@ Plans:
   2. Una vez completada la extracción, los controles de exportación se habilitan; antes de completarla permanecen deshabilitados.
   3. Si la extracción falla, la ventana muestra el mensaje de error de forma explícita (alert o inline) sin necesidad de relanzar la app.
   4. El usuario puede configurar selector CSS y timeout desde la UI antes de extraer.
-**Plans**: TBD
+**Plans**: 2 planes
+
+Plans:
+
+- [ ] 04-01-PLAN.md — ExtractionViewModel: ObservableObject con @Published + extract() wiring PythonBridge
+- [ ] 04-02-PLAN.md — ContentView reescritura completa + verificación build end-to-end
+
 **UI hint**: yes
 
 ### Phase 5: Preview y Export MD/HTML
