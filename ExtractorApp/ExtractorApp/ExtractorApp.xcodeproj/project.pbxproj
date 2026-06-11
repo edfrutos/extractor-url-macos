@@ -6,8 +6,19 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXContainerItemProxy section */
+		7B5C000AFDAB1D900884317 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 694A97132FDAB1D900884317 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 694A971A2FDAB1D900884317;
+			remoteInfo = ExtractorApp;
+		};
+/* End PBXContainerItemProxy section */
+
 /* Begin PBXFileReference section */
 		694A971B2FDAB1D900884317 /* ExtractorApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ExtractorApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		7B5C0001FDAB1D900884317 /* ExtractorAppTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ExtractorAppTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -16,10 +27,22 @@
 			path = ExtractorApp;
 			sourceTree = "<group>";
 		};
+		7B5C0002FDAB1D900884317 /* ExtractorAppTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = ExtractorAppTests;
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
 		694A97182FDAB1D900884317 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		7B5C0004FDAB1D900884317 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -33,6 +56,7 @@
 			isa = PBXGroup;
 			children = (
 				694A971D2FDAB1D900884317 /* ExtractorApp */,
+				7B5C0002FDAB1D900884317 /* ExtractorAppTests */,
 				694A971C2FDAB1D900884317 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -41,6 +65,7 @@
 			isa = PBXGroup;
 			children = (
 				694A971B2FDAB1D900884317 /* ExtractorApp.app */,
+				7B5C0001FDAB1D900884317 /* ExtractorAppTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -70,6 +95,28 @@
 			productReference = 694A971B2FDAB1D900884317 /* ExtractorApp.app */;
 			productType = "com.apple.product-type.application";
 		};
+		7B5C0005FDAB1D900884317 /* ExtractorAppTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 7B5C0008FDAB1D900884317 /* Build configuration list for PBXNativeTarget "ExtractorAppTests" */;
+			buildPhases = (
+				7B5C0003FDAB1D900884317 /* Sources */,
+				7B5C0004FDAB1D900884317 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				7B5C0009FDAB1D900884317 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				7B5C0002FDAB1D900884317 /* ExtractorAppTests */,
+			);
+			name = ExtractorAppTests;
+			packageProductDependencies = (
+			);
+			productName = ExtractorAppTests;
+			productReference = 7B5C0001FDAB1D900884317 /* ExtractorAppTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -82,6 +129,10 @@
 				TargetAttributes = {
 					694A971A2FDAB1D900884317 = {
 						CreatedOnToolsVersion = 26.5;
+					};
+					7B5C0005FDAB1D900884317 = {
+						CreatedOnToolsVersion = 26.5;
+						TestTargetID = 694A971A2FDAB1D900884317;
 					};
 				};
 			};
@@ -100,6 +151,7 @@
 			projectRoot = "";
 			targets = (
 				694A971A2FDAB1D900884317 /* ExtractorApp */,
+				7B5C0005FDAB1D900884317 /* ExtractorAppTests */,
 			);
 		};
 /* End PBXProject section */
@@ -122,7 +174,22 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		7B5C0003FDAB1D900884317 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		7B5C0009FDAB1D900884317 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 694A971A2FDAB1D900884317 /* ExtractorApp */;
+			targetProxy = 7B5C000AFDAB1D900884317 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		694A97242FDAB1DC00884317 /* Debug */ = {
@@ -311,6 +378,52 @@
 			};
 			name = Release;
 		};
+		7B5C0006FDAB1D900884317 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 13.5;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.edefrutos.ExtractorAppTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_VERSION = 5.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/ExtractorApp.app/Contents/MacOS/ExtractorApp";
+			};
+			name = Debug;
+		};
+		7B5C0007FDAB1D900884317 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 13.5;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.edefrutos.ExtractorAppTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_VERSION = 5.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/ExtractorApp.app/Contents/MacOS/ExtractorApp";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -328,6 +441,15 @@
 			buildConfigurations = (
 				694A97272FDAB1DC00884317 /* Debug */,
 				694A97282FDAB1DC00884317 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		7B5C0008FDAB1D900884317 /* Build configuration list for PBXNativeTarget "ExtractorAppTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				7B5C0006FDAB1D900884317 /* Debug */,
+				7B5C0007FDAB1D900884317 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
