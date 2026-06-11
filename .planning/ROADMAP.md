@@ -64,7 +64,13 @@ Plans:
   2. El usuario selecciona formato MD y pulsa Exportar — se abre `NSSavePanel`/`fileExporter` y el archivo guardado se abre correctamente en cualquier editor de texto.
   3. El usuario selecciona formato HTML y pulsa Exportar — el archivo `.html` resultante se abre en Safari/Chrome sin assets externos rotos y aplica dark mode según las preferencias del sistema.
   4. El selector de formato (MD / HTML / PDF) está visible antes de exportar y refleja el formato activo.
-**Plans**: TBD
+**Plans**: 2 planes
+
+Plans:
+
+- [ ] 05-01-PLAN.md — ExtractionViewModel: contentReady/exportFormat, htmlForPreview, generateHTML autocontenido + target XCTest y tests unitarios
+- [ ] 05-02-PLAN.md — WebPreviewView (NSViewRepresentable WKWebView) + ContentView con fila de exportación + verificación visual
+
 **UI hint**: yes
 
 ### Phase 6: Export PDF
@@ -97,7 +103,7 @@ Phases execute in numeric order: 3 → 4 → 5 → 6 → 7
 |-------|----------------|--------|-----------|
 | 3. Python Bridge y Preferencias | 0/3 | In progress | - |
 | 4. SwiftUI UI de Extracción | 2/2 | Complete   | 2026-06-11 |
-| 5. Preview y Export MD/HTML | 0/? | Not started | - |
+| 5. Preview y Export MD/HTML | 0/2 | Not started | - |
 | 6. Export PDF | 0/? | Not started | - |
 | 7. Universal Binary y Configuración de Build | 0/? | Not started | - |
 
