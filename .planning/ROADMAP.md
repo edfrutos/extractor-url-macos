@@ -50,7 +50,7 @@ Plans:
 
 Plans:
 
-- [ ] 04-01-PLAN.md — ExtractionViewModel: ObservableObject con @Published + extract() wiring PythonBridge
+- [x] 04-01-PLAN.md — ExtractionViewModel: ObservableObject con @Published + extract() wiring PythonBridge
 - [ ] 04-02-PLAN.md — ContentView reescritura completa + verificación build end-to-end
 
 **UI hint**: yes
@@ -96,7 +96,7 @@ Phases execute in numeric order: 3 → 4 → 5 → 6 → 7
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 3. Python Bridge y Preferencias | 0/3 | In progress | - |
-| 4. SwiftUI UI de Extracción | 0/? | Not started | - |
+| 4. SwiftUI UI de Extracción | 1/2 | In Progress|  |
 | 5. Preview y Export MD/HTML | 0/? | Not started | - |
 | 6. Export PDF | 0/? | Not started | - |
 | 7. Universal Binary y Configuración de Build | 0/? | Not started | - |

@@ -13,9 +13,9 @@
 
 ### APP — Shell de la aplicación
 
-- [ ] **APP-01**: El usuario puede introducir una URL y lanzar la extracción desde la app SwiftUI.
-- [ ] **APP-02**: La app muestra un indicador de progreso indeterminado durante la extracción.
-- [ ] **APP-03**: La app muestra errores de extracción de forma explícita (alert o mensaje inline).
+- [x] **APP-01**: El usuario puede introducir una URL y lanzar la extracción desde la app SwiftUI.
+- [x] **APP-02**: La app muestra un indicador de progreso indeterminado durante la extracción.
+- [x] **APP-03**: La app muestra errores de extracción de forma explícita (alert o mensaje inline).
 - [ ] **APP-04**: La app compila como universal binary x86_64 + arm64, deployment target macOS 13.0.
 - [ ] **APP-05**: App Sandbox desactivado (herramienta personal, distribución fuera del App Store).
 
@@ -34,9 +34,9 @@
 
 ### UI — Interfaz de extracción
 
-- [ ] **UI-01**: El usuario puede configurar tipo de salida (text/html/markdown), selector CSS y timeout desde la UI.
+- [x] **UI-01**: El usuario puede configurar tipo de salida (text/html/markdown), selector CSS y timeout desde la UI.
 - [ ] **UI-02**: El usuario puede previsualizar el contenido extraído en un `WKWebView` (`NSViewRepresentable`).
-- [ ] **UI-03**: Los controles de exportación están deshabilitados hasta que la extracción completa y el DOM esté listo (`contentReady`).
+- [x] **UI-03**: Los controles de exportación están deshabilitados hasta que la extracción completa y el DOM esté listo (`contentReady`).
 
 ### EXPORT — Exportación
 
