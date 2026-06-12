@@ -13,7 +13,7 @@ El bridge subprocess es la dependencia bloqueante de todo el milestone. Las fase
 - [ ] **Phase 3: Python Bridge y Preferencias** - Cimentar el bridge subprocess async y las preferencias de ruta antes de tocar UI.
 - [x] **Phase 4: SwiftUI UI de Extracción** - Primera interfaz funcional end-to-end: campo URL, controles, progreso y errores. (completed 2026-06-11)
 - [x] **Phase 5: Preview y Export MD/HTML** - Preview WKWebView del contenido extraído y exportación a Markdown y HTML autocontenido. (completed 2026-06-12)
-- [ ] **Phase 6: Export PDF** - Exportación PDF vectorial vía WKWebView con control de timing de renderizado.
+- [x] **Phase 6: Export PDF** - Exportación PDF vectorial vía WKWebView con control de timing de renderizado. (completed 2026-06-12)
 - [ ] **Phase 7: Universal Binary y Configuración de Build** - Verificación fat binary, firma, notarización y empaquetado .dmg.
 
 ## Phase Details
@@ -107,7 +107,7 @@ Plans:
 
 **Wave 2** *(blocked on Wave 1: depende de 06-02)*
 
-- [ ] 06-03-PLAN.md — `exportPDF()` (createPDF + modo claro + NSSavePanel + NSAlert), habilitar Picker PDF + verificación humana
+- [x] 06-03-PLAN.md — `exportPDF()` (createPDF + modo claro + NSSavePanel + NSAlert), habilitar Picker PDF + verificación humana
 
 **UI hint**: yes
 
@@ -134,7 +134,7 @@ Phases execute in numeric order: 3 → 4 → 5 → 6 → 7
 | 3. Python Bridge y Preferencias | 0/3 | In progress | - |
 | 4. SwiftUI UI de Extracción | 2/2 | Complete   | 2026-06-11 |
 | 5. Preview y Export MD/HTML | 0/2 | Not started | - |
-| 6. Export PDF | 2/3 | In Progress|  |
+| 6. Export PDF | 3/3 | Complete   | 2026-06-12 |
 | 7. Universal Binary y Configuración de Build | 0/? | Not started | - |
 
 ---
