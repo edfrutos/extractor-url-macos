@@ -194,6 +194,33 @@ def _post_process_markdown(text: str) -> str:
     return text.strip()
 
 
+def _extract_title(
+    soup: BeautifulSoup,
+    html_text: Optional[str] = None,
+) -> Optional[str]:
+    """Extrae el <title> de la página. Fallback a trafilatura metadata.
+
+    Camino 1: BeautifulSoup — guard doble para evitar AttributeError
+    cuando soup.title existe pero title.string es None (Pitfall #5).
+    Camino 2: trafilatura.extract_metadata — cubre og:title, twitter:title, etc.
+    Si ninguno produce título, devuelve None.
+    """
+    # Camino 1: BeautifulSoup (guard doble — Pitfall #5 de RESEARCH.md)
+    if soup.title and soup.title.string:
+        title = soup.title.string.strip()
+        if title:
+            return title
+    # Camino 2: trafilatura metadata (fallback para og:title, etc.)
+    if html_text is not None:
+        try:
+            meta = trafilatura.extract_metadata(html_text)
+            if meta and meta.title:
+                return meta.title.strip()
+        except Exception:  # pylint: disable=broad-exception-caught
+            pass
+    return None
+
+
 def _format_soup_content(
     soup: BeautifulSoup,
     return_type: str,

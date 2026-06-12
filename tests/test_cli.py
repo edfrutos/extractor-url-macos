@@ -54,6 +54,81 @@ def test_main_json_devuelve_salida_estructurada(
     assert output["status"] == "success"
     assert output["url"] == "https://example.com"
     assert output["content"] == "contenido"
+    assert "title" in output  # campo siempre presente (puede ser null)
+
+
+def test_main_json_incluye_title_cuando_hay_titulo(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """Comprueba que --json incluye title con el texto del <title> de la página."""
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        ["extractor_url.py", "https://example.com", "--json", "--no-cache"],
+    )
+    monkeypatch.setattr(
+        extractor_url,
+        "extract_formatted_content",
+        lambda *_args, **_kwargs: "contenido",
+    )
+    # Monkeypatch sobre el binding local del módulo (no sobre core directamente)
+    monkeypatch.setattr(
+        extractor_url,
+        "_fetch_raw",
+        lambda *_a, **_kw: (
+            "<html><title>Mi Título</title></html>",
+            "https://example.com",
+        ),
+    )
+    monkeypatch.setattr(
+        extractor_url,
+        "_extract_title",
+        lambda *_a, **_kw: "Mi Título",
+    )
+
+    with pytest.raises(SystemExit, match="0"):
+        extractor_url.main()
+
+    output = json.loads(capsys.readouterr().out)
+    assert output["title"] == "Mi Título"
+
+
+def test_main_json_title_null_sin_titulo(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """Comprueba que title es null en JSON cuando la página no tiene <title>."""
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        ["extractor_url.py", "https://example.com", "--json", "--no-cache"],
+    )
+    monkeypatch.setattr(
+        extractor_url,
+        "extract_formatted_content",
+        lambda *_args, **_kwargs: "contenido",
+    )
+    # Monkeypatch sobre el binding local del módulo (no sobre core directamente)
+    monkeypatch.setattr(
+        extractor_url,
+        "_fetch_raw",
+        lambda *_a, **_kw: (
+            "<html><body>sin título</body></html>",
+            "https://example.com",
+        ),
+    )
+    monkeypatch.setattr(
+        extractor_url,
+        "_extract_title",
+        lambda *_a, **_kw: None,
+    )
+
+    with pytest.raises(SystemExit, match="0"):
+        extractor_url.main()
+
+    output = json.loads(capsys.readouterr().out)
+    assert output["title"] is None
 
 
 def test_main_propaga_fallo_de_guardado(
