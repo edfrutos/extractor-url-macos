@@ -97,7 +97,7 @@ struct ContentView: View {
                 Picker("", selection: $vm.exportFormat) {
                     Text("Markdown").tag("markdown")     // UI-SPEC exacto
                     Text("HTML").tag("html")             // UI-SPEC exacto
-                    Text("PDF").tag("pdf").disabled(true)  // D-09: Phase 6
+                    Text("PDF").tag("pdf")
                 }
                 .pickerStyle(.segmented)
                 .labelsHidden()
