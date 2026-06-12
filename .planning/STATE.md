@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: SwiftUI Native App
 status: executing
-last_updated: "2026-06-12T16:21:17.115Z"
-last_activity: 2026-06-12 -- Phase 06 execution started
+last_updated: "2026-06-12T19:30:00.000Z"
+last_activity: 2026-06-12 -- Phase 06 completada (plan 06-03 verificado y cerrado)
 progress:
   total_phases: 5
-  completed_phases: 3
+  completed_phases: 4
   total_plans: 10
-  completed_plans: 7
-  percent: 60
+  completed_plans: 8
+  percent: 80
 ---
 
 # Project State
@@ -24,13 +24,13 @@ See: .planning/PROJECT.md (updated 2026-06-10)
 
 ## Current Position
 
-Phase: 06 (export-pdf) — EXECUTING
-Plan: 3 of 3 (Tasks 1-3 complete; Task 4 awaiting human verification)
-Status: Checkpoint — human verify PDF export
-Last activity: 2026-06-12 -- Phase 06 Plan 03 Tasks 1-3 committed; checkpoint Task 4
+Phase: 06 (export-pdf) — COMPLETE
+Plan: 3 of 3 — DONE (Task 4 verificacion humana APROBADA)
+Status: Phase 06 completa — lista para Phase 07
+Last activity: 2026-06-12 -- Phase 06 Plan 03 completo; verificacion humana aprobada; EXPORT-04 cerrado
 
 ```
-v2.0 Progress: [######----] 60% (3/5 phases)
+v2.0 Progress: [########--] 80% (4/5 phases)
 ```
 
 ## Performance Metrics
@@ -65,6 +65,8 @@ Recent decisions affecting current work:
 - [06-03]: webViewProvider como closure (() -> WKWebView?)? con [weak coordinator] — menor acoplamiento, sin ciclo de retención.
 - [06-03]: Approach B (withCheckedThrowingContinuation + completionHandler) para createPDF — siempre seguro macOS 11+.
 - [06-03]: WKPDFConfiguration() sin rect — WYSIWYG estricto (D-02) y página única continua (D-03).
+- [06-03]: baseURL HTTPS en loadHTMLString — necesario para imágenes protocol-relative (Fix A post-verificación).
+- [06-03]: Sondeo JS document.images[*].complete con timeout 5s en lugar de delay fijo 0.1s (Fix B post-verificación).
 
 ### Pending Todos
 
@@ -85,6 +87,6 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-06-12T16:56:00Z
-Stopped at: Phase 06 Plan 03 Task 4 (checkpoint:human-verify — PDF real)
-Resume file: .planning/phases/06-export-pdf/06-03-PLAN.md
+Last session: 2026-06-12T19:30:00Z
+Stopped at: Phase 06 completa — Phase 07 es la siguiente
+Resume file: None
