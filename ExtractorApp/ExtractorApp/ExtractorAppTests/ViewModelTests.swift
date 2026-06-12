@@ -71,6 +71,18 @@ final class ViewModelTests: XCTestCase {
         XCTAssertEqual(vm.exportFormat, "pdf")
     }
 
+    // MARK: - Phase 6 Plan 03: exportPDF sin webView (no-op)
+
+    func testExportPDFWithoutWebViewIsNoop() async throws {
+        // webViewProvider es nil (no hay WebPreviewView activo en tests)
+        // → export("pdf") debe terminar sin crash y conservar resultContent
+        let vm = ExtractionViewModel()
+        vm.resultContent = "contenido"
+        vm.exportFormat = "pdf"
+        await vm.export()
+        XCTAssertEqual(vm.resultContent, "contenido")
+    }
+
     // MARK: - Phase 6: Tests de suggestedFilename (D-06/D-07)
 
     func testSuggestedFilenameWithTitle() async throws {
