@@ -31,10 +31,12 @@ struct WebPreviewView: NSViewRepresentable {
         context.coordinator.lastLoadedHTML = htmlContent
 
         if let html = htmlContent {
-            webView.loadHTMLString(html, baseURL: nil)  // origen about:blank
+            // baseURL HTTPS: permite resolver URLs protocol-relative (//cdn/img.png)
+            // y carga de recursos remotos desde el webview (fix: imágenes en preview/PDF)
+            webView.loadHTMLString(html, baseURL: URL(string: "https://localhost"))
         } else {
             // D-04: nueva extracción → limpiar y resetear contentReady
-            webView.loadHTMLString("", baseURL: nil)
+            webView.loadHTMLString("", baseURL: URL(string: "https://localhost"))
             let coordinator = context.coordinator
             DispatchQueue.main.async { [weak coordinator] in
                 coordinator?.parent.contentReady = false
