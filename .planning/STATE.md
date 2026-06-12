@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: SwiftUI Native App
 status: executing
-last_updated: "2026-06-12T08:22:00.000Z"
-last_activity: 2026-06-12 -- Plan 05-02 code complete (741f25c); awaiting human-verify checkpoint (Task 3)
+last_updated: "2026-06-12T08:40:00.000Z"
+last_activity: 2026-06-12 -- Phase 05 complete (human-verify approved); Phase 06 ready to plan
 progress:
   total_phases: 5
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 7
-  completed_plans: 6
-  percent: 40
+  completed_plans: 7
+  percent: 60
 ---
 
 # Project State
@@ -20,17 +20,17 @@ progress:
 See: .planning/PROJECT.md (updated 2026-06-10)
 
 **Core value:** Convertir páginas web en Markdown útil y limpio de forma fiable, repetible y sin depender de servicios externos.
-**Current focus:** Phase 05 — preview-y-export-md-html
+**Current focus:** Phase 06 — Export PDF (ready to plan)
 
 ## Current Position
 
-Phase: 05 (preview-y-export-md-html) — EXECUTING
-Plan: 2 of 2 (05-01 complete — dd22f7f; 05-02 code complete — 741f25c)
-Status: Plan 05-02 Task 3 — checkpoint:human-verify pendiente (verificación visual preview + export)
-Last activity: 2026-06-12 -- Plan 05-02 code complete; awaiting human verification
+Phase: 06 (export-pdf) — Not started
+Plan: Not started
+Status: Phase 05 complete and verified — ready to plan Phase 06
+Last activity: 2026-06-12 -- Phase 05 complete (05-01 dd22f7f, 05-02 741f25c, human-verify approved)
 
 ```
-v2.0 Progress: [##--------] 20% (1/5 phases)
+v2.0 Progress: [######----] 60% (3/5 phases)
 ```
 
 ## Performance Metrics

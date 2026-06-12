@@ -35,14 +35,14 @@
 ### UI — Interfaz de extracción
 
 - [x] **UI-01**: El usuario puede configurar tipo de salida (text/html/markdown), selector CSS y timeout desde la UI.
-- [ ] **UI-02**: El usuario puede previsualizar el contenido extraído en un `WKWebView` (`NSViewRepresentable`).
+- [x] **UI-02**: El usuario puede previsualizar el contenido extraído en un `WKWebView` (`NSViewRepresentable`).
 - [x] **UI-03**: Los controles de exportación están deshabilitados hasta que la extracción completa y el DOM esté listo (`contentReady`).
 
 ### EXPORT — Exportación
 
-- [ ] **EXPORT-01**: El usuario selecciona el formato de salida (MD / HTML / PDF) con un selector antes de exportar.
-- [ ] **EXPORT-02**: El export `.md` guarda el contenido íntegro extraído sin transformaciones vía `NSSavePanel`.
-- [ ] **EXPORT-03**: El export `.html` genera un único archivo autocontenido con CSS inline (max-width, apple-system font, `@media (prefers-color-scheme: dark)`, `@media print`), legible en navegador sin dependencias externas.
+- [x] **EXPORT-01**: El usuario selecciona el formato de salida (MD / HTML / PDF) con un selector antes de exportar.
+- [x] **EXPORT-02**: El export `.md` guarda el contenido íntegro extraído sin transformaciones vía `NSSavePanel`.
+- [x] **EXPORT-03**: El export `.html` genera un único archivo autocontenido con CSS inline (max-width, apple-system font, `@media (prefers-color-scheme: dark)`, `@media print`), legible en navegador sin dependencias externas.
 - [ ] **EXPORT-04**: El export PDF usa `WKWebView.pdf(configuration:)` (macOS 13+, async/await), con guarda de estado `contentReady` antes de invocar la API, y guarda el resultado vía `NSSavePanel`.
 
 ## Future Requirements
@@ -84,11 +84,11 @@
 | SETTINGS-02 | Active | Phase 03 |
 | SETTINGS-03 | Active | Phase 03 |
 | UI-01 | Active | Phase 04 |
-| UI-02 | Active | Phase 05 |
+| UI-02 | Complete | Phase 05 |
 | UI-03 | Active | Phase 04 |
-| EXPORT-01 | Active | Phase 05 |
-| EXPORT-02 | Active | Phase 05 |
-| EXPORT-03 | Active | Phase 05 |
+| EXPORT-01 | Complete | Phase 05 |
+| EXPORT-02 | Complete | Phase 05 |
+| EXPORT-03 | Complete | Phase 05 |
 | EXPORT-04 | Active | Phase 06 |
 
 ## Notes

@@ -12,7 +12,7 @@ El bridge subprocess es la dependencia bloqueante de todo el milestone. Las fase
 
 - [ ] **Phase 3: Python Bridge y Preferencias** - Cimentar el bridge subprocess async y las preferencias de ruta antes de tocar UI.
 - [x] **Phase 4: SwiftUI UI de Extracción** - Primera interfaz funcional end-to-end: campo URL, controles, progreso y errores. (completed 2026-06-11)
-- [ ] **Phase 5: Preview y Export MD/HTML** - Preview WKWebView del contenido extraído y exportación a Markdown y HTML autocontenido.
+- [x] **Phase 5: Preview y Export MD/HTML** - Preview WKWebView del contenido extraído y exportación a Markdown y HTML autocontenido. (completed 2026-06-12)
 - [ ] **Phase 6: Export PDF** - Exportación PDF vectorial vía WKWebView con control de timing de renderizado.
 - [ ] **Phase 7: Universal Binary y Configuración de Build** - Verificación fat binary, firma, notarización y empaquetado .dmg.
 
@@ -81,7 +81,7 @@ Plans:
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
-- [ ] 05-02-PLAN.md — WebPreviewView (NSViewRepresentable WKWebView) + ContentView con fila de exportación + verificación visual
+- [x] 05-02-PLAN.md — WebPreviewView (NSViewRepresentable WKWebView) + ContentView con fila de exportación + verificación visual
 
 **UI hint**: yes
 
