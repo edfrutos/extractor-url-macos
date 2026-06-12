@@ -10,3 +10,11 @@ __pycache__/
 .planning/current-agent-id.txt
 .planning/agent-history.json
 .planning/tmp/
+
+# Artefactos regenerables de grafos de conocimiento
+graphify-out/
+.planning/graphs/
+
+# Configuración local de editores y Xcode
+.vscode/
+xcuserdata/
