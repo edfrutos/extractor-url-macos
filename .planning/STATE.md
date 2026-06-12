@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: SwiftUI Native App
 status: executing
-last_updated: "2026-06-11T19:21:50.764Z"
-last_activity: 2026-06-11 -- Phase 05 execution started
+last_updated: "2026-06-12T08:16:00.000Z"
+last_activity: 2026-06-12 -- Plan 05-01 complete (ViewModel export logic, 7/7 tests)
 progress:
   total_phases: 5
   completed_phases: 2
   total_plans: 7
-  completed_plans: 5
+  completed_plans: 6
   percent: 40
 ---
 
@@ -25,9 +25,9 @@ See: .planning/PROJECT.md (updated 2026-06-10)
 ## Current Position
 
 Phase: 05 (preview-y-export-md-html) — EXECUTING
-Plan: 1 of 2
+Plan: 2 of 2 (05-01 complete — dd22f7f)
 Status: Executing Phase 05
-Last activity: 2026-06-11 -- Phase 05 execution started
+Last activity: 2026-06-12 -- Plan 05-01 complete (ViewModel export logic, 7/7 tests)
 
 ```
 v2.0 Progress: [##--------] 20% (1/5 phases)
@@ -65,7 +65,6 @@ Recent decisions affecting current work:
 
 ### Pending Todos
 
-- Verificar empíricamente `UTType(filenameExtension: "md")` en macOS 13 antes de implementar export MD (Phase 5).
 - Verificar si `@Observable` tiene comportamiento diferente en runtime macOS 13 vs 14 al inicio de Phase 4.
 - Determinar si `allow-unsigned-executable-memory` es necesario con las dependencias Python concretas (Phase 7).
 

@@ -77,7 +77,7 @@ Plans:
 Plans:
 **Wave 1**
 
-- [ ] 05-01-PLAN.md — ExtractionViewModel: contentReady/exportFormat, htmlForPreview, generateHTML autocontenido + target XCTest y tests unitarios
+- [x] 05-01-PLAN.md — ExtractionViewModel: contentReady/exportFormat, htmlForPreview, generateHTML autocontenido + target XCTest y tests unitarios
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
