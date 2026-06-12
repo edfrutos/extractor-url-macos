@@ -68,7 +68,8 @@ struct ContentView: View {
                     // Estado 4: éxito — D-06: WKWebView para los 3 tipos
                     WebPreviewView(
                         htmlContent: vm.htmlForPreview,
-                        contentReady: $vm.contentReady
+                        contentReady: $vm.contentReady,
+                        viewModel: vm
                     )
                 } else if let errorMsg = vm.errorMessage {
                     // Estado 5: error — D-08, APP-03

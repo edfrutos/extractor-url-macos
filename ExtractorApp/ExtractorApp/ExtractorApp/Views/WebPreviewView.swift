@@ -6,6 +6,7 @@ import WebKit
 struct WebPreviewView: NSViewRepresentable {
     var htmlContent: String?
     @Binding var contentReady: Bool
+    var viewModel: ExtractionViewModel  // Phase 6 (D-01): para registrar webViewProvider
 
     func makeCoordinator() -> Coordinator {
         Coordinator(self)
@@ -15,6 +16,11 @@ struct WebPreviewView: NSViewRepresentable {
         let webView = WKWebView()
         webView.navigationDelegate = context.coordinator
         context.coordinator.webView = webView
+        // Phase 6 (D-01): registrar el proveedor en el ViewModel con capture weak del coordinator
+        // para evitar ciclo de retención (A5 de RESEARCH.md)
+        viewModel.webViewProvider = { [weak coordinator = context.coordinator] in
+            coordinator?.webView
+        }
         return webView
     }
 

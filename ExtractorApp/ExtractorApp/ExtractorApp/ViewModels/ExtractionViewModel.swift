@@ -3,6 +3,7 @@ import Combine
 import Foundation
 import SwiftUI
 import UniformTypeIdentifiers
+import WebKit
 
 @MainActor
 final class ExtractionViewModel: ObservableObject {
@@ -21,6 +22,9 @@ final class ExtractionViewModel: ObservableObject {
     @Published var contentReady: Bool = false       // D-10: DOM del preview renderizado
     @Published var exportFormat: String = "markdown" // "markdown" | "html" | "pdf" (D-14)
     @Published var pageTitle: String? = nil           // Phase 6 — poblado al decodificar ExtractionResult
+
+    // Phase 6 (D-01): proveedor del WKWebView visible — registrado desde WebPreviewView.makeNSView
+    var webViewProvider: (() -> WKWebView?)? = nil
 
     // D-05: computada, no @Published — se deriva de resultContent + outputType
     var htmlForPreview: String? {
