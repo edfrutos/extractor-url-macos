@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: SwiftUI Native App
 status: executing
-last_updated: "2026-06-12T08:16:00.000Z"
-last_activity: 2026-06-12 -- Plan 05-01 complete (ViewModel export logic, 7/7 tests)
+last_updated: "2026-06-12T08:22:00.000Z"
+last_activity: 2026-06-12 -- Plan 05-02 code complete (741f25c); awaiting human-verify checkpoint (Task 3)
 progress:
   total_phases: 5
   completed_phases: 2
@@ -25,9 +25,9 @@ See: .planning/PROJECT.md (updated 2026-06-10)
 ## Current Position
 
 Phase: 05 (preview-y-export-md-html) — EXECUTING
-Plan: 2 of 2 (05-01 complete — dd22f7f)
-Status: Executing Phase 05
-Last activity: 2026-06-12 -- Plan 05-01 complete (ViewModel export logic, 7/7 tests)
+Plan: 2 of 2 (05-01 complete — dd22f7f; 05-02 code complete — 741f25c)
+Status: Plan 05-02 Task 3 — checkpoint:human-verify pendiente (verificación visual preview + export)
+Last activity: 2026-06-12 -- Plan 05-02 code complete; awaiting human verification
 
 ```
 v2.0 Progress: [##--------] 20% (1/5 phases)
