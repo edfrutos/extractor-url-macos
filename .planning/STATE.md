@@ -25,9 +25,9 @@ See: .planning/PROJECT.md (updated 2026-06-10)
 ## Current Position
 
 Phase: 06 (export-pdf) — EXECUTING
-Plan: 1 of 3
-Status: Executing Phase 06
-Last activity: 2026-06-12 -- Phase 06 execution started
+Plan: 3 of 3 (Tasks 1-3 complete; Task 4 awaiting human verification)
+Status: Checkpoint — human verify PDF export
+Last activity: 2026-06-12 -- Phase 06 Plan 03 Tasks 1-3 committed; checkpoint Task 4
 
 ```
 v2.0 Progress: [######----] 60% (3/5 phases)
@@ -62,6 +62,9 @@ Recent decisions affecting current work:
 - [v2.0]: `@Observable` macro (Swift 5.9+) como patrón de estado; fallback a `@StateObject + ObservableObject` si hay problemas en runtime macOS 13.
 - [v2.0]: `readabilityHandler` asíncrono en paralelo para stdout y stderr — evita deadlock con buffers grandes de `trafilatura`.
 - [v2.0]: BRIDGE-01 es la dependencia bloqueante — ninguna fase de UI ni export puede iniciarse antes de que el bridge funcione.
+- [06-03]: webViewProvider como closure (() -> WKWebView?)? con [weak coordinator] — menor acoplamiento, sin ciclo de retención.
+- [06-03]: Approach B (withCheckedThrowingContinuation + completionHandler) para createPDF — siempre seguro macOS 11+.
+- [06-03]: WKPDFConfiguration() sin rect — WYSIWYG estricto (D-02) y página única continua (D-03).
 
 ### Pending Todos
 
@@ -82,6 +85,6 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-06-12T16:00:42.401Z
-Stopped at: Phase 6 UI-SPEC approved
-Resume file: .planning/phases/06-export-pdf/06-UI-SPEC.md
+Last session: 2026-06-12T16:56:00Z
+Stopped at: Phase 06 Plan 03 Task 4 (checkpoint:human-verify — PDF real)
+Resume file: .planning/phases/06-export-pdf/06-03-PLAN.md
