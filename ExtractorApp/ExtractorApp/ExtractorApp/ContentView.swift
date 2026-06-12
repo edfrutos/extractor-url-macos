@@ -64,14 +64,12 @@ struct ContentView: View {
                 if vm.isExtracting {
                     // Estado 3: extrayendo — APP-02
                     ProgressView("Extrayendo\u{2026}")  // U+2026, UI-SPEC exacto
-                } else if let content = vm.resultContent {
-                    // Estado 4: éxito — D-02, D-10
-                    ScrollView {
-                        Text(content)  // solo content, sin metadatos (D-10)
-                            .font(.system(.caption, design: .monospaced))  // D-02
-                            .padding()
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                    }
+                } else if vm.resultContent != nil {
+                    // Estado 4: éxito — D-06: WKWebView para los 3 tipos
+                    WebPreviewView(
+                        htmlContent: vm.htmlForPreview,
+                        contentReady: $vm.contentReady
+                    )
                 } else if let errorMsg = vm.errorMessage {
                     // Estado 5: error — D-08, APP-03
                     VStack(alignment: .leading, spacing: 4) {
@@ -90,6 +88,29 @@ struct ContentView: View {
                 // Estado 1/2: vacío — sin contenido visible
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
+
+            Divider()  // NUEVO Phase 5: entre preview y fila export
+
+            // ── Fila de exportación (Phase 5) ──────────────────────────
+            HStack(spacing: 8) {
+                Picker("", selection: $vm.exportFormat) {
+                    Text("Markdown").tag("markdown")     // UI-SPEC exacto
+                    Text("HTML").tag("html")             // UI-SPEC exacto
+                    Text("PDF").tag("pdf").disabled(true)  // D-09: Phase 6
+                }
+                .pickerStyle(.segmented)
+                .labelsHidden()
+                .disabled(!vm.contentReady)  // D-07, D-08
+
+                Button {
+                    Task { await vm.export() }
+                } label: {
+                    Label("Exportar", systemImage: "square.and.arrow.up")  // UI-SPEC
+                }
+                .buttonStyle(.borderedProminent)
+                .accessibilityLabel("Exportar contenido")  // UI-SPEC exacto
+                .disabled(!vm.contentReady)  // D-08
+            }
 
         }
         .padding()
