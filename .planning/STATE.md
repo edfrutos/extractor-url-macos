@@ -2,9 +2,9 @@
 gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: SwiftUI Native App
-status: executing
-last_updated: "2026-06-12T08:40:00.000Z"
-last_activity: 2026-06-12 -- Phase 05 complete (human-verify approved); Phase 06 ready to plan
+status: planning
+last_updated: "2026-06-12T11:40:18.895Z"
+last_activity: 2026-06-12 -- Phase 05 complete (05-01 dd22f7f, 05-02 741f25c, human-verify approved)
 progress:
   total_phases: 5
   completed_phases: 3
@@ -82,6 +82,6 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-06-11T16:19:39.968Z
-Stopped at: Phase 4 context gathered
-Resume file: None
+Last session: 2026-06-12T11:40:18.888Z
+Stopped at: Phase 6 context gathered
+Resume file: .planning/phases/06-export-pdf/06-CONTEXT.md
