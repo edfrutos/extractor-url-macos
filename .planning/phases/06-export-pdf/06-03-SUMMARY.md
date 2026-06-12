@@ -38,7 +38,8 @@ key-decisions:
   - "Approach B (withCheckedThrowingContinuation + completionHandler) para createPDF — siempre seguro macOS 11+"
   - "WKPDFConfiguration() sin modificar rect — D-02 WYSIWYG ancho ventana, D-03 página única continua"
   - "defer { webView.appearance = savedAppearance } garantiza restauracion NSAppearance en exito y error"
-  - "Task.sleep(nanoseconds: 100_000_000) = 0.1s delay pre-createPDF para layout CSS post-didFinish"
+  - "baseURL HTTPS en loadHTMLString — necesario para resolver imágenes protocol-relative (Fix A)"
+  - "Sondeo JS document.images[*].complete con timeout 5s e intervalo 200ms — sustituye delay fijo 0.1s (Fix B)"
   - "showPDFError via NSAlert.runModal() en @MainActor — wording exacto del UI-SPEC D-08"
   - "T-06-06 mitigado: pdfData.write(to:options:.atomic) evita corrupcion parcial"
 
@@ -55,14 +56,14 @@ completed: "2026-06-12"
 
 # Phase 06 Plan 03: Exportacion PDF end-to-end Summary
 
-**Exportacion PDF vectorial con texto seleccionable implementada via WKWebView.createPDF + NSAppearance forzada a claro + NSSavePanel con nombre derivado del titulo de pagina.**
+**Exportacion PDF vectorial con texto seleccionable implementada via WKWebView.createPDF + NSAppearance forzada a claro + NSSavePanel con nombre derivado del titulo de pagina; imágenes protocol-relative corregidas via baseURL HTTPS y sondeo JS de carga.**
 
 ## Performance
 
-- **Duration:** ~14 min
+- **Duration:** ~35 min (implementación + 2 correcciones post-verificación humana)
 - **Started:** 2026-06-12T16:42:39Z
-- **Completed:** 2026-06-12T16:56:xx Z
-- **Tasks completadas:** 3 de 4 (Task 4 = checkpoint human-verify — pendiente)
+- **Completed:** 2026-06-12T19:30:00Z
+- **Tasks completadas:** 4 de 4 (Task 4 verificacion humana APROBADA)
 - **Files modified:** 4
 
 ## Accomplishments
@@ -80,6 +81,9 @@ completed: "2026-06-12"
 | 2 RED | Test noop exportPDF sin webView | `b86d111` | test |
 | 2 GREEN | exportPDF() + showPDFError + rama pdf | `03f56c4` | feat |
 | 3 | Habilitar opcion PDF del Picker | `cc196f3` | feat |
+| Fix A | baseURL HTTPS en WebPreviewView | `db64b70` | fix |
+| Fix B | Espera activa JS para imágenes remotas | `0491d99` | fix |
+| 4 | Verificacion humana — APROBADA | — | checkpoint |
 
 ## Files Created/Modified
 
@@ -96,12 +100,32 @@ completed: "2026-06-12"
 
 ## Deviations from Plan
 
-Ninguna — el plan se ejecutó exactamente como estaba escrito.
+### Auto-fixed Issues
+
+**1. [Rule 1 - Bug / Fix A] baseURL HTTPS ausente en loadHTMLString**
+
+- **Found during:** Task 4 — verificación humana; el PDF generado no mostraba imágenes
+- **Causa raíz:** `loadHTMLString(_:baseURL:)` con `baseURL: nil` hace que las URLs protocol-relative (`//cdn.example.com/img.jpg`) no puedan resolverse porque el parser no tiene esquema base. WKWebView las descarta silenciosamente.
+- **Fix:** Pasar `baseURL: URL(string: "https://")` en `WebPreviewView.loadHTMLString`. Provee el esquema HTTPS sin alterar la ruta; las imágenes protocol-relative se resuelven correctamente.
+- **Files modified:** `ExtractorApp/ExtractorApp/ExtractorApp/Views/WebPreviewView.swift`
+- **Commit:** `db64b70`
+
+**2. [Rule 1 - Bug / Fix B] Delay fijo 0.1s insuficiente para imágenes remotas**
+
+- **Found during:** Task 4 — tras Fix A las imágenes cargaban en la vista pero no siempre aparecían en el PDF
+- **Causa raíz:** `Task.sleep(nanoseconds: 100_000_000)` es un límite de tiempo ciego que no detecta si las imágenes del DOM han terminado de cargar. Para páginas con imágenes remotas, 100ms es insuficiente en condiciones de red normales.
+- **Fix:** Sustituir el delay fijo por sondeo JS activo: `evaluateJavaScript("document.images.length > 0 && Array.from(document.images).every(i => i.complete)")` con intervalo de 200ms y timeout de 5s. Si el sondeo expira se procede igualmente (mejor esfuerzo).
+- **Files modified:** `ExtractorApp/ExtractorApp/ExtractorApp/ViewModels/ExtractionViewModel.swift`
+- **Commit:** `0491d99`
+
+### Incidencias fuera del plan (sin cambios de código)
+
+**Icono del Dock — caché de macOS:** Tras compilar en limpio el Dock mostraba el icono genérico. Resuelto con `lsregister -kill -r -domain local -domain system -domain user` para forzar reconstrucción del caché de Launch Services. No requirió cambios de código ni de assets.
 
 ## Issues Encountered
 
-- El primer build de verificacion falló porque `xcodebuild` se invocó desde el directorio raiz del proyecto (que no contiene el `.xcodeproj`). Se corrigió usando el path absoluto al `.xcodeproj`. No es una desviación del plan — es un ajuste del comando de verificacion.
-- Los warnings de Swift 6 (`reference to captured var 'self' in concurrently-executing code`) son preexistentes de la implementación de `extract()` en fases anteriores. Están fuera del scope de este plan.
+- El primer build de verificacion falló porque `xcodebuild` se invocó desde el directorio raiz del proyecto (que no contiene el `.xcodeproj`). Se corrigió usando el path absoluto al `.xcodeproj`. No es una desviación del plan.
+- Los warnings de Swift 6 (`reference to captured var 'self' in concurrently-executing code`) son preexistentes de fases anteriores. Fuera del scope de este plan.
 
 ## Known Stubs
 
@@ -119,22 +143,20 @@ Ninguno nuevo — las amenazas T-06-06 (write .atomic), T-06-07 (NSSavePanel), T
 
 ## Next Phase Readiness
 
-- EXPORT-04 implementado end-to-end en codigo; pendiente de verificacion humana (Task 4, checkpoint)
-- Cuando el usuario confirme "approved" en Task 4, el plan 06-03 queda completo y Phase 6 cerrada
-- Phase 7 (empaquetado/distribución) puede iniciarse tras la verificacion humana
+- EXPORT-04 implementado end-to-end y verificado manualmente — Phase 6 cerrada
+- Phase 7 (empaquetado/distribución) puede iniciarse
 
 ## Self-Check: PASSED
 
-- [x] `ExtractionViewModel.swift` contiene `webViewProvider` y `func exportPDF`
-- [x] `WebPreviewView.swift` contiene `viewModel: ExtractionViewModel` y `webViewProvider = { [weak coordinator`
+- [x] `ExtractionViewModel.swift` contiene `webViewProvider`, `func exportPDF` y sondeo JS activo (Fix B)
+- [x] `WebPreviewView.swift` contiene `webViewProvider = { [weak coordinator` y `baseURL: URL(string: "https://")` (Fix A)
 - [x] `ContentView.swift` contiene `Text("PDF").tag("pdf")` SIN `.disabled(true)`
 - [x] `ViewModelTests.swift` contiene `testExportPDFWithoutWebViewIsNoop`
-- [x] `06-03-SUMMARY.md` creado
-- [x] Commits `7eed298`, `b86d111`, `03f56c4`, `cc196f3` presentes en el log
-- [x] BUILD SUCCEEDED (solo warnings Swift 6 preexistentes)
-- [x] TEST SUCCEEDED (ViewModelTests — 11 tests, 0 fallos)
+- [x] Commits `7eed298`, `b86d111`, `03f56c4`, `cc196f3`, `db64b70`, `0491d99` presentes en el log
+- [x] BUILD SUCCEEDED (solo warnings Swift 6 preexistentes, fuera de scope)
+- [x] TEST SUCCEEDED: 11 tests Swift (ViewModelTests), 20 tests Python — todos verdes
+- [x] Task 4 verificacion humana: APROBADA (texto seleccionable, sin páginas en blanco, modo claro forzado, imágenes presentes)
 
 ---
-*Phase: 06-export-pdf*
-*Plan: 03*
-*Completed: 2026-06-12 (Tasks 1-3; Task 4 awaiting human verification)*
+
+<!-- Phase: 06-export-pdf | Plan: 03 | Completed: 2026-06-12 | EXPORT-04 cumplido end-to-end -->
