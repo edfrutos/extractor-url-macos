@@ -150,7 +150,7 @@ final class ExtractionViewModel: ObservableObject {
         case "html":
             await exportHTML()
         case "pdf":
-            break
+            await exportPDF()
         default:
             break
         }
@@ -201,6 +201,65 @@ final class ExtractionViewModel: ObservableObject {
         } catch {
             print("[ExportHTML] Error al guardar: \(error.localizedDescription)")
         }
+    }
+
+    // MARK: - Phase 6: Export PDF (EXPORT-04)
+
+    /// Genera el PDF desde el WKWebView visible con modo claro forzado y lo guarda via NSSavePanel.
+    /// D-02 WYSIWYG: WKPDFConfiguration sin rect ni ancho mínimo — el PDF toma el ancho actual de ventana.
+    /// D-03: página única continua (sin modificar el rect).
+    /// D-04: fuerza modo claro (NSAppearance.aqua) durante la captura; defer restaura en éxito y error.
+    @MainActor
+    func exportPDF() async {
+        guard let webView = webViewProvider?() else { return }  // silencioso si no hay webView
+
+        // D-04: forzar modo claro; defer garantiza restauración en ambos paths (Pitfall 2)
+        let savedAppearance = webView.appearance
+        webView.appearance = NSAppearance(named: .aqua)
+        defer { webView.appearance = savedAppearance }
+
+        // Pitfall 1: delay 0.1s para que el layout CSS termine tras didFinish
+        try? await Task.sleep(nanoseconds: 100_000_000)
+
+        do {
+            // Approach B (siempre seguro macOS 11+): completionHandler wrapping
+            // NO modificar el rect — D-03 página única; D-02 WYSIWYG ancho de ventana
+            let pdfData = try await withCheckedThrowingContinuation {
+                (cont: CheckedContinuation<Data, Error>) in
+                webView.createPDF(configuration: WKPDFConfiguration()) { result in
+                    cont.resume(with: result)
+                }
+            }
+
+            // NSSavePanel — mismo patrón que exportMarkdown/exportHTML
+            let panel = NSSavePanel()
+            panel.allowedContentTypes = [.pdf]
+            panel.nameFieldStringValue = suggestedFilename(title: pageTitle, extension: "pdf")
+            panel.canCreateDirectories = true
+
+            let response = await withCheckedContinuation {
+                (continuation: CheckedContinuation<NSApplication.ModalResponse, Never>) in
+                panel.begin { continuation.resume(returning: $0) }
+            }
+            guard response == .OK, let url = panel.url else { return }
+
+            // T-06-06: escritura atómica para evitar corrupción parcial
+            try pdfData.write(to: url, options: .atomic)
+
+        } catch {
+            showPDFError(error)  // D-08: NSAlert visible en error de createPDF o write
+        }
+    }
+
+    /// D-08: muestra NSAlert cuando falla la generación o escritura del PDF.
+    @MainActor
+    private func showPDFError(_ error: Error) {
+        let alert = NSAlert()
+        alert.messageText = "Error al exportar PDF"
+        alert.informativeText = "No se pudo generar el archivo PDF.\n\(error.localizedDescription)"
+        alert.alertStyle = .warning
+        alert.addButton(withTitle: "Aceptar")
+        alert.runModal()
     }
 
     // internal: accesible desde @testable import en XCTest (Phase 6)
