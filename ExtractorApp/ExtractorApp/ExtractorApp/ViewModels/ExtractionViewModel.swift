@@ -20,6 +20,7 @@ final class ExtractionViewModel: ObservableObject {
     @Published var isPythonPathError: Bool = false  // hint "Preferencias" en la View
     @Published var contentReady: Bool = false       // D-10: DOM del preview renderizado
     @Published var exportFormat: String = "markdown" // "markdown" | "html" | "pdf" (D-14)
+    @Published var pageTitle: String? = nil           // Phase 6 — poblado al decodificar ExtractionResult
 
     // D-05: computada, no @Published — se deriva de resultContent + outputType
     var htmlForPreview: String? {
@@ -60,6 +61,7 @@ final class ExtractionViewModel: ObservableObject {
                 )
                 await MainActor.run {
                     self?.resultContent = result?.content
+                    self?.pageTitle = result?.title
                     self?.isExtracting = false
                 }
             } catch {
@@ -158,7 +160,7 @@ final class ExtractionViewModel: ObservableObject {
         let panel = NSSavePanel()
         // PITFALL 2: UTType de "md" puede no estar declarado — nunca force-unwrap
         panel.allowedContentTypes = [UTType(filenameExtension: "md") ?? .plainText]
-        panel.nameFieldStringValue = suggestedFilename(from: content, extension: "md")
+        panel.nameFieldStringValue = suggestedFilename(title: pageTitle, extension: "md")
         panel.canCreateDirectories = true
 
         let response = await withCheckedContinuation {
@@ -181,7 +183,7 @@ final class ExtractionViewModel: ObservableObject {
 
         let panel = NSSavePanel()
         panel.allowedContentTypes = [.html]
-        panel.nameFieldStringValue = suggestedFilename(from: content, extension: "html")
+        panel.nameFieldStringValue = suggestedFilename(title: pageTitle, extension: "html")
         panel.canCreateDirectories = true
 
         let response = await withCheckedContinuation {
@@ -197,13 +199,31 @@ final class ExtractionViewModel: ObservableObject {
         }
     }
 
-    private func suggestedFilename(from content: String, extension ext: String) -> String {
-        let name = String(content.prefix(50))
-            .replacingOccurrences(
-                of: "[^a-zA-Z0-9_\\-]", with: "-", options: .regularExpression
-            )
-            .trimmingCharacters(in: CharacterSet(charactersIn: "-"))
-        return "\(name.isEmpty ? "export" : name).\(ext)"
+    // internal: accesible desde @testable import en XCTest (Phase 6)
+    func suggestedFilename(title: String?, extension ext: String) -> String {
+        // D-06: preferir title saneado (T-06-04: elimina path traversal)
+        if let raw = title, !raw.isEmpty {
+            let sanitized = raw
+                .replacingOccurrences(
+                    of: "[^a-zA-Z0-9_\\-\\s]", with: "-",
+                    options: .regularExpression
+                )
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+            let truncated = String(sanitized.prefix(60))
+                .replacingOccurrences(of: " ", with: "-")
+            if !truncated.isEmpty { return "\(truncated).\(ext)" }
+        }
+        // D-07: fallback — prefijo del contenido (heurística original)
+        if let content = resultContent {
+            let name = String(content.prefix(50))
+                .replacingOccurrences(
+                    of: "[^a-zA-Z0-9_\\-]", with: "-",
+                    options: .regularExpression
+                )
+                .trimmingCharacters(in: CharacterSet(charactersIn: "-"))
+            if !name.isEmpty { return "\(name).\(ext)" }
+        }
+        return "export.\(ext)"
     }
 
     // MARK: - marked.js v18.0.5 (UMD, bundled inline — sin dependencia de runtime)

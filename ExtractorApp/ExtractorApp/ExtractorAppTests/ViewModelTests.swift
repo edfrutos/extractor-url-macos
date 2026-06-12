@@ -70,4 +70,35 @@ final class ViewModelTests: XCTestCase {
         XCTAssertEqual(vm.resultContent, "contenido")
         XCTAssertEqual(vm.exportFormat, "pdf")
     }
+
+    // MARK: - Phase 6: Tests de suggestedFilename (D-06/D-07)
+
+    func testSuggestedFilenameWithTitle() async throws {
+        let vm = ExtractionViewModel()
+        vm.pageTitle = "Mi Artículo de Prueba"
+        let result = vm.suggestedFilename(title: vm.pageTitle, extension: "pdf")
+        // El título saneado debe aparecer en el nombre (no "export")
+        XCTAssertTrue(result.hasSuffix(".pdf"), "debe terminar en .pdf")
+        XCTAssertNotEqual(result, "export.pdf", "no debe usar el fallback 'export'")
+        XCTAssertFalse(result.contains(" "), "el nombre no debe contener espacios")
+    }
+
+    func testSuggestedFilenameFallbackToContent() async throws {
+        let vm = ExtractionViewModel()
+        vm.pageTitle = nil
+        vm.resultContent = "Contenido sin titulo"
+        let result = vm.suggestedFilename(title: nil, extension: "md")
+        // Sin title → usa prefijo del contenido, no "export"
+        XCTAssertTrue(result.hasSuffix(".md"), "debe terminar en .md")
+        XCTAssertNotEqual(result, "export.md", "no debe usar el fallback 'export' si hay contenido")
+    }
+
+    func testSuggestedFilenameFallbackToExport() async throws {
+        let vm = ExtractionViewModel()
+        vm.pageTitle = nil
+        vm.resultContent = nil
+        let result = vm.suggestedFilename(title: nil, extension: "txt")
+        // Sin title ni contenido → "export.<ext>"
+        XCTAssertEqual(result, "export.txt")
+    }
 }
