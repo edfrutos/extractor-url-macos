@@ -96,7 +96,19 @@ Plans:
   2. El archivo PDF resultante contiene el contenido íntegro, el texto es seleccionable y no hay páginas en blanco.
   3. Se abre `NSSavePanel` con extensión `.pdf` y nombre sugerido derivado del título de la página antes de guardar.
 
-**Plans**: TBD
+**Plans**: 3 planes
+
+Plans:
+
+**Wave 1**
+
+- [ ] 06-01-PLAN.md — Contrato JSON Python: campo `title` (`_extract_title` + bloque JSON + tests)
+- [ ] 06-02-PLAN.md — Contrato Swift: `ExtractionResult.title`, `pageTitle`, `suggestedFilename(title:)` unificado + tests
+
+**Wave 2** *(blocked on Wave 1: depende de 06-02)*
+
+- [ ] 06-03-PLAN.md — `exportPDF()` (createPDF + modo claro + NSSavePanel + NSAlert), habilitar Picker PDF + verificación humana
+
 **UI hint**: yes
 
 ### Phase 7: Universal Binary y Configuración de Build
@@ -122,7 +134,7 @@ Phases execute in numeric order: 3 → 4 → 5 → 6 → 7
 | 3. Python Bridge y Preferencias | 0/3 | In progress | - |
 | 4. SwiftUI UI de Extracción | 2/2 | Complete   | 2026-06-11 |
 | 5. Preview y Export MD/HTML | 0/2 | Not started | - |
-| 6. Export PDF | 0/? | Not started | - |
+| 6. Export PDF | 0/3 | Not started | - |
 | 7. Universal Binary y Configuración de Build | 0/? | Not started | - |
 
 ---
