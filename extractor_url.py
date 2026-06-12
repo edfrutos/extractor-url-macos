@@ -15,9 +15,9 @@ import tkinter as tk
 from tkinter import filedialog, messagebox, ttk
 from typing import Any, Optional, Union
 
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup, FeatureNotFound
 
-from core import extract_formatted_content
+from core import extract_formatted_content, _fetch_raw, _extract_title
 
 
 # ---------------------------------------------------------------------------
@@ -288,6 +288,16 @@ def main() -> None:
     result_str = result if isinstance(result, str) else str(result)
 
     if args.json:
+        # Extraer title de forma independiente (segunda llamada = hit de caché)
+        page_title: Optional[str] = None
+        raw_result = _fetch_raw(args.url, timeout=args.timeout, use_cache=args.use_cache)
+        if raw_result is not None:
+            html_text, _ = raw_result
+            try:
+                title_soup = BeautifulSoup(html_text, "lxml")
+            except FeatureNotFound:
+                title_soup = BeautifulSoup(html_text, "html.parser")
+            page_title = _extract_title(title_soup, html_text)
         _print_json_output({
             "status": "success",
             "url": args.url,
@@ -295,6 +305,7 @@ def main() -> None:
             "output_type": args.type,
             "char_count": len(result_str),
             "content": result_str,
+            "title": page_title,
         })
         return
 
