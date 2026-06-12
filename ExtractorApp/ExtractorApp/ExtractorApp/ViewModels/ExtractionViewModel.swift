@@ -221,6 +221,21 @@ final class ExtractionViewModel: ObservableObject {
         // Pitfall 1: delay 0.1s para que el layout CSS termine tras didFinish
         try? await Task.sleep(nanoseconds: 100_000_000)
 
+        // Espera activa: sondear JS hasta que todas las imágenes estén cargadas (timeout 5s).
+        // Sin esto, createPDF captura antes de que las imágenes remotas terminen de descargar.
+        let imageWaitStart = Date()
+        while Date().timeIntervalSince(imageWaitStart) < 5.0 {
+            let allLoaded: Bool = await withCheckedContinuation { cont in
+                webView.evaluateJavaScript(
+                    "Array.from(document.images).every(function(i){return i.complete && i.naturalWidth > 0;})"
+                ) { result, _ in
+                    cont.resume(returning: (result as? Bool) ?? true)
+                }
+            }
+            if allLoaded { break }
+            try? await Task.sleep(nanoseconds: 200_000_000)  // 200ms entre sondeos
+        }
+
         do {
             // Approach B (siempre seguro macOS 11+): completionHandler wrapping
             // NO modificar el rect — D-03 página única; D-02 WYSIWYG ancho de ventana
