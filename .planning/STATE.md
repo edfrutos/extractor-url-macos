@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: SwiftUI Native App
 status: executing
-last_updated: "2026-06-12T16:16:54.766Z"
-last_activity: 2026-06-12 -- Phase 6 planning complete
+last_updated: "2026-06-12T16:21:17.115Z"
+last_activity: 2026-06-12 -- Phase 06 execution started
 progress:
   total_phases: 5
   completed_phases: 3
@@ -20,14 +20,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-06-10)
 
 **Core value:** Convertir páginas web en Markdown útil y limpio de forma fiable, repetible y sin depender de servicios externos.
-**Current focus:** Phase 06 — Export PDF (ready to plan)
+**Current focus:** Phase 06 — export-pdf
 
 ## Current Position
 
-Phase: 06 (export-pdf) — Not started
-Plan: Not started
-Status: Ready to execute
-Last activity: 2026-06-12 -- Phase 6 planning complete
+Phase: 06 (export-pdf) — EXECUTING
+Plan: 1 of 3
+Status: Executing Phase 06
+Last activity: 2026-06-12 -- Phase 06 execution started
 
 ```
 v2.0 Progress: [######----] 60% (3/5 phases)

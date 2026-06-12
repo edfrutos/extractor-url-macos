@@ -102,8 +102,8 @@ Plans:
 
 **Wave 1**
 
-- [ ] 06-01-PLAN.md — Contrato JSON Python: campo `title` (`_extract_title` + bloque JSON + tests)
-- [ ] 06-02-PLAN.md — Contrato Swift: `ExtractionResult.title`, `pageTitle`, `suggestedFilename(title:)` unificado + tests
+- [x] 06-01-PLAN.md — Contrato JSON Python: campo `title` (`_extract_title` + bloque JSON + tests)
+- [x] 06-02-PLAN.md — Contrato Swift: `ExtractionResult.title`, `pageTitle`, `suggestedFilename(title:)` unificado + tests
 
 **Wave 2** *(blocked on Wave 1: depende de 06-02)*
 
@@ -134,7 +134,7 @@ Phases execute in numeric order: 3 → 4 → 5 → 6 → 7
 | 3. Python Bridge y Preferencias | 0/3 | In progress | - |
 | 4. SwiftUI UI de Extracción | 2/2 | Complete   | 2026-06-11 |
 | 5. Preview y Export MD/HTML | 0/2 | Not started | - |
-| 6. Export PDF | 0/3 | Not started | - |
+| 6. Export PDF | 2/3 | In Progress|  |
 | 7. Universal Binary y Configuración de Build | 0/? | Not started | - |
 
 ---
