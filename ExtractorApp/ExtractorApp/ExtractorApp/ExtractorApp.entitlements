@@ -6,6 +6,9 @@
     <!-- App Sandbox OFF: permite Process() con rutas arbitrarias -->
     <key>com.apple.security.app-sandbox</key>
     <false/>
+    <!-- Hardened Runtime ON: mitigación contra ejecución de código memoria sin autorización -->
+    <key>com.apple.security.hardened-runtime</key>
+    <true/>
     <!-- Descomenta si trafilatura usa JIT de regex y Python falla con SIGKILL: -->
     <!--
     <key>com.apple.security.cs.allow-unsigned-executable-memory</key>
