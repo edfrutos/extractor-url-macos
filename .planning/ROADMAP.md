@@ -128,7 +128,7 @@ Plans:
 
 **Wave 1**
 
-- [ ] 07-01-PLAN.md — Build settings: MACOSX_DEPLOYMENT_TARGET = 13.0, ARCHS = arm64 x86_64 + entitlements hardened-runtime
+- [x] 07-01-PLAN.md — Build settings: MACOSX_DEPLOYMENT_TARGET = 13.0, ARCHS = arm64 x86_64 + entitlements hardened-runtime
 
 **Wave 2** *(blocked on Wave 1: depende de compilación exitosa)*
 
@@ -147,7 +147,7 @@ Phases execute in numeric order: 3 → 4 → 5 → 6 → 7
 | 4. SwiftUI UI de Extracción | 2/2 | Complete   | 2026-06-11 |
 | 5. Preview y Export MD/HTML | 2/2 | Complete   | 2026-06-12 |
 | 6. Export PDF | 3/3 | Complete    | 2026-06-13 |
-| 7. Universal Binary y Configuración de Build | 0/2 | Planning done | - |
+| 7. Universal Binary y Configuración de Build | 1/2 | In Progress|  |
 
 ---
 
