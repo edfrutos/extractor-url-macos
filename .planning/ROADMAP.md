@@ -122,7 +122,19 @@ Plans:
   2. La app arranca y extrae contenido correctamente en un Mac Apple Silicon y en un Mac Intel (o Rosetta) con macOS 13.0.
   3. El archivo `.entitlements` tiene `app-sandbox = false` y `hardened-runtime = true`; la app pasa la notarización con `stapler`.
 
-**Plans**: TBD
+**Plans**: 2 planes
+
+Plans:
+
+**Wave 1**
+
+- [ ] 07-01-PLAN.md — Build settings: MACOSX_DEPLOYMENT_TARGET = 13.0, ARCHS = arm64 x86_64 + entitlements hardened-runtime
+
+**Wave 2** *(blocked on Wave 1: depende de compilación exitosa)*
+
+- [ ] 07-02-PLAN.md — Validación binaria: lipo -archs, codesign verification, ejecución y checkpoint humano
+
+**UI hint**: no
 
 ## Progress
 
@@ -135,7 +147,7 @@ Phases execute in numeric order: 3 → 4 → 5 → 6 → 7
 | 4. SwiftUI UI de Extracción | 2/2 | Complete   | 2026-06-11 |
 | 5. Preview y Export MD/HTML | 2/2 | Complete   | 2026-06-12 |
 | 6. Export PDF | 3/3 | Complete    | 2026-06-13 |
-| 7. Universal Binary y Configuración de Build | 0/? | Not started | - |
+| 7. Universal Binary y Configuración de Build | 0/2 | Planning done | - |
 
 ---
 
