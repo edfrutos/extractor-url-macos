@@ -16,8 +16,8 @@
 - [x] **APP-01**: El usuario puede introducir una URL y lanzar la extracción desde la app SwiftUI.
 - [x] **APP-02**: La app muestra un indicador de progreso indeterminado durante la extracción.
 - [x] **APP-03**: La app muestra errores de extracción de forma explícita (alert o mensaje inline).
-- [ ] **APP-04**: La app compila como universal binary x86_64 + arm64, deployment target macOS 13.0.
-- [ ] **APP-05**: App Sandbox desactivado (herramienta personal, distribución fuera del App Store).
+- [x] **APP-04**: La app compila como universal binary x86_64 + arm64, deployment target macOS 13.0.
+- [x] **APP-05**: App Sandbox desactivado (herramienta personal, distribución fuera del App Store).
 
 ### BRIDGE — Puente Python subprocess
 
@@ -74,8 +74,8 @@
 | APP-01 | Active | Phase 04 |
 | APP-02 | Active | Phase 04 |
 | APP-03 | Active | Phase 04 |
-| APP-04 | Active | Phase 07 |
-| APP-05 | Active | Phase 03 |
+| APP-04 | Complete | Phase 07 |
+| APP-05 | Complete | Phase 07 |
 | BRIDGE-01 | Active | Phase 03 |
 | BRIDGE-02 | Active | Phase 03 |
 | BRIDGE-03 | Active | Phase 03 |

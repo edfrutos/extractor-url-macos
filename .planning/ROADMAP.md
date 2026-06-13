@@ -14,7 +14,7 @@ El bridge subprocess es la dependencia bloqueante de todo el milestone. Las fase
 - [x] **Phase 4: SwiftUI UI de Extracción** - Primera interfaz funcional end-to-end: campo URL, controles, progreso y errores. (completed 2026-06-11)
 - [x] **Phase 5: Preview y Export MD/HTML** - Preview WKWebView del contenido extraído y exportación a Markdown y HTML autocontenido. (completed 2026-06-12)
 - [x] **Phase 6: Export PDF** - Exportación PDF vectorial vía WKWebView con control de timing de renderizado. (completed 2026-06-12)
-- [ ] **Phase 7: Universal Binary y Configuración de Build** - Verificación fat binary, firma, notarización y empaquetado .dmg.
+- [x] **Phase 7: Universal Binary y Configuración de Build** - Verificación fat binary, firma, notarización y empaquetado .dmg. (completed 2026-06-13)
 
 ## Phase Details
 
@@ -147,7 +147,7 @@ Phases execute in numeric order: 3 → 4 → 5 → 6 → 7
 | 4. SwiftUI UI de Extracción | 2/2 | Complete   | 2026-06-11 |
 | 5. Preview y Export MD/HTML | 2/2 | Complete   | 2026-06-12 |
 | 6. Export PDF | 3/3 | Complete    | 2026-06-13 |
-| 7. Universal Binary y Configuración de Build | 2/2 | Complete | 2026-06-13 |
+| 7. Universal Binary y Configuración de Build | 2/2 | Complete    | 2026-06-13 |
 
 ---
 
