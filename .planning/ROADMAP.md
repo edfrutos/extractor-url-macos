@@ -132,7 +132,7 @@ Plans:
 
 **Wave 2** *(blocked on Wave 1: depende de compilación exitosa)*
 
-- [ ] 07-02-PLAN.md — Validación binaria: lipo -archs, codesign verification, ejecución y checkpoint humano
+- [x] 07-02-PLAN.md — Validación binaria: lipo -archs, codesign verification, ejecución y checkpoint humano (completed 2026-06-13)
 
 **UI hint**: no
 
@@ -147,7 +147,7 @@ Phases execute in numeric order: 3 → 4 → 5 → 6 → 7
 | 4. SwiftUI UI de Extracción | 2/2 | Complete   | 2026-06-11 |
 | 5. Preview y Export MD/HTML | 2/2 | Complete   | 2026-06-12 |
 | 6. Export PDF | 3/3 | Complete    | 2026-06-13 |
-| 7. Universal Binary y Configuración de Build | 1/2 | In Progress|  |
+| 7. Universal Binary y Configuración de Build | 2/2 | Complete | 2026-06-13 |
 
 ---
 
