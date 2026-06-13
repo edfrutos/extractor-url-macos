@@ -6,6 +6,8 @@ enum ExtractionError: Error, LocalizedError {
     case extractionFailed(message: String)
     case jsonDecodeFailed(underlying: Error)
     case emptyOutput
+    /// El proceso no completó dentro del tiempo límite y fue terminado.
+    case timeout
 
     var errorDescription: String? {
         switch self {
@@ -19,6 +21,8 @@ enum ExtractionError: Error, LocalizedError {
             return "Respuesta JSON inválida del CLI: \(error.localizedDescription)"
         case .emptyOutput:
             return "El proceso terminó sin producir salida."
+        case .timeout:
+            return "La extracción superó el tiempo límite y fue cancelada."
         }
     }
 }
