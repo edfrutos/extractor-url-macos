@@ -133,8 +133,8 @@ Phases execute in numeric order: 3 → 4 → 5 → 6 → 7
 |-------|----------------|--------|-----------|
 | 3. Python Bridge y Preferencias | 0/3 | In progress | - |
 | 4. SwiftUI UI de Extracción | 2/2 | Complete   | 2026-06-11 |
-| 5. Preview y Export MD/HTML | 0/2 | Not started | - |
-| 6. Export PDF | 3/3 | Complete   | 2026-06-12 |
+| 5. Preview y Export MD/HTML | 2/2 | Complete   | 2026-06-12 |
+| 6. Export PDF | 3/3 | Complete    | 2026-06-13 |
 | 7. Universal Binary y Configuración de Build | 0/? | Not started | - |
 
 ---

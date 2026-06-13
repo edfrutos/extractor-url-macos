@@ -43,7 +43,7 @@
 - [x] **EXPORT-01**: El usuario selecciona el formato de salida (MD / HTML / PDF) con un selector antes de exportar.
 - [x] **EXPORT-02**: El export `.md` guarda el contenido íntegro extraído sin transformaciones vía `NSSavePanel`.
 - [x] **EXPORT-03**: El export `.html` genera un único archivo autocontenido con CSS inline (max-width, apple-system font, `@media (prefers-color-scheme: dark)`, `@media print`), legible en navegador sin dependencias externas.
-- [ ] **EXPORT-04**: El export PDF usa `WKWebView.pdf(configuration:)` (macOS 13+, async/await), con guarda de estado `contentReady` antes de invocar la API, y guarda el resultado vía `NSSavePanel`.
+- [x] **EXPORT-04**: El export PDF usa `WKWebView.pdf(configuration:)` (macOS 13+, async/await), con guarda de estado `contentReady` antes de invocar la API, y guarda el resultado vía `NSSavePanel`.
 
 ## Future Requirements
 
@@ -89,7 +89,7 @@
 | EXPORT-01 | Complete | Phase 05 |
 | EXPORT-02 | Complete | Phase 05 |
 | EXPORT-03 | Complete | Phase 05 |
-| EXPORT-04 | Active | Phase 06 |
+| EXPORT-04 | Complete | Phase 06 |
 
 ## Notes
 
