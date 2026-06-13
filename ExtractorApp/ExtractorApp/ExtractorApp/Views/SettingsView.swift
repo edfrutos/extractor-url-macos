@@ -203,7 +203,7 @@ private struct HelpTextView: View {
     private func helpRow(icon: String, title: String, body: String) -> some View {
         HStack(alignment: .top, spacing: 10) {
             Image(systemName: icon)
-                .foregroundStyle(.accentColor)
+                .foregroundStyle(Color.accentColor)
                 .imageScale(.medium)
                 .frame(width: 20)
 
