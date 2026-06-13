@@ -1,18 +1,5 @@
 import SwiftUI
 
-// MARK: - Brand Design System
-
-/// Paleta de colores centralizada — coherente con logo y app icon.
-extension Color {
-    static let brandPrimary   = Color(red: 0.310, green: 0.431, blue: 0.969) // #4F6EF7
-    static let brandSecondary = Color(red: 0.227, green: 0.337, blue: 0.831) // #3A56D4
-    static let brandAccent    = Color(red: 0.388, green: 0.761, blue: 0.663) // #63C2A9 mint
-    static let surfaceLight   = Color(red: 0.969, green: 0.973, blue: 0.988)
-    static let surfaceDark    = Color(red: 0.110, green: 0.118, blue: 0.157)
-    static let cardLight      = Color.white
-    static let cardDark       = Color(red: 0.145, green: 0.157, blue: 0.208)
-}
-
 // MARK: - ContentView
 
 struct ContentView: View {
@@ -20,19 +7,15 @@ struct ContentView: View {
     @State private var isExpanded: Bool = false
     @State private var extractButtonScale: CGFloat = 1.0
     @State private var heroAppear: Bool = false
-    @Environment(\.colorScheme) private var colorScheme
 
     var body: some View {
         ZStack {
-            // Fondo adaptativo
-            adaptiveBackground
+            Color(.windowBackgroundColor)
                 .ignoresSafeArea()
 
             VStack(spacing: 0) {
-                // ── Hero ──────────────────────────────────────────────────
                 heroSection
 
-                // ── Contenido principal (scroll para ventanas pequeñas) ──
                 ScrollView(.vertical, showsIndicators: false) {
                     VStack(spacing: 16) {
                         inputCard
@@ -40,35 +23,16 @@ struct ContentView: View {
                         resultCard
                         exportCard
                     }
-                    .padding(.horizontal, 20)
+                    .padding(.horizontal, 24)
                     .padding(.top, 16)
                     .padding(.bottom, 24)
                 }
             }
         }
-        .frame(minWidth: 560, minHeight: 500)
+        .frame(minWidth: 560, minHeight: 480)
         .onAppear {
             withAnimation(.easeOut(duration: 0.5)) {
                 heroAppear = true
-            }
-        }
-    }
-
-    // MARK: - Background
-
-    private var adaptiveBackground: some View {
-        Group {
-            if colorScheme == .dark {
-                Color.surfaceDark
-            } else {
-                LinearGradient(
-                    colors: [
-                        Color.surfaceLight,
-                        Color(red: 0.945, green: 0.953, blue: 0.996)
-                    ],
-                    startPoint: .top,
-                    endPoint: .bottom
-                )
             }
         }
     }
@@ -84,14 +48,8 @@ struct ContentView: View {
 
             VStack(alignment: .leading, spacing: 2) {
                 Text("Extractor URL")
-                    .font(.system(size: 17, weight: .semibold, design: .default))
-                    .foregroundStyle(
-                        LinearGradient(
-                            colors: [Color.brandPrimary, Color.brandSecondary],
-                            startPoint: .leading,
-                            endPoint: .trailing
-                        )
-                    )
+                    .font(.system(size: 17, weight: .semibold))
+                    .foregroundStyle(.primary)
                 Text("Extrae contenido web en texto, HTML o Markdown")
                     .font(.system(size: 11, weight: .regular))
                     .foregroundStyle(.secondary)
@@ -102,7 +60,6 @@ struct ContentView: View {
 
             Spacer()
 
-            // Indicador de estado activo
             if vm.isExtracting {
                 HStack(spacing: 6) {
                     ProgressView()
@@ -115,13 +72,9 @@ struct ContentView: View {
                 .transition(.opacity.combined(with: .scale(scale: 0.9)))
             }
         }
-        .padding(.horizontal, 20)
+        .padding(.horizontal, 24)
         .padding(.vertical, 14)
-        .background(
-            colorScheme == .dark
-                ? Color.cardDark.opacity(0.6)
-                : Color.white.opacity(0.85)
-        )
+        .background(Color(.controlBackgroundColor).opacity(0.6))
         .overlay(alignment: .bottom) {
             Divider().opacity(0.5)
         }
@@ -132,44 +85,35 @@ struct ContentView: View {
 
     private var inputCard: some View {
         VStack(spacing: 0) {
-            // Label
-            HStack {
+            // Campo URL con estilo capsula
+            HStack(spacing: 8) {
                 Image(systemName: "link")
-                    .font(.system(size: 12, weight: .medium))
-                    .foregroundStyle(Color.brandPrimary)
-                Text("URL")
-                    .font(.system(size: 12, weight: .semibold))
+                    .font(.system(size: 13, weight: .medium))
                     .foregroundStyle(.secondary)
-                Spacer()
+
+                TextField("https://example.com", text: $vm.urlString)
+                    .textFieldStyle(.plain)
+                    .font(.body)
+                    .onSubmit { vm.extract() }
+                    .disabled(vm.isExtracting)
+                    .accessibilityLabel("URL a extraer")
             }
-            .padding(.horizontal, 14)
-            .padding(.top, 12)
-            .padding(.bottom, 6)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 10)
+            .background(Color(.textBackgroundColor))
+            .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                    .stroke(Color.secondary.opacity(0.3), lineWidth: 1)
+            )
 
-            Divider().padding(.horizontal, 14)
+            Spacer().frame(height: 10)
 
-            // Campo URL
-            TextField("https://example.com", text: $vm.urlString)
-                .textFieldStyle(.plain)
-                .font(.system(size: 14, weight: .regular, design: .monospaced))
-                .padding(.horizontal, 14)
-                .padding(.vertical, 10)
-                .onSubmit { vm.extract() }
-                .disabled(vm.isExtracting)
-                .accessibilityLabel("URL a extraer")
-
-            Divider().padding(.horizontal, 14)
-
-            // Fila Picker + Botón Extraer
+            // Fila Picker + Boton Extraer
             HStack(spacing: 10) {
-                HStack(spacing: 6) {
-                    Image(systemName: "doc.text")
-                        .font(.system(size: 11))
-                        .foregroundStyle(.secondary)
-                    Text("Formato")
-                        .font(.system(size: 12, weight: .medium))
-                        .foregroundStyle(.secondary)
-                }
+                Text("Formato:")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
 
                 Picker("Tipo", selection: $vm.outputType) {
                     Text("Texto").tag("text")
@@ -182,7 +126,6 @@ struct ContentView: View {
 
                 Spacer()
 
-                // Botón Extraer con animación de tap
                 Button {
                     withAnimation(.easeInOut(duration: 0.1)) {
                         extractButtonScale = 0.94
@@ -204,28 +147,18 @@ struct ContentView: View {
                         Text("Extraer")
                             .font(.system(size: 14, weight: .semibold))
                     }
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 8)
-                    .background(
-                        vm.urlString.isEmpty || vm.isExtracting
-                            ? Color.brandPrimary.opacity(0.35)
-                            : Color.brandPrimary
-                    )
-                    .foregroundStyle(Color.white)
-                    .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(.borderedProminent)
                 .scaleEffect(extractButtonScale)
                 .accessibilityLabel("Extraer contenido de la URL")
                 .disabled(vm.isExtracting || vm.urlString.isEmpty)
                 .animation(.easeInOut(duration: 0.2), value: vm.urlString.isEmpty)
             }
-            .padding(.horizontal, 14)
-            .padding(.vertical, 10)
         }
-        .background(cardBackground)
+        .padding(.horizontal, 14)
+        .padding(.vertical, 12)
+        .background(Color(.controlBackgroundColor))
         .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-        .shadow(color: cardShadow, radius: 4, x: 0, y: 2)
     }
 
     // MARK: - Options Card
@@ -233,23 +166,41 @@ struct ContentView: View {
     private var optionsCard: some View {
         DisclosureGroup(isExpanded: $isExpanded) {
             VStack(spacing: 10) {
-                Divider().padding(.horizontal, -14)
+                Divider()
+                    .padding(.horizontal, -14)
 
                 optionRow(icon: "number", label: "Selector CSS") {
                     TextField("article, .content\u{2026}", text: $vm.selectorCSS)
                         .textFieldStyle(.plain)
                         .font(.system(size: 13, design: .monospaced))
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 5)
+                        .background(Color(.textBackgroundColor))
+                        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                                .stroke(Color.secondary.opacity(0.2), lineWidth: 1)
+                        )
                         .disabled(vm.isExtracting)
                 }
 
-                Divider().padding(.horizontal, -14)
+                Divider()
+                    .padding(.horizontal, -14)
 
-                optionRow(icon: "clock", label: "Tiempo límite (s)") {
+                optionRow(icon: "clock", label: "Tiempo limite (s)") {
                     TextField("15", value: $vm.timeout, formatter: NumberFormatter())
                         .textFieldStyle(.plain)
                         .font(.system(size: 13, design: .monospaced))
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 5)
+                        .background(Color(.textBackgroundColor))
+                        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                                .stroke(Color.secondary.opacity(0.2), lineWidth: 1)
+                        )
                         .disabled(vm.isExtracting)
-                        .frame(maxWidth: 60)
+                        .frame(maxWidth: 80)
                 }
             }
             .padding(.top, 6)
@@ -258,17 +209,16 @@ struct ContentView: View {
             HStack(spacing: 6) {
                 Image(systemName: "slider.horizontal.3")
                     .font(.system(size: 12, weight: .medium))
-                    .foregroundStyle(Color.brandPrimary)
+                    .foregroundStyle(.secondary)
                 Text("Opciones avanzadas")
-                    .font(.system(size: 12, weight: .semibold))
+                    .font(.subheadline)
                     .foregroundStyle(.secondary)
             }
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 10)
-        .background(cardBackground)
+        .background(Color(.controlBackgroundColor))
         .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-        .shadow(color: cardShadow, radius: 4, x: 0, y: 2)
     }
 
     @ViewBuilder
@@ -285,7 +235,7 @@ struct ContentView: View {
             Text(label)
                 .font(.system(size: 12, weight: .medium))
                 .foregroundStyle(.secondary)
-                .frame(width: 150, alignment: .leading)
+                .frame(width: 140, alignment: .leading)
             content()
             Spacer()
         }
@@ -310,10 +260,10 @@ struct ContentView: View {
                 if vm.resultContent != nil && !vm.isExtracting {
                     Text(vm.outputType.uppercased())
                         .font(.system(size: 10, weight: .bold, design: .monospaced))
-                        .foregroundStyle(Color.brandPrimary)
+                        .foregroundStyle(Color.accentColor)
                         .padding(.horizontal, 7)
                         .padding(.vertical, 3)
-                        .background(Color.brandPrimary.opacity(0.12))
+                        .background(Color.accentColor.opacity(0.12))
                         .clipShape(RoundedRectangle(cornerRadius: 4, style: .continuous))
                 }
             }
@@ -321,16 +271,20 @@ struct ContentView: View {
             .padding(.top, 12)
             .padding(.bottom, 8)
 
-            Divider().padding(.horizontal, 14)
+            Divider()
+                .padding(.horizontal, -24)
 
-            // Contenido resultado
+            // Contenido resultado con fondo diferenciado
             resultContent
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .accessibilityElement(children: .contain)
         }
         .frame(minHeight: 240)
-        .background(cardBackground)
+        .background(
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .fill(Color(.controlBackgroundColor))
+        )
         .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-        .shadow(color: cardShadow, radius: 4, x: 0, y: 2)
         .animation(.easeInOut(duration: 0.3), value: vm.isExtracting)
         .animation(.easeInOut(duration: 0.3), value: vm.resultContent != nil)
     }
@@ -343,7 +297,7 @@ struct ContentView: View {
     }
 
     private var resultHeaderColor: Color {
-        if vm.isExtracting { return Color.brandPrimary }
+        if vm.isExtracting { return .accentColor }
         if vm.resultContent != nil { return .green }
         if vm.errorMessage != nil { return .orange }
         return .secondary
@@ -363,16 +317,10 @@ struct ContentView: View {
     private var resultContent: some View {
         if vm.isExtracting {
             VStack(spacing: 16) {
-                ZStack {
-                    Circle()
-                        .stroke(Color.brandPrimary.opacity(0.15), lineWidth: 4)
-                        .frame(width: 48, height: 48)
-                    ProgressView()
-                        .scaleEffect(1.4)
-                        .tint(Color.brandPrimary)
-                }
-                Text("Extrayendo\u{2026}")
-                    .font(.system(size: 14, weight: .medium))
+                ProgressView()
+                    .scaleEffect(1.2)
+                Text("Extrayendo contenido\u{2026}")
+                    .font(.subheadline)
                     .foregroundStyle(.secondary)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -388,27 +336,30 @@ struct ContentView: View {
 
         } else if let errorMsg = vm.errorMessage {
             VStack(alignment: .leading, spacing: 10) {
-                HStack(spacing: 8) {
+                HStack(alignment: .top, spacing: 8) {
                     Image(systemName: "exclamationmark.triangle.fill")
-                        .foregroundStyle(Color.orange)
-                    Text(errorMsg)
-                        .font(.system(size: 13))
-                        .foregroundStyle(.primary)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-                if vm.isPythonPathError {
-                    HStack(spacing: 6) {
-                        Image(systemName: "gear")
-                            .font(.system(size: 11))
-                            .foregroundStyle(.secondary)
-                        Text("Configura la ruta Python en Preferencias (⌘,)")
+                        .foregroundStyle(.orange)
+                        .font(.title3)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Error de extraccion")
+                            .font(.subheadline)
+                            .bold()
+                        Text(errorMsg)
                             .font(.caption)
                             .foregroundStyle(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
                     }
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 6)
-                    .background(Color.secondary.opacity(0.1))
-                    .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
+                }
+                if vm.isPythonPathError {
+                    Button("Abrir Preferencias") {
+                        NSApp.sendAction(
+                            Selector(("showPreferencesWindow:")),
+                            to: nil,
+                            from: nil
+                        )
+                    }
+                    .buttonStyle(.link)
+                    .font(.caption)
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -423,7 +374,7 @@ struct ContentView: View {
         VStack(spacing: 12) {
             ZStack {
                 Circle()
-                    .fill(Color.brandPrimary.opacity(0.08))
+                    .fill(Color.accentColor.opacity(0.08))
                     .frame(width: 56, height: 56)
                 LogoMark(size: 28)
                     .opacity(0.6)
@@ -431,9 +382,9 @@ struct ContentView: View {
             Text("Introduce una URL y pulsa Extraer")
                 .font(.system(size: 13, weight: .medium))
                 .foregroundStyle(.secondary)
-            Text("El resultado aparecerá aquí")
+            Text("El resultado aparecera aqui")
                 .font(.caption)
-                .foregroundStyle(Color.secondary.opacity(0.7))
+                .foregroundStyle(.secondary.opacity(0.7))
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .padding(.vertical, 40)
@@ -442,80 +393,57 @@ struct ContentView: View {
     // MARK: - Export Card
 
     private var exportCard: some View {
-        HStack(spacing: 10) {
-            Image(systemName: "square.and.arrow.up")
-                .font(.system(size: 12, weight: .medium))
-                .foregroundStyle(vm.contentReady ? Color.brandPrimary : Color.secondary)
+        VStack(spacing: 0) {
+            Divider()
 
-            Text("Exportar como")
-                .font(.system(size: 12, weight: .semibold))
-                .foregroundStyle(.secondary)
+            HStack(spacing: 10) {
+                Image(systemName: "square.and.arrow.up")
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundStyle(vm.contentReady ? Color.accentColor : Color.secondary)
 
-            Picker("", selection: $vm.exportFormat) {
-                Text("Markdown").tag("markdown")
-                Text("HTML").tag("html")
-                Text("PDF").tag("pdf")
-            }
-            .pickerStyle(.segmented)
-            .labelsHidden()
-            .disabled(!vm.contentReady)
-            .frame(maxWidth: 200)
+                Text("Exportar como")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(.secondary)
 
-            Spacer()
-
-            Button {
-                Task { await vm.export() }
-            } label: {
-                HStack(spacing: 6) {
-                    Image(systemName: "square.and.arrow.down")
-                        .font(.system(size: 13, weight: .semibold))
-                    Text("Exportar")
-                        .font(.system(size: 13, weight: .semibold))
+                Picker("", selection: $vm.exportFormat) {
+                    Text("Markdown").tag("markdown")
+                    Text("HTML").tag("html")
+                    Text("PDF").tag("pdf")
                 }
-                .padding(.horizontal, 14)
-                .padding(.vertical, 7)
-                .background(
-                    vm.contentReady
-                        ? Color.brandAccent
-                        : Color.secondary.opacity(0.2)
-                )
-                .foregroundStyle(vm.contentReady ? Color.white : Color.secondary)
-                .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                .pickerStyle(.segmented)
+                .labelsHidden()
+                .disabled(!vm.contentReady)
+                .frame(maxWidth: 200)
+
+                Spacer()
+
+                Button {
+                    Task { await vm.export() }
+                } label: {
+                    HStack(spacing: 6) {
+                        Image(systemName: "square.and.arrow.down")
+                            .font(.system(size: 13, weight: .semibold))
+                        Text("Exportar")
+                            .font(.system(size: 13, weight: .semibold))
+                    }
+                }
+                .buttonStyle(.borderedProminent)
+                .accessibilityLabel("Exportar contenido")
+                .disabled(!vm.contentReady)
+                .animation(.easeInOut(duration: 0.2), value: vm.contentReady)
             }
-            .buttonStyle(.plain)
-            .accessibilityLabel("Exportar contenido")
-            .disabled(!vm.contentReady)
-            .animation(.easeInOut(duration: 0.2), value: vm.contentReady)
+            .padding(.horizontal, 14)
+            .padding(.vertical, 10)
+            .padding(.top, 8)
         }
-        .padding(.horizontal, 14)
-        .padding(.vertical, 10)
-        .background(cardBackground)
+        .background(Color(.controlBackgroundColor))
         .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-        .shadow(color: cardShadow, radius: 4, x: 0, y: 2)
-    }
-
-    // MARK: - Helpers
-
-    private var cardBackground: some View {
-        Group {
-            if colorScheme == .dark {
-                Color.cardDark
-            } else {
-                Color.cardLight
-            }
-        }
-    }
-
-    private var cardShadow: Color {
-        colorScheme == .dark
-            ? Color.black.opacity(0.25)
-            : Color.black.opacity(0.06)
     }
 }
 
 // MARK: - LogoMark
 
-/// Icono vectorial de la marca: nodo central con 3 ramas de extracción.
+/// Icono vectorial de la marca: nodo central con 3 ramas de extraccion.
 /// Pure SwiftUI Canvas — sin dependencia de assets externos.
 struct LogoMark: View {
     let size: CGFloat
@@ -526,41 +454,30 @@ struct LogoMark: View {
             let cy = bounds.height / 2
             let r  = min(cx, cy)
 
-            // Fondo circular con gradiente azul índigo
+            // Fondo circular con tono de acento del sistema
             let bgPath = Path(ellipseIn: CGRect(
                 x: cx - r, y: cy - r, width: r * 2, height: r * 2
             ))
-            ctx.fill(
-                bgPath,
-                with: .linearGradient(
-                    Gradient(colors: [
-                        Color(red: 0.310, green: 0.431, blue: 0.969),
-                        Color(red: 0.227, green: 0.337, blue: 0.831)
-                    ]),
-                    startPoint: CGPoint(x: cx - r, y: cy - r),
-                    endPoint: CGPoint(x: cx + r, y: cy + r)
-                )
-            )
+            ctx.fill(bgPath, with: .color(Color.accentColor))
 
             let s         = r * 0.36
             let lineWidth = max(1.5, r * 0.09)
             let style     = StrokeStyle(lineWidth: lineWidth, lineCap: .round, lineJoin: .round)
             let nodeR     = s * 0.28
 
-            // Nodo central (círculo blanco relleno)
+            // Nodo central (circulo blanco relleno)
             let nodePath = Path(ellipseIn: CGRect(
                 x: cx - nodeR, y: cy - nodeR,
                 width: nodeR * 2, height: nodeR * 2
             ))
             ctx.fill(nodePath, with: .color(.white))
 
-            // 3 ramas salientes a 0°, 120°, 240°
+            // 3 ramas salientes a 0 deg, 120 deg, 240 deg
             let angles: [Double] = [0, 120, 240].map { $0 * .pi / 180 }
             for angle in angles {
                 let endX = cx + cos(angle) * s
                 let endY = cy + sin(angle) * s
 
-                // Línea nodo → extremo
                 var linePath = Path()
                 linePath.move(to: CGPoint(
                     x: cx + cos(angle) * nodeR,
@@ -569,13 +486,12 @@ struct LogoMark: View {
                 linePath.addLine(to: CGPoint(x: endX, y: endY))
                 ctx.stroke(linePath, with: .color(.white.opacity(0.92)), style: style)
 
-                // Punto terminal (círculo mint accent)
                 let dotR = nodeR * 0.7
                 let dotPath = Path(ellipseIn: CGRect(
                     x: endX - dotR, y: endY - dotR,
                     width: dotR * 2, height: dotR * 2
                 ))
-                ctx.fill(dotPath, with: .color(Color(red: 0.388, green: 0.761, blue: 0.663)))
+                ctx.fill(dotPath, with: .color(.white.opacity(0.85)))
             }
         }
         .frame(width: size, height: size)
