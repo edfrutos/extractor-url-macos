@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Extractor URL — logo monocromático">
+  <!-- Fondo circular monocromático -->
+  <circle cx="32" cy="32" r="30" fill="currentColor"/>
+
+  <!-- Nodo central -->
+  <circle cx="32" cy="32" r="5.5" fill="white"/>
+
+  <!-- Rama derecha -->
+  <line x1="37.5" y1="32" x2="52" y2="32"
+        stroke="white" stroke-width="2.5" stroke-linecap="round" opacity="0.85"/>
+  <circle cx="52" cy="32" r="3.5" fill="white" opacity="0.7"/>
+
+  <!-- Rama inferior-izquierda -->
+  <line x1="29.25" y1="36.76" x2="19.5" y2="53.69"
+        stroke="white" stroke-width="2.5" stroke-linecap="round" opacity="0.85"/>
+  <circle cx="19.5" cy="53.69" r="3.5" fill="white" opacity="0.7"/>
+
+  <!-- Rama superior-izquierda -->
+  <line x1="29.25" y1="27.24" x2="19.5" y2="10.31"
+        stroke="white" stroke-width="2.5" stroke-linecap="round" opacity="0.85"/>
+  <circle cx="19.5" cy="10.31" r="3.5" fill="white" opacity="0.7"/>
+</svg>
