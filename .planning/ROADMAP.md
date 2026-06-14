@@ -10,7 +10,7 @@ El bridge subprocess es la dependencia bloqueante de todo el milestone. Las fase
 
 ## Phases
 
-- [ ] **Phase 3: Python Bridge y Preferencias** - Cimentar el bridge subprocess async y las preferencias de ruta antes de tocar UI.
+- [x] **Phase 3: Python Bridge y Preferencias** - Cimentar el bridge subprocess async y las preferencias de ruta antes de tocar UI. (completed 2026-06-14)
 - [x] **Phase 4: SwiftUI UI de Extracción** - Primera interfaz funcional end-to-end: campo URL, controles, progreso y errores. (completed 2026-06-11)
 - [x] **Phase 5: Preview y Export MD/HTML** - Preview WKWebView del contenido extraído y exportación a Markdown y HTML autocontenido. (completed 2026-06-12)
 - [x] **Phase 6: Export PDF** - Exportación PDF vectorial vía WKWebView con control de timing de renderizado. (completed 2026-06-12)
@@ -30,13 +30,14 @@ El bridge subprocess es la dependencia bloqueante de todo el milestone. Las fase
   3. Si Python no está en la ruta configurada o el CLI falla, el error tipado se propaga y es inspeccionable (no se silencia).
   4. La extracción corre en `Task.detached` — la ventana responde a eventos durante los 5-30 segundos que dura el proceso.
 
-**Plans**: 3 planes
+**Plans**: 4 planes
 
 Plans:
 
-- [ ] 03-01-PLAN.md — Proyecto Xcode + entitlements + modelos ExtractionResult y ExtractionError
-- [ ] 03-02-PLAN.md — PythonBridge (subprocess async paralelo) + ExtractorApp entry point
-- [ ] 03-03-PLAN.md — SettingsView con validación reactiva + verificación end-to-end del bridge
+- [x] 03-01-PLAN.md — Proyecto Xcode + entitlements + modelos ExtractionResult y ExtractionError
+- [x] 03-02-PLAN.md — PythonBridge (subprocess async paralelo) + SettingsView con validación reactiva
+- [x] 03-03-PLAN.md — ContentView rediseño premium con LogoMark + assets de marca
+- [x] 03-04-PLAN.md — ContentView y SettingsView colores semánticos del sistema (macOS 13 compatible)
 
 **UI hint**: yes
 
@@ -143,11 +144,11 @@ Phases execute in numeric order: 3 → 4 → 5 → 6 → 7
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 3. Python Bridge y Preferencias | 0/3 | In progress | - |
-| 4. SwiftUI UI de Extracción | 2/2 | Complete   | 2026-06-11 |
-| 5. Preview y Export MD/HTML | 2/2 | Complete   | 2026-06-12 |
-| 6. Export PDF | 3/3 | Complete    | 2026-06-13 |
-| 7. Universal Binary y Configuración de Build | 2/2 | Complete    | 2026-06-13 |
+| 3. Python Bridge y Preferencias | 4/4 | Complete | 2026-06-14 |
+| 4. SwiftUI UI de Extracción | 2/2 | Complete | 2026-06-11 |
+| 5. Preview y Export MD/HTML | 2/2 | Complete | 2026-06-12 |
+| 6. Export PDF | 3/3 | Complete | 2026-06-13 |
+| 7. Universal Binary y Configuración de Build | 2/2 | Complete | 2026-06-13 |
 
 ---
 
