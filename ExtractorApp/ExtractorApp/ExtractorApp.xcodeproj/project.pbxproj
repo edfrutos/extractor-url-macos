@@ -6,6 +6,11 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		6938562E2FDFF363008D32EB /* extractor_url.py in CopyFiles */ = {isa = PBXBuildFile; fileRef = 6938562D2FDFF363008D32EB /* extractor_url.py */; };
+		693856302FDFF374008D32EB /* core.py in CopyFiles */ = {isa = PBXBuildFile; fileRef = 6938562F2FDFF374008D32EB /* core.py */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		7B5C000AFDAB1D900884317 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -16,7 +21,23 @@
 		};
 /* End PBXContainerItemProxy section */
 
+/* Begin PBXCopyFilesBuildPhase section */
+		6938562C2FDFF13E008D32EB /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = scripts;
+			dstSubfolderSpec = 7;
+			files = (
+				693856302FDFF374008D32EB /* core.py in CopyFiles */,
+				6938562E2FDFF363008D32EB /* extractor_url.py in CopyFiles */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
 /* Begin PBXFileReference section */
+		6938562D2FDFF363008D32EB /* extractor_url.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; name = extractor_url.py; path = ../../extractor_url.py; sourceTree = "<group>"; };
+		6938562F2FDFF374008D32EB /* core.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; name = core.py; path = ../../core.py; sourceTree = "<group>"; };
 		694A971B2FDAB1D900884317 /* ExtractorApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ExtractorApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		7B5C0001FDAB1D900884317 /* ExtractorAppTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ExtractorAppTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -55,6 +76,8 @@
 		694A97122FDAB1D900884317 = {
 			isa = PBXGroup;
 			children = (
+				6938562F2FDFF374008D32EB /* core.py */,
+				6938562D2FDFF363008D32EB /* extractor_url.py */,
 				694A971D2FDAB1D900884317 /* ExtractorApp */,
 				7B5C0002FDAB1D900884317 /* ExtractorAppTests */,
 				694A971C2FDAB1D900884317 /* Products */,
@@ -79,7 +102,9 @@
 			buildPhases = (
 				694A97172FDAB1D900884317 /* Sources */,
 				694A97182FDAB1D900884317 /* Frameworks */,
+				6938562C2FDFF13E008D32EB /* CopyFiles */,
 				694A97192FDAB1D900884317 /* Resources */,
+				693856312FDFF3E6008D32EB /* Bundle Python Runtime */,
 			);
 			buildRules = (
 			);
@@ -165,6 +190,29 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		693856312FDFF3E6008D32EB /* Bundle Python Runtime */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"$(PROJECT_DIR)/scripts/bundle-python.sh\n",
+			);
+			name = "Bundle Python Runtime";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(BUILT_PRODUCTS_DIR)/$(CONTENTS_FOLDER_PATH)/Resources/python/bin/python3.13\n",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/bash;
+			shellScript = "set -euo pipefail\n\"${PROJECT_DIR}/../../scripts/bundle-python.sh\"\n\n";
+		};
+/* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		694A97172FDAB1D900884317 /* Sources */ = {
@@ -313,7 +361,10 @@
 		694A97272FDAB1DC00884317 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ARCHS = "arm64 x86_64";
+				ARCHS = (
+					arm64,
+					x86_64,
+				);
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = ExtractorApp/ExtractorApp.entitlements;
@@ -324,6 +375,7 @@
 				ENABLE_APP_SANDBOX = NO;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
@@ -348,7 +400,10 @@
 		694A97282FDAB1DC00884317 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ARCHS = "arm64 x86_64";
+				ARCHS = (
+					arm64,
+					x86_64,
+				);
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = ExtractorApp/ExtractorApp.entitlements;
@@ -359,6 +414,7 @@
 				ENABLE_APP_SANDBOX = NO;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";

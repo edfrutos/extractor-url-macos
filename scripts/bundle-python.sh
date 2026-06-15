@@ -8,6 +8,9 @@
 # Se invoca desde Xcode Run Script Build Phase.
 set -euo pipefail
 
+# Xcode elimina /opt/homebrew/bin del PATH — restaurarlo para python3/lipomerge
+export PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"
+
 # ── Versiones (única sección a tocar en actualizaciones) ─────────────────────
 PYTHON_VERSION="3.13.14"
 PYTHON_MINOR="3.13"          # para paths lib/python3.13/
@@ -28,8 +31,18 @@ RESOURCES="${BUILT_PRODUCTS_DIR}/${CONTENTS_FOLDER_PATH}/Resources"
 PYTHON_DEST="${RESOURCES}/python"
 CACHE_DIR="${PROJECT_DIR}/.build-cache/python-standalone"
 
-# ── Cache ─────────────────────────────────────────────────────────────────────
+# ── Cache y venv para lipomerge ───────────────────────────────────────────────
 mkdir -p "${CACHE_DIR}"
+
+# lipomerge se instala en un venv propio en .build-cache/ para no tocar
+# ni el Homebrew Python (externally-managed) ni el sistema.
+LIPOMERGE_VENV="${PROJECT_DIR}/.build-cache/lipomerge-venv"
+if [[ ! -x "${LIPOMERGE_VENV}/bin/python3" ]]; then
+  echo "Creando venv para lipomerge (primera vez)..."
+  /opt/homebrew/bin/python3 -m venv "${LIPOMERGE_VENV}"
+  "${LIPOMERGE_VENV}/bin/pip" install lipomerge==0.1.1 --quiet
+fi
+LIPOMERGE_PYTHON="${LIPOMERGE_VENV}/bin/python3"
 
 fetch_if_needed() {
   local url="$1" dest="$2"
@@ -60,7 +73,7 @@ tar -xzf "${CACHE_DIR}/${X86_TARBALL}" -C "${X86_DIR}"
 # Para .so y .dylib: SOLO copia del primer árbol (arm64) — ver segundo pase.
 echo "Fusionando con lipomerge..."
 rm -rf "${PYTHON_DEST}"
-python3 -m lipomerge "${ARM_DIR}/python" "${X86_DIR}/python" "${PYTHON_DEST}"
+"${LIPOMERGE_PYTHON}" -m lipomerge "${ARM_DIR}/python" "${X86_DIR}/python" "${PYTHON_DEST}"
 
 # ── Segundo pase: lipo -create para .so de lib-dynload ───────────────────────
 # Pitfall: lipomerge copia .so del primer árbol (arm64) sin fusionar.
