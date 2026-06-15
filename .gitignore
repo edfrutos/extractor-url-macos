@@ -18,3 +18,6 @@ graphify-out/
 # Configuración local de editores y Xcode
 .vscode/
 xcuserdata/
+
+# Python bundle build cache (tarballs ~24 MB cada uno, regenerados en build time)
+.build-cache/

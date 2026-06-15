@@ -162,6 +162,38 @@ final class PythonBridge {
     }
 }
 
+// MARK: - Bundle Paths (Fase 8: rutas del intérprete embebido)
+
+extension PythonBridge {
+
+    /// Ruta al intérprete Python universal embebido en el bundle.
+    /// Devuelve nil si el binario no existe o no es ejecutable
+    /// (p.ej. en un build de desarrollo antes de ejecutar bundle-python.sh).
+    static func bundledPythonPath() -> String? {
+        guard let resourcePath = Bundle.main.resourcePath else { return nil }
+        let path = resourcePath + "/python/bin/python3.13"
+        guard FileManager.default.isExecutableFile(atPath: path) else { return nil }
+        return path
+    }
+
+    /// Ruta al script principal extractor_url.py en el bundle.
+    /// Devuelve nil si el archivo no existe.
+    static func bundledScriptPath() -> String? {
+        guard let resourcePath = Bundle.main.resourcePath else { return nil }
+        let path = resourcePath + "/scripts/extractor_url.py"
+        guard FileManager.default.fileExists(atPath: path) else { return nil }
+        return path
+    }
+
+    /// Ruta a las deps Python vendorizadas (python-packages/).
+    /// Siempre devuelve la ruta construida; no valida existencia
+    /// porque el directorio se crea en build time.
+    static func bundledVendoredLibPath() -> String? {
+        guard let resourcePath = Bundle.main.resourcePath else { return nil }
+        return resourcePath + "/python/lib/python-packages"
+    }
+}
+
 // MARK: - IOCollector
 
 /// Acumula stdout/stderr desde readabilityHandlers concurrentes.
