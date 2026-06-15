@@ -188,7 +188,11 @@ BUNDLE-01 es la dependencia bloqueante: sin el runtime embebido, las fases 9 y 1
   3. Las dependencias `requests`, `beautifulsoup4`, `lxml`, `markdownify` y `trafilatura` están instaladas en `Contents/Resources/python/lib/` (vendorizadas con `pip install --target`) y son importables desde el intérprete bundleado sin acceso a red ni a `pip` del sistema.
   4. Un script de shell de validación ejecutado sobre el `.app` de Release invoca `Contents/Resources/python/bin/python3 Contents/Resources/scripts/extractor_url.py --json https://example.com` y devuelve JSON válido.
 
-**Plans**: TBD
+**Plans**: 3 planes — Wave 1: 08-01-PLAN.md · 08-02-PLAN.md · Wave 2: 08-03-PLAN.md (blocked on 08-02)
+- [ ] 08-01-PLAN.md — scripts/bundle-python.sh: descarga, lipo merge, pip vendorize, codesign
+- [ ] 08-02-PLAN.md — Xcode: Copy Bundle Resources (scripts) + Run Script Phase (bundle-python.sh)
+- [ ] 08-03-PLAN.md — scripts/verify-bundle.sh + BundlePathTests.swift + validación end-to-end
+
 **UI hint**: no
 
 ### Phase 9: Bridge Auto-detección de Rutas
