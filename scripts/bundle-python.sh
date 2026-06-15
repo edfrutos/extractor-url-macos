@@ -142,19 +142,30 @@ fi
 
 echo "Codesigning bottom-up (identity: ${IDENTITY})..."
 
-# 1. Extensiones compiladas .so
+# Ad-hoc ("-") no admite --timestamp ni --options runtime.
+# Con identidad real (Developer ID) se añaden ambos flags.
+# Nota: se usa cadena en lugar de array para compatibilidad con bash 3.2 (macOS).
+if [[ "${IDENTITY}" == "-" ]]; then
+  CSIGN_EXTRA=""
+else
+  CSIGN_EXTRA="--timestamp --options runtime"
+fi
+
+# 1. Extensiones compiladas .so (incluye python-packages vendorizadas)
 find "${PYTHON_DEST}" -name "*.so" | while IFS= read -r f; do
-  codesign --force --timestamp --options runtime --sign "${IDENTITY}" "${f}" 2>/dev/null || true
+  # shellcheck disable=SC2086
+  codesign --force $CSIGN_EXTRA --sign "${IDENTITY}" "${f}" 2>/dev/null || true
 done
 
 # 2. Librerías dinámicas .dylib
 find "${PYTHON_DEST}" -name "*.dylib" | while IFS= read -r f; do
-  codesign --force --timestamp --options runtime --sign "${IDENTITY}" "${f}" 2>/dev/null || true
+  # shellcheck disable=SC2086
+  codesign --force $CSIGN_EXTRA --sign "${IDENTITY}" "${f}" 2>/dev/null || true
 done
 
 # 3. Ejecutable python3.13
-codesign --force --timestamp --options runtime --sign "${IDENTITY}" \
-  "${BUNDLED_PYTHON}"
+# shellcheck disable=SC2086
+codesign --force $CSIGN_EXTRA --sign "${IDENTITY}" "${BUNDLED_PYTHON}"
 
 echo "Codesigning: OK"
 
