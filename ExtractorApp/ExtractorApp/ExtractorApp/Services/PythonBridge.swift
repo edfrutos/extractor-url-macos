@@ -13,6 +13,8 @@ final class PythonBridge {
     @AppStorage("pythonPath") var pythonPath: String = ""
     @AppStorage("scriptPath") var scriptPath: String = ""
 
+    enum PathSource { case bundle, userDefaults }
+
     // MARK: - Run
 
     /// Lanza el CLI Python con --json y devuelve el resultado decodificado.
@@ -32,21 +34,18 @@ final class PythonBridge {
         timeout: Int = 15
     ) async throws -> ExtractionResult {
 
-        // -- Validación de rutas ------------------------------------------
-        guard !pythonPath.isEmpty,
-              FileManager.default.isExecutableFile(atPath: pythonPath) else {
-            throw ExtractionError.pythonNotFound(path: pythonPath)
+        // -- Resolución de rutas (UserDefaults-first / bundle fallback) ----
+        guard let paths = resolvedPaths() else {
+            throw ExtractionError.pythonNotFound(path: "(bundle no compilado)")
         }
-        guard !scriptPath.isEmpty,
-              FileManager.default.fileExists(atPath: scriptPath) else {
-            throw ExtractionError.pythonNotFound(path: scriptPath)
-        }
+        let pythonExec = paths.python
+        let scriptFile = paths.script
 
         // -- Configurar proceso -------------------------------------------
         let process = Process()
-        process.executableURL = URL(fileURLWithPath: pythonPath)
+        process.executableURL = URL(fileURLWithPath: pythonExec)
 
-        var arguments = [scriptPath, url, "--type", outputType, "--json"]
+        var arguments = [scriptFile, url, "--type", outputType, "--json"]
         if let sel = selector {
             arguments += ["--selector", sel]
         }
@@ -54,15 +53,25 @@ final class PythonBridge {
         arguments += ["--timeout", "\(timeout)"]
         process.arguments = arguments
 
-        // Entorno con venv activado (necesario para trafilatura, markdownify, etc.)
-        let scriptDir = URL(fileURLWithPath: scriptPath)
-            .deletingLastPathComponent().path
-        let venvBin = scriptDir + "/.venv/bin"
+        // Entorno según origen de rutas
         var env = ProcessInfo.processInfo.environment
-        env["VIRTUAL_ENV"] = scriptDir + "/.venv"
-        env["PATH"] = venvBin + ":" + (env["PATH"] ?? "/usr/bin:/bin:/usr/local/bin")
+        switch paths.source {
+        case .bundle:
+            if let libPath = Self.bundledVendoredLibPath() {
+                let existing = env["PYTHONPATH"] ?? ""
+                env["PYTHONPATH"] = existing.isEmpty ? libPath : libPath + ":" + existing
+            }
+            process.currentDirectoryURL = URL(fileURLWithPath: scriptFile)
+                .deletingLastPathComponent()
+        case .userDefaults:
+            let scriptDir = URL(fileURLWithPath: scriptFile)
+                .deletingLastPathComponent().path
+            let venvBin = scriptDir + "/.venv/bin"
+            env["VIRTUAL_ENV"] = scriptDir + "/.venv"
+            env["PATH"] = venvBin + ":" + (env["PATH"] ?? "/usr/bin:/bin:/usr/local/bin")
+            process.currentDirectoryURL = URL(fileURLWithPath: scriptDir)
+        }
         process.environment = env
-        process.currentDirectoryURL = URL(fileURLWithPath: scriptDir)
 
         let stdoutPipe = Pipe()
         let stderrPipe = Pipe()
@@ -159,6 +168,27 @@ final class PythonBridge {
             selector: nil,
             timeout: 10
         )
+    }
+}
+
+// MARK: - Path Resolution (Fase 9: UserDefaults-first / bundle fallback)
+
+extension PythonBridge {
+
+    // Lee UserDefaults directamente (no self.pythonPath) para evitar dependencia
+    // de @MainActor en el contexto async de run() (Pitfall 3 RESEARCH fase 9).
+    internal func resolvedPaths() -> (python: String, script: String, source: PathSource)? {
+        let udPython = UserDefaults.standard.string(forKey: "pythonPath") ?? ""
+        let udScript = UserDefaults.standard.string(forKey: "scriptPath") ?? ""
+        if !udPython.isEmpty,
+           !udScript.isEmpty,
+           FileManager.default.isExecutableFile(atPath: udPython),
+           FileManager.default.fileExists(atPath: udScript) {
+            return (python: udPython, script: udScript, source: .userDefaults)
+        }
+        guard let bundlePython = Self.bundledPythonPath(),
+              let bundleScript = Self.bundledScriptPath() else { return nil }
+        return (python: bundlePython, script: bundleScript, source: .bundle)
     }
 }
 

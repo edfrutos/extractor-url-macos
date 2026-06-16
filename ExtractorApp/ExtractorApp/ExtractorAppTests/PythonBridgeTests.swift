@@ -38,7 +38,11 @@ final class PythonBridgeTests: XCTestCase {
 
     // MARK: - 1. pythonNotFound — ruta Python vacía
 
-    func testRunThrowsPythonNotFound_whenPythonPathIsEmpty() async {
+    func testRunThrowsPythonNotFound_whenPythonPathIsEmpty() async throws {
+        try XCTSkipIf(
+            PythonBridge.bundledPythonPath() != nil,
+            "Bundle disponible: con UserDefaults vacíos, PythonBridge usa el bundle en lugar de lanzar pythonNotFound"
+        )
         let bridge = makeBridgeUnconfigured()
         do {
             _ = try await bridge.run(url: "https://example.com", outputType: "text")
@@ -56,7 +60,11 @@ final class PythonBridgeTests: XCTestCase {
 
     // MARK: - 2. pythonNotFound — ruta Python inexistente
 
-    func testRunThrowsPythonNotFound_whenPythonPathDoesNotExist() async {
+    func testRunThrowsPythonNotFound_whenPythonPathDoesNotExist() async throws {
+        try XCTSkipIf(
+            PythonBridge.bundledPythonPath() != nil,
+            "Bundle disponible: con override inválido, PythonBridge usa el bundle en lugar de lanzar pythonNotFound"
+        )
         let bridge = PythonBridge()
         bridge.pythonPath = "/ruta/inexistente/python"
         bridge.scriptPath = ""
@@ -76,7 +84,11 @@ final class PythonBridgeTests: XCTestCase {
 
     // MARK: - 3. pythonNotFound — script inexistente
 
-    func testRunThrowsPythonNotFound_whenScriptPathDoesNotExist() async {
+    func testRunThrowsPythonNotFound_whenScriptPathDoesNotExist() async throws {
+        try XCTSkipIf(
+            PythonBridge.bundledPythonPath() != nil,
+            "Bundle disponible: con scriptPath inexistente en UserDefaults, PythonBridge usa el bundle en lugar de lanzar pythonNotFound"
+        )
         let bridge = makeBridgeWithSystemPython()
         // pythonPath = /bin/sh (ejecutable real), scriptPath = inexistente
         do {
@@ -84,7 +96,7 @@ final class PythonBridgeTests: XCTestCase {
             XCTFail("Debería haber lanzado ExtractionError.pythonNotFound")
         } catch let error as ExtractionError {
             if case .pythonNotFound = error {
-                // Correcto — segundo guard detecta script inexistente
+                // Correcto — override con scriptPath inexistente rechazado, bundle no disponible
             } else {
                 XCTFail("Error incorrecto: \(error)")
             }
@@ -288,5 +300,68 @@ final class PythonBridgeTests: XCTestCase {
                 "\(error) no debe tener descripción vacía"
             )
         }
+    }
+
+    // MARK: - Fase 9: resolvedPaths() — 3 ramas
+
+    // BRIDGE-05 / BRIDGE-06: con UserDefaults vacíos, resolvedPaths() usa el bundle si
+    // está disponible; si no lo hay, run() debe lanzar exclusivamente .pythonNotFound.
+    func testResolvedPathsFallsToBundleWhenUserDefaultsEmpty() async throws {
+        let bridge = makeBridgeUnconfigured()
+        let paths = bridge.resolvedPaths()
+        if let paths = paths {
+            // Bundle presente (Fase 8 completa) — BRIDGE-05 verificado: fuente es .bundle
+            XCTAssertEqual(paths.source, .bundle, "Con UserDefaults vacíos la fuente debe ser .bundle")
+        } else {
+            // Bundle ausente — run() debe lanzar .pythonNotFound, no otro error (BRIDGE-06)
+            do {
+                _ = try await bridge.run(url: "https://example.com", outputType: "text")
+                XCTFail("Sin bundle ni UserDefaults, debería lanzar ExtractionError.pythonNotFound")
+            } catch let error as ExtractionError {
+                if case .pythonNotFound = error { /* Correcto — BRIDGE-06 */ }
+                else { XCTFail("Error incorrecto: \(error) (esperado pythonNotFound)") }
+            } catch {
+                XCTFail("Error inesperado: \(error)")
+            }
+        }
+    }
+
+    // BRIDGE-07: con rutas válidas en UserDefaults, resolvedPaths() prefiere ese override
+    // y run() ejecuta el script especificado devolviendo ExtractionResult correcto.
+    func testRunUsesUserDefaultsOverride_whenBothPathsValid() async throws {
+        let jsonPayload = """
+        {"status":"success","url":"https://example.com","content":"test bundle","output_type":"text","char_count":11,"selector":null,"error_message":null,"title":null}
+        """
+        let tmp = FileManager.default.temporaryDirectory
+            .appendingPathComponent("phase9ovr_\(UUID().uuidString).sh")
+        try "#!/bin/sh\nprintf '\(jsonPayload)'".write(to: tmp, atomically: true, encoding: .utf8)
+        try FileManager.default.setAttributes([.posixPermissions: 0o755], ofItemAtPath: tmp.path)
+        defer { try? FileManager.default.removeItem(at: tmp) }
+
+        let bridge = PythonBridge()
+        bridge.pythonPath = "/bin/sh"
+        bridge.scriptPath = tmp.path
+
+        let paths = bridge.resolvedPaths()
+        XCTAssertNotNil(paths)
+        XCTAssertEqual(paths?.source, .userDefaults, "Con rutas válidas, la fuente debe ser .userDefaults")
+
+        let result = try await bridge.run(url: "https://example.com", outputType: "text")
+        XCTAssertEqual(result.status, "success")
+        XCTAssertEqual(result.content, "test bundle")
+    }
+
+    // BRIDGE-07 fallback: con override inválido, resolvedPaths() rechaza UserDefaults y
+    // cae al bundle si está disponible; si no, la fuente nunca es .userDefaults.
+    func testRunFallsToBundleWhenUserDefaultsPathInvalid() {
+        let bridge = PythonBridge()
+        bridge.pythonPath = "/ruta/que/no/existe/python3"
+        bridge.scriptPath = ""
+        let paths = bridge.resolvedPaths()
+        if let paths = paths {
+            // Bundle presente — override inválido cae al bundle, NO a userDefaults
+            XCTAssertEqual(paths.source, .bundle, "Override inválido debe usar el bundle, no userDefaults")
+        }
+        // paths == nil también es correcto (sin bundle); lo importante es no retornar .userDefaults
     }
 }
