@@ -10,7 +10,7 @@ Comunícate siempre en **español de España**. Mantén en inglés: nombres de l
 
 Herramienta modular con `core.py`, `extractor_url.py` y carpeta `tests/` para validación automatizada local. Tres capas:
 
-1. **Descarga y parseo (`core.py`)** — `_fetch_raw(url)` devuelve `(html_text, url_final)` y `_fetch_soup(url)` construye `BeautifulSoup` con fallback `lxml → html.parser`.
+1. **Descarga y parseo (`core.py`)** — `_fetch_raw(url)` devuelve `(html_text, url_final)` y `_fetch_soup(url)` construye `BeautifulSoup` con fallback `lxml → html.parser`. Si `_looks_insufficient()` detecta contenido estático insuficiente (posible SPA sin hidratar), `_fetch_raw()` reintenta automáticamente con `_fetch_via_playwright()` (Chromium headless); si Playwright no está instalado, degrada al HTML estático sin fallar.
 2. **Extracción y conversión (`core.py`)** — `extract_formatted_content(url, return_type, selector)` expone texto, HTML, `BeautifulSoup` o Markdown. El flujo Markdown usa `trafilatura` como primera opción y `markdownify` como fallback sobre `_clean_soup()` + `_main_content()`. Un selector CSS explícito inexistente o mal formado falla sin ampliar el contenido.
 3. **Interfaces (`extractor_url.py`)** — `_ExtractorGui` + `main()` cubren GUI tkinter y CLI argparse. La GUI usa `threading.Thread` para no bloquear la ventana durante la extracción.
 
@@ -18,7 +18,8 @@ Herramienta modular con `core.py`, `extractor_url.py` y carpeta `tests/` para va
 
 ```bash
 source .venv/bin/activate        # activar venv existente
-pip install requests beautifulsoup4 lxml markdownify trafilatura pytest
+pip install requests beautifulsoup4 lxml markdownify trafilatura playwright pytest
+playwright install chromium      # binarios del browser — paso aparte, sin esto el fallback JS degrada en silencio
 ```
 
 ## Ejecución

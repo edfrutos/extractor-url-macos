@@ -1,15 +1,15 @@
 ---
 gsd_state_version: 1.0
-milestone: v3.0
-milestone_name: Standalone App
+milestone: v4.0
+milestone_name: Contenido Dinámico (JS)
 status: complete
 last_updated: "2026-08-18T00:00:00.000Z"
-last_activity: 2026-08-18 -- Checkpoint humano Fase 10 pasado en Xcode (Build Succeeded, 49 tests/3 skipped/0 fallos, checklist visual OK) — milestone v3.0 cerrado
+last_activity: 2026-08-18 -- Fase 11 implementada y verificada (pytest 28/28, pylint 10/10, mypy limpio) — milestone v4.0 cerrado
 progress:
-  total_phases: 3
-  completed_phases: 3
-  total_plans: 3
-  completed_plans: 3
+  total_phases: 1
+  completed_phases: 1
+  total_plans: 1
+  completed_plans: 1
   percent: 100
 ---
 
@@ -20,20 +20,18 @@ progress:
 See: .planning/PROJECT.md (updated 2026-08-18)
 
 **Core value:** Convertir páginas web en Markdown útil y limpio de forma fiable, repetible y sin depender de servicios externos.
-**Current focus:** Milestone v3.0 (Standalone App) completado y cerrado. Sin foco activo — pendiente que el usuario indique el siguiente milestone (v4+: soporte JS/Playwright, historial de extracciones, o commit de todo lo pendiente).
+**Current focus:** Milestone v4.0 completado y cerrado. Sin foco activo — pendiente que el usuario indique el siguiente milestone (v5+: historial de extracciones, flag manual --js/--no-js, notarización) o pida commit/push de lo hecho.
 
 ## Current Position
 
-Phase: 10 — UX Zero-Config
-Plan: 10-01 (Wave 1)
-Status: Complete — checkpoint humano pasado en Xcode el 2026-08-18
-Last activity: 2026-08-18 — Checkpoint humano: Build Succeeded (tras corregir 2 bugs reales encontrados durante la verificación: warnings de Sendable en IOCollector, y Task.detached para bundledPythonVersion() que corría erróneamente en @MainActor), 49 tests ejecutados/3 skipped/0 fallos, checklist visual 2-0 a 2D confirmado (badge "Python 3.13.14" real).
+Phase: 11 — Playwright Fallback para Contenido Dinámico
+Plan: 11-01 (Wave 1)
+Status: Complete
+Last activity: 2026-08-18 — Implementación completa: `_MIN_VISIBLE_TEXT_LENGTH`, `_looks_insufficient()`, `_fetch_via_playwright()` añadidos a `core.py`, integrados en `_fetch_raw()`. `tests/test_js_fallback.py` (8 tests) + `tests/fixtures/spa_vacia.html` nuevos. `requirements.txt` y `CLAUDE.md` documentan la dependencia `playwright`. Verificado en un venv Python 3.14 ad-hoc de este sandbox (el `.venv` del repo es macOS-específico, no ejecutable aquí): pytest 28/28, pylint 10/10, mypy limpio — incluyendo verificación real (sin mockear) de la degradación cuando Playwright no está instalado.
 
 ```
-v3.0 Progress: [==========] 100% — verificado con xcodebuild real, milestone cerrado
-Phase 8: [==========] 3/3 planes
-Phase 9: [==========] 1/1 plan
-Phase 10: [==========] 1/1 plan (checkpoint humano completo)
+v4.0 Progress: [==========] 100% — verificado, milestone cerrado
+Phase 11: [==========] 1/1 plan
 ```
 
 ## Accumulated Context
@@ -41,40 +39,34 @@ Phase 10: [==========] 1/1 plan (checkpoint humano completo)
 ### Decisions
 
 Decisions are logged in PROJECT.md Key Decisions table.
-Decisiones relevantes para v3.0:
+Decisiones relevantes para v4.0:
 
-- [v3.0]: python-build-standalone (astral-sh, release 20260610) + Python 3.13.14 como runtime embebido — `install_only` tarballs arm64 + x86_64, fusionados con lipomerge + segundo pase lipo para lib-dynload .so.
-- [v3.0]: App Sandbox OFF simplifica el bundling — sin entitlements adicionales para subprocess con binario embebido.
-- [v3.0]: Bundle size ~30-60 MB añadido es aceptable para uso personal.
-- [v3.0]: Python en `Contents/Resources/python/bin/` (NO en `Contents/MacOS/`) — evita Local Network Privacy dialog de TCC.
-- [v3.0]: `PYTHONPATH` env var desde PythonBridge para encontrar deps vendorizadas (NO .pth file — rutas variables según instalación del usuario).
-- [v3.0]: `pip install --target ... --platform macosx_13_0_universal2 --only-binary :all:` para forzar wheels universal2 (lxml 6.1.1 tiene wheel universal2 para cp313).
-- [v3.0]: Codesigning bottom-up manual — `find .so/.dylib` → `python3.13` → Xcode firma `.app`. Sin `--deep`.
-- [v3.0]: SettingsView mantiene override de rutas para uso avanzado — no se elimina, se hace opcional (Fase 10).
-- [v3.0]: `PathSource` (PythonBridge) y `PythonOperatingMode` (SettingsViewModel) declarados `Equatable` explícitamente — necesario para que `XCTAssertEqual`/`==` compilen; Swift no sintetiza Equatable en enums sin declaración explícita, aunque no tengan asociados.
-- [v3.0]: `SettingsViewModel.operatingMode` reutiliza `PythonBridge.resolvedPaths()` (misma lógica que `run()`) en vez de reimplementar la prioridad UserDefaults/bundle — evita que el badge de Preferencias se desincronice del comportamiento real.
-- [v3.0]: Sección "Configuración avanzada" en SettingsView colapsada por defecto solo en modo bundle; se auto-expande la primera vez si el modo activo es override o unavailable (UX-03).
-- [v3.0]: `IOCollector: @unchecked Sendable` en vez de `nonisolated` — el `NSLock` interno ya protege el estado; `nonisolated` no suprime los warnings de captura no-Sendable en closures `@Sendable`. Encontrado en el checkpoint humano de Fase 10.
-- [v3.0]: `refreshOperatingMode()` lanza `Task.detached` (no `Task {}`) para `bundledPythonVersion()` — `SettingsViewModel` es `@MainActor` y un `Task {}` normal hereda ese aislamiento, así que el subprocess bloqueante `--version` corría en el hilo principal pese al comentario original. Encontrado en el checkpoint humano de Fase 10.
+- [v4.0]: Fallback a Playwright activado solo por heurística automática de contenido insuficiente — sin flag manual `--js`/`--no-js` en este milestone (diferido a v5+ si hace falta).
+- [v4.0]: Playwright/Chromium (~300MB+) no se embebe en el `.app` bundle SwiftUI — v4.0 es exclusivamente motor Python (CLI); la app queda fuera de este milestone.
+- [v4.0]: Si Playwright no está instalado, la extracción degrada al resultado estático con aviso explícito, no con una excepción no controlada — confirmado con test real (sin mockear) contra un entorno sin el paquete instalado.
+- [v4.0]: `_MIN_VISIBLE_TEXT_LENGTH = 100` (no 200) — ajustado durante la implementación porque la fixture de test "HTML rico" existente mide solo 145 caracteres de texto visible.
+- [v4.0]: `# type: ignore[import-not-found]` debe ir ANTES de `# pylint: disable=...` en la misma línea — mypy no reconoce la directiva si aparece después de otro comentario.
 
 ### Pending Todos
 
-- Ninguno pendiente de v3.0. Decidir siguiente milestone (v4+) o hacer commit de Fases 9+10 y docs (ver Blockers/Concerns).
+- Ninguno pendiente de v4.0. Decidir siguiente milestone (v5+) o hacer commit/push de Fase 11 + docs (ver Blockers/Concerns).
+- Recomendado no bloqueante: repetir `pytest tests/` en el `.venv` real del Mac (macOS, Python 3.12) antes de considerar esto verificado "en el entorno real del usuario" — la verificación de esta sesión se hizo en un venv Linux ad-hoc equivalente, no en el `.venv` del propio repo.
 
 ### Blockers/Concerns
 
-- Nada bloqueante. Todos los cambios de Fase 9 y Fase 10 (código Swift + docs de planning) siguen sin commitear en `git status` — el usuario no ha pedido aún hacer el commit; preguntar antes de commitear (ver flujo de cierre en `.planning/phases/10-ux-zero-config/CHECKPOINT-HUMANO.md`, Paso 5.4).
+- Nada bloqueante. Cambios de Fase 11 (core.py, requirements.txt, CLAUDE.md, tests/, docs de planning) siguen sin commitear en `git status` — preguntar al usuario antes de commitear/pushear, igual que en v3.0.
 
-## Deferred Items (desde v2.0)
+## Deferred Items (desde v4.0)
 
 | Category | Item | Status |
 |----------|------|--------|
-| Funcionalidad | Soporte páginas JavaScript (Playwright) | v4+ |
-| Funcionalidad | Historial y cola de extracciones | v4+ |
-| Distribución | Notarización para terceros | v3 es personal; revisar en v4 |
+| Funcionalidad | Historial y cola de extracciones | v5+ |
+| Funcionalidad | Flag manual `--js`/`--no-js` | v5+ si la heurística automática resulta insuficiente en uso real |
+| Distribución | Notarización para terceros | uso personal; revisar en v5+ |
+| Distribución | Embeber Playwright/Chromium en el `.app` bundle | v5+ si hay demanda real, pese al coste de +300MB |
 
 ## Session Continuity
 
 Last session: 2026-08-18T00:00:00Z
-Stopped at: Milestone v3.0 cerrado tras checkpoint humano en Xcode (Build Succeeded, 49 tests/3 skipped/0 fallos, checklist visual OK). Pendiente: preguntar al usuario si quiere commitear Fase 9 + Fase 10 + docs.
-Resume file: .planning/phases/10-ux-zero-config/10-01-SUMMARY.md
+Stopped at: Milestone v4.0 cerrado (Fase 11 implementada y verificada). Pendiente: preguntar al usuario si quiere commitear/pushear, o definir v5.
+Resume file: .planning/phases/11-playwright-fallback/11-01-SUMMARY.md

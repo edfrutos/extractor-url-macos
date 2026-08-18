@@ -49,6 +49,13 @@ _MAIN_SELECTORS = [
     ".post-body",
 ]
 
+# Umbral de caracteres de texto visible bajo el cual se considera que la
+# extracción estática no capturó contenido real (posible SPA sin hidratar).
+# 100 deja margen bajo el contenido real más corto de la suite de tests
+# (145 caracteres en tests/fixtures/edefrutos_me.html) sin dejar de detectar
+# una SPA vacía (0 caracteres tras quitar ruido).
+_MIN_VISIBLE_TEXT_LENGTH = 100
+
 # --- Configuración de Caché y Sesión HTTP ---
 
 _CACHE_DIR = Path.home() / ".cache" / "extractor-url"
@@ -105,6 +112,13 @@ def _fetch_raw(url: str, timeout: int = 15, use_cache: bool = True) -> Optional[
         html_text = response.text
         final_url = response.url
 
+        # Fallback JS (Fase 11): si el HTML estático parece insuficiente
+        # (posible SPA sin hidratar), reintentar renderizando con Playwright.
+        if _looks_insufficient(html_text):
+            rendered = _fetch_via_playwright(url, timeout)
+            if rendered is not None:
+                html_text = rendered
+
         # Guardar en caché si la descarga fue exitosa
         if use_cache:
             try:
@@ -134,6 +148,54 @@ def _fetch_soup(url: str, timeout: int = 15, use_cache: bool = True) -> Optional
         return BeautifulSoup(html_text, "lxml")
     except FeatureNotFound:
         return BeautifulSoup(html_text, "html.parser")
+
+
+def _looks_insufficient(html_text: str) -> bool:
+    """Heurística: ¿el HTML estático tiene contenido visible real?
+
+    Best-effort, no exacta: un documento vacío o casi vacío (típico de una
+    SPA sin hidratar) da menos de _MIN_VISIBLE_TEXT_LENGTH caracteres de
+    texto visible tras quitar _NOISE_TAGS.
+    """
+    try:
+        soup = BeautifulSoup(html_text, "lxml")
+    except FeatureNotFound:
+        soup = BeautifulSoup(html_text, "html.parser")
+    for tag in soup(_NOISE_TAGS):
+        tag.decompose()
+    body = soup.find("body") or soup
+    visible_text = body.get_text(strip=True)
+    return len(visible_text) < _MIN_VISIBLE_TEXT_LENGTH
+
+
+def _fetch_via_playwright(url: str, timeout: int) -> Optional[str]:
+    """Renderiza `url` con Chromium headless y devuelve el HTML final.
+
+    Devuelve None si Playwright no está instalado (paquete pip ausente) o
+    si los binarios del browser no están instalados (`playwright install
+    chromium` nunca ejecutado) — ambos casos degradan, no son fatales.
+    """
+    try:
+        from playwright.sync_api import Error as PlaywrightError  # type: ignore[import-not-found]  # pylint: disable=import-outside-toplevel
+        from playwright.sync_api import sync_playwright  # type: ignore[import-not-found]  # pylint: disable=import-outside-toplevel
+    except ImportError:
+        return None
+
+    try:
+        with sync_playwright() as p:
+            browser = p.chromium.launch()
+            try:
+                page = browser.new_page()
+                page.goto(url, timeout=timeout * 1000, wait_until="networkidle")
+                return page.content()
+            finally:
+                browser.close()
+    except PlaywrightError as e:
+        print(
+            f"Playwright no disponible o falló el render de '{url}': {e}",
+            file=sys.stderr,
+        )
+        return None
 
 
 # ---------------------------------------------------------------------------

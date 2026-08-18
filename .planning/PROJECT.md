@@ -44,34 +44,40 @@ Convertir páginas web en Markdown útil y limpio de forma fiable, repetible y s
 - ✓ UX-02: SettingsView muestra "Usando Python incluido (Python X.X.X)" cuando opera con el bundle. — Validated in Phase 10 (badge confirmado con "Python 3.13.14" real en checkpoint humano)
 - ✓ UX-03: SettingsView mantiene override opcional de rutas para uso avanzado, colapsado por defecto. — Validated in Phase 10
 
+- ✓ JS-01: `core.py` detecta heurísticamente cuando la extracción estática devuelve contenido insuficiente (`_looks_insufficient()`, umbral de 100 caracteres de texto visible). — Validated in Phase 11
+- ✓ JS-02: Si se detecta contenido insuficiente, `core.py` reintenta automáticamente renderizando con Playwright (Chromium headless) vía `_fetch_via_playwright()`. — Validated in Phase 11
+- ✓ JS-03: Si Playwright/Chromium no están instalados, la extracción degrada al resultado estático sin excepción no controlada — verificado real (sin mockear) en un entorno sin Playwright instalado. — Validated in Phase 11
+- ✓ JS-04: 8 tests nuevos en `tests/test_js_fallback.py` cubren las 4 ramas con fixtures/mocks; `pytest tests/` (28 tests) pasa sin requerir un browser real. — Validated in Phase 11
+
 ### Out of Scope
 
 - App Store o distribución comercial — no es el objetivo.
-- Soporte páginas JavaScript (Playwright / WKWebView headless) — v4+.
+- Embeber Playwright/Chromium en el `.app` bundle de la app SwiftUI — v4 es solo motor Python (CLI); +300MB de peso no es aceptable para el bundle zero-config de v3. Revisar en v5+ si hay demanda real.
+- Flag manual `--js`/`--no-js` para forzar u omitir el fallback — v4 usa solo detección automática; un control manual explícito queda diferido.
 - Historial de extracciones y cola — v4+.
-- Notarización para distribución a terceros — v3 es uso personal.
+- Notarización para distribución a terceros — uso personal, sin distribución pública.
 
 ## Context
 
-El proyecto tiene dos capas: el motor Python (`core.py` + `extractor_url.py`) y la app nativa SwiftUI (`ExtractorApp/`). La app lanza el motor vía `Foundation.Process()` con `--json`. v3.0 elimina la dependencia del usuario de instalar Python y configurar rutas: el runtime y las dependencias van dentro del `.app bundle`.
+El proyecto tiene dos capas: el motor Python (`core.py` + `extractor_url.py`) y la app nativa SwiftUI (`ExtractorApp/`). La app lanza el motor vía `Foundation.Process()` con `--json`. v3.0 eliminó la dependencia del usuario de instalar Python y configurar rutas. v4.0 amplía el motor Python para extraer contenido de páginas que requieren JavaScript (SPAs), sin tocar la app SwiftUI ni el bundling de v3.0.
 
-## Current Milestone: v3.0 Standalone App — COMPLETADO 2026-08-18
+## Current Milestone: v4.0 Contenido Dinámico (JS) — COMPLETADO 2026-08-18
 
-**Goal:** La app funciona al abrir sin ninguna configuración — Python, dependencias y script van dentro del `.app` bundle.
+**Goal:** El motor Python extrae contenido correctamente de páginas que dependen de JavaScript del lado del cliente, cayendo a Playwright automáticamente solo cuando la extracción estática resulta insuficiente — sin penalizar velocidad ni comportamiento en sitios estáticos, y sin romper el entorno bundleado de la app (que no incluye Playwright).
 
 **Target features:**
 
-- Python runtime universal (arm64+x86_64) embebido en `Contents/Resources/`
-- `extractor_url.py`, `core.py` y dependencias vendorizadas dentro del bundle
-- PythonBridge detecta rutas del bundle automáticamente vía `Bundle.main.resourcePath`
-- SettingsView: "Usando Python incluido (vX.X)" — sin configuración obligatoria de rutas
-- Primera apertura funciona de inmediato — zero-config experience
+- Heurística de detección de contenido estático insuficiente en `core.py`
+- Fallback automático a Playwright (Chromium headless) cuando la heurística se activa
+- Degradación silenciosa (sin crash) si Playwright no está instalado — comportamiento actual preservado como base
+- Cobertura de tests con fixtures/mocks, sin dependencia de red real ni de un browser en CI estándar
 
 ## Current State
 
 Milestone v1.0 (Stabilization) completado: suite `pytest` con 14 tests, pylint 10/10, contratos CLI explícitos.
 Milestone v2.0 (SwiftUI Native App) completado: app macOS nativa, bridge Python async, export MD/HTML/PDF, universal binary, UI premium con dark mode automático.
-Milestone v3.0 (Standalone App) **completado y cerrado**: Fases 8, 9 y 10 verificadas con `xcodebuild` real. Fase 10 (badge de modo + sección avanzada colapsable) escrita en un sandbox Linux sin Xcode/swiftc, y verificada en checkpoint humano el 2026-08-18 en Mac real: Build Succeeded (tras corregir 2 bugs encontrados durante el checkpoint, ver `.planning/phases/10-ux-zero-config/10-01-SUMMARY.md`), 49 tests ejecutados / 3 skipped (esperado) / 0 fallos, y checklist visual completo (badge bundle verde con versión real "Python 3.13.14", override azul, vuelta a bundle al borrar rutas).
+Milestone v3.0 (Standalone App) completado y cerrado: Fases 8, 9 y 10 verificadas con `xcodebuild` real (Build Succeeded, 49 tests/3 skipped/0 fallos, checklist visual OK) — ver `.planning/phases/10-ux-zero-config/10-01-SUMMARY.md`.
+Milestone v4.0 (Contenido Dinámico) completado y cerrado: Fase 11 implementa `_looks_insufficient()` + `_fetch_via_playwright()` en `core.py`, integrados en `_fetch_raw()`. Verificado con `pytest tests/` (28/28), `pylint` 10/10 y `mypy` limpio en un venv equivalente al del repo — ver `.planning/phases/11-playwright-fallback/11-01-SUMMARY.md`.
 
 ## Constraints
 
@@ -79,6 +85,7 @@ Milestone v3.0 (Standalone App) **completado y cerrado**: Fases 8, 9 y 10 verifi
 - **Testing**: Sin dependencias de webs reales — usar fixtures HTML locales y mocks.
 - **Platform**: macOS 13.0+ — universal binary arm64+x86_64.
 - **Bundle size**: Python embebido añade ~30-60 MB al bundle — aceptable para uso personal.
+- **[v4.0] Scope**: Playwright/Chromium (~300MB+) queda fuera del `.app` bundle — solo disponible vía `pip install` en el motor Python (CLI/venv), no en la app SwiftUI.
 
 ## Key Decisions
 
@@ -100,6 +107,10 @@ Milestone v3.0 (Standalone App) **completado y cerrado**: Fases 8, 9 y 10 verifi
 | [v3.0] `SettingsViewModel.operatingMode` reutiliza `PythonBridge.resolvedPaths()` en vez de reimplementar la lógica | Evita que el badge de Preferencias se desincronice del comportamiento real de `run()` | ✓ Good (Phase 10, confirmado con build real) |
 | [v3.0] `IOCollector: @unchecked Sendable` (en vez de `nonisolated`) | El `nonisolated` no elimina los warnings de captura no-Sendable en closures `@Sendable` de `readabilityHandler`; el `NSLock` interno ya garantiza la seguridad real, así que `@unchecked Sendable` es el fix correcto — encontrado durante el checkpoint humano de Fase 10 | ✓ Good (Phase 10) |
 | [v3.0] `refreshOperatingMode()` usa `Task.detached` (no `Task {}`) para `bundledPythonVersion()` | `SettingsViewModel` es `@MainActor`; un `Task {}` normal hereda ese aislamiento y el subprocess bloqueante `--version` se ejecutaría en el hilo principal pese al comentario original — bug real encontrado por el warning "No async operations occur within await expression" en el checkpoint | ✓ Good (Phase 10) |
+| [v4.0] Fallback Playwright activado solo por heurística automática, sin flag manual | El usuario decidió que v4 prioriza "que simplemente funcione" sobre exponer un control explícito; un flag manual queda diferido a v5+ si hace falta | ✓ Good (Phase 11) |
+| [v4.0] Playwright/Chromium no se embebe en el `.app` bundle SwiftUI | +300MB rompería la experiencia zero-config de v3.0 (bundle actual ~30-60MB); v4 es solo motor Python, la app queda fuera de este milestone | ✓ Good (Phase 11) |
+| [v4.0] `_MIN_VISIBLE_TEXT_LENGTH = 100` (no 200 como proponía el research inicial) | La fixture de test "HTML rico" existente (`edefrutos_me.html`) mide solo 145 caracteres de texto visible — un umbral de 200 la marcaba como falso positivo. Encontrado al ejecutar los tests durante la implementación | ✓ Good (Phase 11) |
+| [v4.0] `# type: ignore[import-not-found]` antes de `# pylint: disable=...` en la misma línea (no después) | mypy no reconoce la directiva `type: ignore` si aparece tras otro comentario en la misma línea física — encontrado al verificar `mypy core.py` | ✓ Good (Phase 11) |
 
 ## Evolution
 
@@ -109,4 +120,4 @@ Este documento evoluciona en transiciones de fase y límites de milestone.
 **Después de cada milestone:** revisar Core Value, auditar Out of Scope, actualizar Context.
 
 ---
-*Last updated: 2026-08-18 — v3.0 Standalone App cerrado: checkpoint humano de Fase 10 pasado (Build Succeeded, 49 tests/3 skipped/0 fallos, checklist visual OK)*
+*Last updated: 2026-08-18 — Milestone v4.0 Contenido Dinámico (JS) cerrado: fallback automático a Playwright implementado y verificado (pytest 28/28, pylint 10/10, mypy limpio)*

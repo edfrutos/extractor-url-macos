@@ -242,3 +242,44 @@ Plans:
 | 8. Bundle Python Runtime | 3/3 | Complete | 2026-06-15 |
 | 9. Bridge Auto-detección de Rutas | 1/1 | Complete | 2026-06-16 |
 | 10. UX Zero-Config | 1/1 | Complete | 2026-08-18 |
+
+---
+
+## v4.0 Contenido Dinámico (JS)
+
+## Overview
+
+Extender el motor Python (`core.py`) para extraer contenido de páginas que dependen de JavaScript del lado del cliente (SPAs), que hoy devuelven HTML vacío o mínimo vía `requests` + `BeautifulSoup`. El fallback a Playwright (Chromium headless) es automático por heurística — sin flag manual, sin cambios en la app SwiftUI, sin tocar el bundle zero-config de v3.0.
+
+JS-01 (heurística de detección) es la dependencia bloqueante: sin ella, JS-02 no tiene forma de decidir cuándo activarse y JS-04 no tiene nada que testear.
+
+### Checklist v4.0
+
+- [x] **Phase 11: Playwright Fallback para Contenido Dinámico** - `core.py` detecta contenido estático insuficiente y reintenta automáticamente con Playwright antes de fallar. (completed 2026-08-18)
+
+### Phase 11: Playwright Fallback para Contenido Dinámico
+
+**Goal**: `core.py` detecta cuando la extracción estática (`requests` + `BeautifulSoup`) devuelve contenido vacío o insuficiente, y reintenta automáticamente renderizando la página con Playwright (Chromium headless) antes de fallar — sin cambiar el comportamiento ni el rendimiento en sitios estáticos normales, y sin romper el entorno bundleado de la app (que no incluye Playwright).
+**Depends on**: Nothing nuevo — extiende `core.py` de v1.0; independiente de la app SwiftUI (v2.0/v3.0).
+**Requirements**: JS-01, JS-02, JS-03, JS-04
+**Success Criteria** (what must be TRUE):
+
+  1. Una URL que devuelve HTML mínimo/vacío por la vía estática (ej. SPA renderizada 100% en cliente) se extrae con contenido real al activarse el fallback Playwright.
+  2. Un sitio estático normal (blog, artículo) no activa Playwright — mismo tiempo de respuesta y comportamiento que en v1-v3.
+  3. Si Playwright/Chromium no están instalados en el entorno (ej. runtime embebido de la app v3.0, que no lo incluye por decisión de scope), la extracción degrada al resultado estático con un aviso explícito, sin excepción no controlada.
+  4. Tests cubren la heurística de detección de contenido insuficiente y el camino de fallback con fixtures/mocks, sin exigir un navegador real para pasar en un entorno CI estándar.
+
+**Plans**: 1 plan — Wave 1: 11-01-PLAN.md
+
+Plans:
+- [x] 11-01-PLAN.md — `_looks_insufficient()` + `_fetch_via_playwright()` + integración en `_fetch_raw()` + 8 tests (completed 2026-08-18)
+
+**UI hint**: no — fuera de scope de la app SwiftUI en v4.0
+
+### Estado v4.0
+
+**Execution Order:** Phases execute in numeric order: 11
+
+| Phase | Plans Complete | Status | Completed |
+|-------|----------------|--------|-----------|
+| 11. Playwright Fallback para Contenido Dinámico | 1/1 | Complete | 2026-08-18 |
