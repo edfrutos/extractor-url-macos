@@ -162,4 +162,101 @@ final class SettingsViewModelTests: XCTestCase {
         let vm = SettingsViewModel()
         XCTAssertEqual(vm.scriptPath, testPath)
     }
+
+    // MARK: - Fase 10: PythonOperatingMode (UX-02, UX-03)
+    //
+    // El bundle Python puede o no estar presente en el host de tests (ver
+    // Pitfall 4 de 09-RESEARCH.md: Bundle.main.resourcePath apunta al test
+    // runner, no al .app de producción). Los tests que dependen de la rama
+    // "sin override válido" branchean sobre PythonBridge.bundledPythonPath()
+    // igual que PythonBridgeTests, en vez de asumir un resultado fijo.
+
+    func testOperatingMode_isOverride_whenUserDefaultsPathsAreValid() throws {
+        let tmp = FileManager.default.temporaryDirectory
+            .appendingPathComponent("opmode_override_\(UUID().uuidString).py")
+        try "# test".write(to: tmp, atomically: true, encoding: .utf8)
+        defer { try? FileManager.default.removeItem(at: tmp) }
+
+        let vm = SettingsViewModel()
+        vm.pythonPath = "/bin/sh"
+        vm.scriptPath = tmp.path
+
+        guard FileManager.default.isExecutableFile(atPath: "/bin/sh") else {
+            throw XCTSkip("/bin/sh no es ejecutable en este sistema")
+        }
+        XCTAssertEqual(vm.operatingMode, .override)
+        XCTAssertFalse(vm.isBundleMode)
+    }
+
+    func testOperatingMode_isBundleOrUnavailable_whenUserDefaultsEmpty() {
+        let vm = SettingsViewModel()
+        vm.pythonPath = ""
+        vm.scriptPath = ""
+
+        if PythonBridge.bundledPythonPath() != nil {
+            // Bundle presente (Fase 8/9 completas) — UX-02: modo bundle activo
+            guard case .bundle = vm.operatingMode else {
+                XCTFail("Con bundle disponible y UserDefaults vacíos, se esperaba .bundle, obtenido \(vm.operatingMode)")
+                return
+            }
+            XCTAssertTrue(vm.isBundleMode)
+        } else {
+            // Sin bundle compilado (build de desarrollo) — ningún origen válido
+            XCTAssertEqual(vm.operatingMode, .unavailable)
+            XCTAssertFalse(vm.isBundleMode)
+        }
+    }
+
+    func testOperatingMode_returnsToBundleOrUnavailable_whenOverrideCleared() throws {
+        let tmp = FileManager.default.temporaryDirectory
+            .appendingPathComponent("opmode_clear_\(UUID().uuidString).py")
+        try "# test".write(to: tmp, atomically: true, encoding: .utf8)
+        defer { try? FileManager.default.removeItem(at: tmp) }
+
+        guard FileManager.default.isExecutableFile(atPath: "/bin/sh") else {
+            throw XCTSkip("/bin/sh no es ejecutable en este sistema")
+        }
+
+        let vm = SettingsViewModel()
+        vm.pythonPath = "/bin/sh"
+        vm.scriptPath = tmp.path
+        XCTAssertEqual(vm.operatingMode, .override, "precondición: override activo")
+
+        // ROADMAP Fase 10, criterio 4: al borrar el override, la app vuelve
+        // al modo bundle (o unavailable si el bundle no está compilado aquí).
+        vm.pythonPath = ""
+        vm.scriptPath = ""
+
+        if PythonBridge.bundledPythonPath() != nil {
+            guard case .bundle = vm.operatingMode else {
+                XCTFail("Tras borrar el override, se esperaba volver a .bundle, obtenido \(vm.operatingMode)")
+                return
+            }
+        } else {
+            XCTAssertEqual(vm.operatingMode, .unavailable)
+        }
+    }
+
+    func testOperatingMode_isOverride_notBundle_whenPartialOverrideCompletedAfterwards() throws {
+        // Ruta de python inválida al inicio → no debe quedar en .override
+        // "fantasma"; al completar ambas rutas válidas, sí debe pasar a .override.
+        let tmp = FileManager.default.temporaryDirectory
+            .appendingPathComponent("opmode_partial_\(UUID().uuidString).py")
+        try "# test".write(to: tmp, atomically: true, encoding: .utf8)
+        defer { try? FileManager.default.removeItem(at: tmp) }
+
+        guard FileManager.default.isExecutableFile(atPath: "/bin/sh") else {
+            throw XCTSkip("/bin/sh no es ejecutable en este sistema")
+        }
+
+        let vm = SettingsViewModel()
+        vm.pythonPath = "/ruta/inexistente/python"
+        XCTAssertNotEqual(vm.operatingMode, .override)
+
+        vm.scriptPath = tmp.path
+        XCTAssertNotEqual(vm.operatingMode, .override, "python sigue inválido, no debe activar override")
+
+        vm.pythonPath = "/bin/sh"
+        XCTAssertEqual(vm.operatingMode, .override, "ambas rutas ya válidas — override activo")
+    }
 }

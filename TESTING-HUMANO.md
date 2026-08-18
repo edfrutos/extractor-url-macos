@@ -1,15 +1,20 @@
-# Testing Visual Humano — ExtractorApp v2.0
+# Testing Visual Humano — ExtractorApp v2.0 / v3.0
 
 Guía de verificación manual de la interfaz. Cubre todos los estados visibles, animaciones, validaciones y flujos de exportación. Ejecutar con la app compilada en Xcode (esquema Release o Debug).
+
+> La sección 2 se actualizó para v3.0 (Fases 8-10, Standalone App): con el
+> runtime Python embebido en el bundle, Preferencias ya no exige configurar
+> rutas manualmente. Los prerequisitos de venv de abajo solo aplican si se va
+> a probar explícitamente el override manual (2C en adelante).
 
 ---
 
 ## Prerequisitos
 
-- [ ] Xcode abierto con el proyecto `ExtractorApp.xcodeproj`
-- [ ] Entorno virtual Python activo con `extractor_url.py` accesible
-- [ ] Conocida la ruta al intérprete: `which python` (con venv activo)
-- [ ] Conocida la ruta al script: ruta absoluta a `extractor_url.py`
+- [x] Xcode abierto con el proyecto `ExtractorApp.xcodeproj`
+- [x] Entorno virtual Python activo con `extractor_url.py` accesible
+- [x] Conocida la ruta al intérprete: `which python` (con venv activo)
+- [x] Conocida la ruta al script: ruta absoluta a `extractor_url.py`
 
 ---
 
@@ -35,7 +40,21 @@ Guía de verificación manual de la interfaz. Cubre todos los estados visibles, 
 
 **Pasos:** Menú `ExtractorApp › Preferencias…` o `⌘,`
 
-### 2A. Rutas vacías (estado inicial)
+### 2-0. Modo de operación (Fase 10 — nuevo)
+
+**Pasos:** Abrir Preferencias en una instalación limpia (sin overrides previos en `UserDefaults`, build con bundle Python compilado — Fase 8 ejecutada).
+
+| # | Qué comprobar | Resultado esperado |
+|---|---------------|--------------------|
+| 2-0.1 | Sección "Modo de operación" | Visible arriba del todo, antes de cualquier campo de ruta |
+| 2-0.2 | Badge | Icono `checkmark.seal.fill` verde + "Usando Python incluido (Python 3.13.14)" (versión real del intérprete bundleado) |
+| 2-0.3 | Subtítulo | "No necesitas configurar nada — la extracción funciona de serie." |
+| 2-0.4 | Sección "Configuración avanzada" | Colapsada por defecto (solo se ve la cabecera "Mostrar ▾") |
+| 2-0.5 | Sin bundle compilado (build de desarrollo, antes de Fase 8) | Badge naranja "Python no disponible" + sección avanzada auto-expandida |
+
+### 2A. Configuración avanzada — rutas vacías
+
+**Pasos:** Pulsar la cabecera "Configuración avanzada" para expandirla.
 
 | # | Qué comprobar | Resultado esperado |
 |---|---------------|--------------------|
@@ -44,36 +63,39 @@ Guía de verificación manual de la interfaz. Cubre todos los estados visibles, 
 | 2A.3 | Sección "Advertencias" | No aparece (se muestra solo cuando hay rutas inválidas) |
 | 2A.4 | Banner naranja en "Ayuda" | Visible: "Configura ambas rutas correctamente para poder extraer contenido" |
 | 2A.5 | Pasos de ayuda | 3 filas numeradas (1 activar venv, 2 which python, 3 localizar script) con icono de acento |
+| 2A.6 | Badge "Modo de operación" | Sigue en verde bundle — las rutas de override vacías no lo afectan |
 
 ### 2B. Ruta Python inválida
 
-**Pasos:** Escribir `/ruta/falsa/python` en el campo Intérprete Python.
+**Pasos:** Con la sección avanzada expandida, escribir `/ruta/falsa/python` en el campo Intérprete Python.
 
 | # | Qué comprobar | Resultado esperado |
 |---|---------------|--------------------|
 | 2B.1 | Badge validación Python | Cápsula roja "No encontrado" con icono ✕ aparece inmediatamente (reactividad `didSet`) |
 | 2B.2 | Sección "Advertencias" | Aparece con mensaje descriptivo para el intérprete |
 | 2B.3 | Campo script | Sin cambios independientes |
+| 2B.4 | Badge "Modo de operación" | Sigue en verde bundle — un override inválido no lo cambia (fallback silencioso) |
 
-### 2C. Ruta Python válida
+### 2C. Ruta Python y script válidas (override activo)
 
-**Pasos:** Pulsar el botón Examinar (📁) del campo Intérprete Python → seleccionar el binario Python del venv.
+**Pasos:** Pulsar Examinar (📁) en ambos campos → seleccionar el Python del venv y `extractor_url.py`.
 
 | # | Qué comprobar | Resultado esperado |
 |---|---------------|--------------------|
 | 2C.1 | NSOpenPanel | Se abre con el Finder para seleccionar archivo |
-| 2C.2 | Badge tras selección | Cápsula verde "OK" con icono ✓ |
+| 2C.2 | Badge tras selección | Cápsula verde "OK" con icono ✓ en ambos campos |
 | 2C.3 | Sección "Advertencias" | Desaparece si el script también es válido |
+| 2C.4 | Badge "Modo de operación" | Cambia a azul "Usando configuración manual" en cuanto ambas rutas son válidas |
 
-### 2D. Ruta script válida
+### 2D. Borrar el override → vuelve a bundle
 
-**Pasos:** Pulsar Examinar del campo Script → seleccionar `extractor_url.py`.
+**Pasos:** Con el override activo (2C), borrar el contenido de ambos campos de ruta.
 
 | # | Qué comprobar | Resultado esperado |
 |---|---------------|--------------------|
-| 2D.1 | Badge tras selección | Cápsula verde "OK" |
-| 2D.2 | Banner naranja "Ayuda" | Desaparece (ambas rutas válidas) |
-| 2D.3 | Sección "Advertencias" | No visible |
+| 2D.1 | Badge "Modo de operación" | Vuelve inmediatamente al verde "Usando Python incluido (Python 3.13.14)" — criterio de éxito #4 de la Fase 10 |
+| 2D.2 | Banner naranja "Ayuda" | Reaparece (rutas de override vacías otra vez) |
+| 2D.3 | Sección "Advertencias" | No visible (campos vacíos → `.empty`, no `.notFound`) |
 
 ### 2E. Verificación del intérprete
 
@@ -306,3 +328,11 @@ Marcar todos antes de declarar v2.0 apta para distribución:
 - [ ] Sin cuelgues durante extracción (ventana responde)
 - [ ] Redimensionado sin roturas de layout
 - [ ] Botón "Abrir Preferencias" aparece solo en errores de ruta Python
+
+### Checklist v3.0 — Fase 10 (UX Zero-Config)
+
+- [ ] Instalación limpia (sin overrides): extrae contenido sin abrir Preferencias
+- [ ] Badge "Usando Python incluido (Python X.X.X)" visible con la versión real del bundle
+- [ ] Sección "Configuración avanzada" colapsada por defecto en modo bundle
+- [ ] Configurar override manual válido → badge cambia a "Usando configuración manual"
+- [ ] Borrar el override → badge vuelve a "Usando Python incluido" sin reiniciar la app

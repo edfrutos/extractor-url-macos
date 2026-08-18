@@ -40,6 +40,19 @@ enum PathValidationState: Equatable {
     }
 }
 
+// MARK: - Python Operating Mode (Fase 10: UX Zero-Config)
+
+/// Modo de resolución de rutas activo, reflejando `PythonBridge.resolvedPaths()`.
+enum PythonOperatingMode: Equatable {
+    /// Usando el intérprete embebido en el bundle. `version` llega async
+    /// (requiere lanzar `--version` en background) y es nil hasta resolverse.
+    case bundle(version: String?)
+    /// Usando el override manual configurado en Preferencias (compatibilidad v2.0).
+    case override
+    /// Ni el override de UserDefaults ni el bundle tienen rutas válidas.
+    case unavailable
+}
+
 // MARK: - SettingsViewModel
 
 @MainActor
@@ -48,11 +61,17 @@ final class SettingsViewModel: ObservableObject {
     // MARK: @AppStorage — persiste automáticamente en UserDefaults
 
     @AppStorage("pythonPath") var pythonPath: String = "" {
-        didSet { validatePythonPath() }
+        didSet {
+            validatePythonPath()
+            refreshOperatingMode()
+        }
     }
 
     @AppStorage("scriptPath") var scriptPath: String = "" {
-        didSet { validateScriptPath() }
+        didSet {
+            validateScriptPath()
+            refreshOperatingMode()
+        }
     }
 
     // MARK: Validation state (@Published para reactividad en View)
@@ -60,12 +79,55 @@ final class SettingsViewModel: ObservableObject {
     @Published private(set) var pythonValidation: PathValidationState = .empty
     @Published private(set) var scriptValidation: PathValidationState = .empty
 
+    // MARK: Operating mode (@Published — badge en SettingsView)
+
+    @Published private(set) var operatingMode: PythonOperatingMode = .unavailable
+
+    /// `true` cuando la app opera con el Python embebido (flujo zero-config por defecto).
+    var isBundleMode: Bool {
+        if case .bundle = operatingMode { return true }
+        return false
+    }
+
+    private let bridge = PythonBridge()
+
     // MARK: Init
 
     init() {
         // Validar estado inicial (puede haber rutas ya guardadas)
         validatePythonPath()
         validateScriptPath()
+        refreshOperatingMode()
+    }
+
+    // MARK: - Operating Mode
+
+    /// Recalcula `operatingMode` reutilizando la misma lógica de resolución
+    /// de rutas que usa `PythonBridge.run()`, para que el badge de Preferencias
+    /// refleje siempre el modo realmente activo (BRIDGE-05/06/07, UX-02, UX-03).
+    private func refreshOperatingMode() {
+        guard let paths = bridge.resolvedPaths() else {
+            operatingMode = .unavailable
+            return
+        }
+
+        switch paths.source {
+        case .userDefaults:
+            operatingMode = .override
+
+        case .bundle:
+            operatingMode = .bundle(version: nil)
+            // --version es un subprocess bloqueante — Task.detached lo saca
+            // del MainActor (refreshOperatingMode ya corre en él); solo se
+            // aplica el resultado si seguimos en modo bundle.
+            Task.detached { [weak self] in
+                let version = PythonBridge.bundledPythonVersion()
+                await MainActor.run {
+                    guard let self, case .bundle = self.operatingMode else { return }
+                    self.operatingMode = .bundle(version: version)
+                }
+            }
+        }
     }
 
     // MARK: - Validation Logic

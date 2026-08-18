@@ -13,7 +13,7 @@ final class PythonBridge {
     @AppStorage("pythonPath") var pythonPath: String = ""
     @AppStorage("scriptPath") var scriptPath: String = ""
 
-    enum PathSource { case bundle, userDefaults }
+    enum PathSource: Equatable { case bundle, userDefaults }
 
     // MARK: - Run
 
@@ -95,7 +95,7 @@ final class PythonBridge {
         // múltiples closures sin warnings de captura de var concurrente.
         let collector = IOCollector()
 
-        let (stdout, _stderr) = try await withCheckedThrowingContinuation {
+        let (stdout, _) = try await withCheckedThrowingContinuation {
             (cont: CheckedContinuation<(Data, Data), Error>) in
 
             let queue = DispatchQueue(
@@ -222,13 +222,45 @@ extension PythonBridge {
         guard let resourcePath = Bundle.main.resourcePath else { return nil }
         return resourcePath + "/python/lib/python-packages"
     }
+
+    /// Ejecuta `--version` contra el intérprete bundleado y devuelve el número
+    /// de versión (p.ej. "3.13.14"). Bloqueante — llamar desde un contexto
+    /// en background (ver SettingsViewModel.refreshOperatingMode()).
+    /// Devuelve nil si el bundle no está disponible o el proceso falla.
+    static func bundledPythonVersion() -> String? {
+        guard let path = bundledPythonPath() else { return nil }
+
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: path)
+        process.arguments = ["--version"]
+        let pipe = Pipe()
+        process.standardOutput = pipe
+        process.standardError = pipe
+
+        do {
+            try process.run()
+        } catch {
+            return nil
+        }
+        process.waitUntilExit()
+
+        let data = pipe.fileHandleForReading.readDataToEndOfFile()
+        guard let output = String(data: data, encoding: .utf8)?
+            .trimmingCharacters(in: .whitespacesAndNewlines), !output.isEmpty
+        else { return nil }
+
+        guard output.hasPrefix("Python ") else { return output }
+        return String(output.dropFirst("Python ".count))
+    }
 }
 
 // MARK: - IOCollector
 
 /// Acumula stdout/stderr desde readabilityHandlers concurrentes.
-/// Usa NSLock para seguridad de hilos sin warnings de captura de var.
-private final class IOCollector {
+/// Usa NSLock para seguridad de hilos real; `@unchecked Sendable` porque el
+/// compilador no puede verificar esa seguridad a través del NSLock, pero
+/// las cuatro mutaciones de estado están protegidas por él.
+private final class IOCollector: @unchecked Sendable {
     private let lock = NSLock()
     private var outData = Data()
     private var errData = Data()
@@ -262,3 +294,4 @@ private final class IOCollector {
         return (outData, errData)
     }
 }
+

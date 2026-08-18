@@ -172,9 +172,9 @@ BUNDLE-01 es la dependencia bloqueante: sin el runtime embebido, las fases 9 y 1
 
 ### Checklist v3.0
 
-- [ ] **Phase 8: Bundle Python Runtime** - Empaquetar el runtime Python universal y las dependencias vendorizadas dentro del .app.
-- [ ] **Phase 9: Bridge Auto-detección de Rutas** - PythonBridge localiza el runtime y el script del bundle vía `Bundle.main.resourcePath` sin configuración del usuario.
-- [ ] **Phase 10: UX Zero-Config** - SettingsView refleja el modo bundled e informa al usuario; primera apertura extrae sin configuración previa.
+- [x] **Phase 8: Bundle Python Runtime** - Empaquetar el runtime Python universal y las dependencias vendorizadas dentro del .app. (completed 2026-06-15)
+- [x] **Phase 9: Bridge Auto-detección de Rutas** - PythonBridge localiza el runtime y el script del bundle vía `Bundle.main.resourcePath` sin configuración del usuario. (completed 2026-06-16)
+- [x] **Phase 10: UX Zero-Config** - SettingsView refleja el modo bundled e informa al usuario; primera apertura extrae sin configuración previa. (completed 2026-08-18, verificado con xcodebuild real)
 
 ### Phase 8: Bundle Python Runtime
 
@@ -188,10 +188,10 @@ BUNDLE-01 es la dependencia bloqueante: sin el runtime embebido, las fases 9 y 1
   3. Las dependencias `requests`, `beautifulsoup4`, `lxml`, `markdownify` y `trafilatura` están instaladas en `Contents/Resources/python/lib/` (vendorizadas con `pip install --target`) y son importables desde el intérprete bundleado sin acceso a red ni a `pip` del sistema.
   4. Un script de shell de validación ejecutado sobre el `.app` de Release invoca `Contents/Resources/python/bin/python3 Contents/Resources/scripts/extractor_url.py --json https://example.com` y devuelve JSON válido.
 
-**Plans**: 3 planes — Wave 1: 08-01-PLAN.md · 08-02-PLAN.md · Wave 2: 08-03-PLAN.md (blocked on 08-02)
-- [ ] 08-01-PLAN.md — scripts/bundle-python.sh: descarga, lipo merge, pip vendorize, codesign
-- [ ] 08-02-PLAN.md — Xcode: Copy Bundle Resources (scripts) + Run Script Phase (bundle-python.sh)
-- [ ] 08-03-PLAN.md — scripts/verify-bundle.sh + BundlePathTests.swift + validación end-to-end
+**Plans**: 3 planes — Wave 1: 08-01-PLAN.md · 08-02-PLAN.md · Wave 2: 08-03-PLAN.md
+- [x] 08-01-PLAN.md — scripts/bundle-python.sh: descarga, lipo merge, pip vendorize, codesign
+- [x] 08-02-PLAN.md — Xcode: Copy Python Scripts phase + Run Script "Bundle Python Runtime"
+- [x] 08-03-PLAN.md — scripts/verify-bundle.sh (14 OK) + BundlePathTests.swift (7/7) + validación end-to-end
 
 **UI hint**: no
 
@@ -207,7 +207,11 @@ BUNDLE-01 es la dependencia bloqueante: sin el runtime embebido, las fases 9 y 1
   3. Si las rutas de `UserDefaults` existen pero no son ejecutables o no existen en disco, `PythonBridge` cae al bundle sin lanzar error al usuario.
   4. `PythonBridgeTests` cubre las tres ramas: bundle por defecto, override válido y override inválido con fallback al bundle.
 
-**Plans**: TBD
+**Plans**: 1 plan — Wave 1: 09-01-PLAN.md
+
+Plans:
+- [x] 09-01-PLAN.md — resolvedPaths() + PathSource + run() bifurcado + 3 tests de ramas (completed 2026-06-16)
+
 **UI hint**: no
 
 ### Phase 10: UX Zero-Config
@@ -222,7 +226,11 @@ BUNDLE-01 es la dependencia bloqueante: sin el runtime embebido, las fases 9 y 1
   3. Los campos de override de rutas están presentes en SettingsView pero visualmente diferenciados como sección avanzada opcional — no interfieren con el flujo por defecto.
   4. Si el usuario borra los overrides de `UserDefaults`, la app vuelve al modo bundle y el badge informativo aparece de nuevo en SettingsView.
 
-**Plans**: TBD
+**Plans**: 1 plan — Wave 1: 10-01-PLAN.md
+
+Plans:
+- [x] 10-01-PLAN.md — PythonOperatingMode + bundledPythonVersion() + badge SettingsView + sección avanzada colapsable + 4 tests de modo (completed 2026-08-17)
+
 **UI hint**: yes
 
 ### Estado v3.0
@@ -231,6 +239,6 @@ BUNDLE-01 es la dependencia bloqueante: sin el runtime embebido, las fases 9 y 1
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 8. Bundle Python Runtime | 0/TBD | Not started | - |
-| 9. Bridge Auto-detección de Rutas | 0/TBD | Not started | - |
-| 10. UX Zero-Config | 0/TBD | Not started | - |
+| 8. Bundle Python Runtime | 3/3 | Complete | 2026-06-15 |
+| 9. Bridge Auto-detección de Rutas | 1/1 | Complete | 2026-06-16 |
+| 10. UX Zero-Config | 1/1 | Complete | 2026-08-18 |

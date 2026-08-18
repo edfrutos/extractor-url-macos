@@ -34,17 +34,15 @@ Convertir páginas web en Markdown útil y limpio de forma fiable, repetible y s
 - ✓ EXPORT-04: Export a PDF vectorial (WKWebView.pdf, texto seleccionable). — Validated in Phase 6
 - ✓ APP-04: Universal binary arm64+x86_64, deployment target macOS 13.0. — Validated in Phase 7
 - ✓ APP-05: Hardened Runtime ON, App Sandbox OFF. — Validated in Phase 7
-
-### Active (v3.0)
-
-- [ ] BUNDLE-01: El .app incluye un intérprete Python universal (arm64+x86_64) en `Contents/Resources/`.
-- [ ] BUNDLE-02: El .app incluye `extractor_url.py` y `core.py` en `Contents/Resources/scripts/`.
-- [ ] BUNDLE-03: Las dependencias Python (`requests`, `beautifulsoup4`, `lxml`, `markdownify`, `trafilatura`) van vendorizadas en el bundle.
-- [ ] BRIDGE-05: PythonBridge detecta las rutas del bundle vía `Bundle.main.resourcePath` sin configuración del usuario.
-- [ ] BRIDGE-06: PythonBridge usa rutas del bundle por defecto; acepta override de `UserDefaults` si existen y son válidas.
-- [ ] UX-01: La app extrae contenido en el primer lanzamiento sin que el usuario configure nada.
-- [ ] UX-02: SettingsView muestra "Usando Python incluido (vX.X)" cuando opera con el bundle.
-- [ ] UX-03: SettingsView mantiene override opcional de rutas para uso avanzado.
+- ✓ BUNDLE-01: El .app incluye un intérprete Python universal (arm64+x86_64) en `Contents/Resources/`. — Validated in Phase 8
+- ✓ BUNDLE-02: El .app incluye `extractor_url.py` y `core.py` en `Contents/Resources/scripts/`. — Validated in Phase 8
+- ✓ BUNDLE-03: Las dependencias Python vendorizadas en el bundle. — Validated in Phase 8
+- ✓ BRIDGE-05: PythonBridge detecta las rutas del bundle vía `Bundle.main.resourcePath` sin configuración del usuario. — Validated in Phase 9
+- ✓ BRIDGE-06: PythonBridge usa rutas del bundle por defecto; acepta override de `UserDefaults` si existen y son válidas. — Validated in Phase 9
+- ✓ BRIDGE-07: Override de `UserDefaults` inválido cae al bundle sin lanzar error al usuario. — Validated in Phase 9
+- ✓ UX-01: La app extrae contenido en el primer lanzamiento sin que el usuario configure nada. — Validated in Phase 10
+- ✓ UX-02: SettingsView muestra "Usando Python incluido (Python X.X.X)" cuando opera con el bundle. — Validated in Phase 10 (badge confirmado con "Python 3.13.14" real en checkpoint humano)
+- ✓ UX-03: SettingsView mantiene override opcional de rutas para uso avanzado, colapsado por defecto. — Validated in Phase 10
 
 ### Out of Scope
 
@@ -57,7 +55,7 @@ Convertir páginas web en Markdown útil y limpio de forma fiable, repetible y s
 
 El proyecto tiene dos capas: el motor Python (`core.py` + `extractor_url.py`) y la app nativa SwiftUI (`ExtractorApp/`). La app lanza el motor vía `Foundation.Process()` con `--json`. v3.0 elimina la dependencia del usuario de instalar Python y configurar rutas: el runtime y las dependencias van dentro del `.app bundle`.
 
-## Current Milestone: v3.0 Standalone App
+## Current Milestone: v3.0 Standalone App — COMPLETADO 2026-08-18
 
 **Goal:** La app funciona al abrir sin ninguna configuración — Python, dependencias y script van dentro del `.app` bundle.
 
@@ -73,7 +71,7 @@ El proyecto tiene dos capas: el motor Python (`core.py` + `extractor_url.py`) y 
 
 Milestone v1.0 (Stabilization) completado: suite `pytest` con 14 tests, pylint 10/10, contratos CLI explícitos.
 Milestone v2.0 (SwiftUI Native App) completado: app macOS nativa, bridge Python async, export MD/HTML/PDF, universal binary, UI premium con dark mode automático.
-Milestone v3.0 en planificación: bundling del runtime Python para eliminar la configuración de rutas.
+Milestone v3.0 (Standalone App) **completado y cerrado**: Fases 8, 9 y 10 verificadas con `xcodebuild` real. Fase 10 (badge de modo + sección avanzada colapsable) escrita en un sandbox Linux sin Xcode/swiftc, y verificada en checkpoint humano el 2026-08-18 en Mac real: Build Succeeded (tras corregir 2 bugs encontrados durante el checkpoint, ver `.planning/phases/10-ux-zero-config/10-01-SUMMARY.md`), 49 tests ejecutados / 3 skipped (esperado) / 0 fallos, y checklist visual completo (badge bundle verde con versión real "Python 3.13.14", override azul, vuelta a bundle al borrar rutas).
 
 ## Constraints
 
@@ -96,7 +94,12 @@ Milestone v3.0 en planificación: bundling del runtime Python para eliminar la c
 | Export PDF vía `WKWebView.pdf(configuration:)` | Vectorial, texto seleccionable, sin PDFKit | ✓ Good |
 | App Sandbox OFF, Hardened Runtime ON | Correcto para herramienta personal fuera del App Store | ✓ Good |
 | Colores semánticos del sistema (no hex hardcodeado) | Dark mode automático sin lógica extra | ✓ Good |
-| [v3.0] python-build-standalone como runtime embebido | Distribución portable sin dependencias del sistema, universal binary | Pending |
+| [v3.0] python-build-standalone como runtime embebido | Distribución portable sin dependencias del sistema, universal binary | ✓ Good (Phase 8) |
+| [v3.0] `resolvedPaths()` UserDefaults-first / bundle-fallback en `PythonBridge` | Preserva overrides v2.0 sin romper el flujo zero-config nuevo | ✓ Good (Phase 9) |
+| [v3.0] `PathSource` y `PythonOperatingMode` declarados `Equatable` explícitamente | Swift no sintetiza Equatable en enums sin declararlo, aunque no tengan valores asociados — necesario para que compilen los tests con `XCTAssertEqual` | ✓ Good (Phase 10, confirmado con build real) |
+| [v3.0] `SettingsViewModel.operatingMode` reutiliza `PythonBridge.resolvedPaths()` en vez de reimplementar la lógica | Evita que el badge de Preferencias se desincronice del comportamiento real de `run()` | ✓ Good (Phase 10, confirmado con build real) |
+| [v3.0] `IOCollector: @unchecked Sendable` (en vez de `nonisolated`) | El `nonisolated` no elimina los warnings de captura no-Sendable en closures `@Sendable` de `readabilityHandler`; el `NSLock` interno ya garantiza la seguridad real, así que `@unchecked Sendable` es el fix correcto — encontrado durante el checkpoint humano de Fase 10 | ✓ Good (Phase 10) |
+| [v3.0] `refreshOperatingMode()` usa `Task.detached` (no `Task {}`) para `bundledPythonVersion()` | `SettingsViewModel` es `@MainActor`; un `Task {}` normal hereda ese aislamiento y el subprocess bloqueante `--version` se ejecutaría en el hilo principal pese al comentario original — bug real encontrado por el warning "No async operations occur within await expression" en el checkpoint | ✓ Good (Phase 10) |
 
 ## Evolution
 
@@ -106,4 +109,4 @@ Este documento evoluciona en transiciones de fase y límites de milestone.
 **Después de cada milestone:** revisar Core Value, auditar Out of Scope, actualizar Context.
 
 ---
-*Last updated: 2026-06-14 — Milestone v3.0 started*
+*Last updated: 2026-08-18 — v3.0 Standalone App cerrado: checkpoint humano de Fase 10 pasado (Build Succeeded, 49 tests/3 skipped/0 fallos, checklist visual OK)*

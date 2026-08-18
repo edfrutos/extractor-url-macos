@@ -2,36 +2,38 @@
 gsd_state_version: 1.0
 milestone: v3.0
 milestone_name: Standalone App
-status: executing
-last_updated: "2026-06-15T10:05:00.000Z"
-last_activity: 2026-06-15 -- Phase 8 planificada (3 planes PASS)
+status: complete
+last_updated: "2026-08-18T00:00:00.000Z"
+last_activity: 2026-08-18 -- Checkpoint humano Fase 10 pasado en Xcode (Build Succeeded, 49 tests/3 skipped/0 fallos, checklist visual OK) — milestone v3.0 cerrado
 progress:
   total_phases: 3
-  completed_phases: 0
+  completed_phases: 3
   total_plans: 3
-  completed_plans: 0
-  percent: 5
+  completed_plans: 3
+  percent: 100
 ---
 
 # Project State
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-06-14)
+See: .planning/PROJECT.md (updated 2026-08-18)
 
 **Core value:** Convertir páginas web en Markdown útil y limpio de forma fiable, repetible y sin depender de servicios externos.
-**Current focus:** Phase 8 — bundling Python runtime dentro del .app
+**Current focus:** Milestone v3.0 (Standalone App) completado y cerrado. Sin foco activo — pendiente que el usuario indique el siguiente milestone (v4+: soporte JS/Playwright, historial de extracciones, o commit de todo lo pendiente).
 
 ## Current Position
 
-Phase: 8 — Bundle Python Runtime
-Plan: 08-01 (Wave 1, listo para ejecutar)
-Status: Planned — ready to execute
-Last activity: 2026-06-15 — Phase 8 planificada con research + 3 PLANs verificados
+Phase: 10 — UX Zero-Config
+Plan: 10-01 (Wave 1)
+Status: Complete — checkpoint humano pasado en Xcode el 2026-08-18
+Last activity: 2026-08-18 — Checkpoint humano: Build Succeeded (tras corregir 2 bugs reales encontrados durante la verificación: warnings de Sendable en IOCollector, y Task.detached para bundledPythonVersion() que corría erróneamente en @MainActor), 49 tests ejecutados/3 skipped/0 fallos, checklist visual 2-0 a 2D confirmado (badge "Python 3.13.14" real).
 
 ```
-v3.0 Progress: [----------] 5%
-Phase 8: [----------] 0/3 planes
+v3.0 Progress: [==========] 100% — verificado con xcodebuild real, milestone cerrado
+Phase 8: [==========] 3/3 planes
+Phase 9: [==========] 1/1 plan
+Phase 10: [==========] 1/1 plan (checkpoint humano completo)
 ```
 
 ## Accumulated Context
@@ -49,16 +51,19 @@ Decisiones relevantes para v3.0:
 - [v3.0]: `pip install --target ... --platform macosx_13_0_universal2 --only-binary :all:` para forzar wheels universal2 (lxml 6.1.1 tiene wheel universal2 para cp313).
 - [v3.0]: Codesigning bottom-up manual — `find .so/.dylib` → `python3.13` → Xcode firma `.app`. Sin `--deep`.
 - [v3.0]: SettingsView mantiene override de rutas para uso avanzado — no se elimina, se hace opcional (Fase 10).
+- [v3.0]: `PathSource` (PythonBridge) y `PythonOperatingMode` (SettingsViewModel) declarados `Equatable` explícitamente — necesario para que `XCTAssertEqual`/`==` compilen; Swift no sintetiza Equatable en enums sin declaración explícita, aunque no tengan asociados.
+- [v3.0]: `SettingsViewModel.operatingMode` reutiliza `PythonBridge.resolvedPaths()` (misma lógica que `run()`) en vez de reimplementar la prioridad UserDefaults/bundle — evita que el badge de Preferencias se desincronice del comportamiento real.
+- [v3.0]: Sección "Configuración avanzada" en SettingsView colapsada por defecto solo en modo bundle; se auto-expande la primera vez si el modo activo es override o unavailable (UX-03).
+- [v3.0]: `IOCollector: @unchecked Sendable` en vez de `nonisolated` — el `NSLock` interno ya protege el estado; `nonisolated` no suprime los warnings de captura no-Sendable en closures `@Sendable`. Encontrado en el checkpoint humano de Fase 10.
+- [v3.0]: `refreshOperatingMode()` lanza `Task.detached` (no `Task {}`) para `bundledPythonVersion()` — `SettingsViewModel` es `@MainActor` y un `Task {}` normal hereda ese aislamiento, así que el subprocess bloqueante `--version` corría en el hilo principal pese al comentario original. Encontrado en el checkpoint humano de Fase 10.
 
 ### Pending Todos
 
-- Ejecutar 08-01-PLAN.md: crear `scripts/bundle-python.sh` + actualizar `.gitignore`
-- Ejecutar 08-02-PLAN.md: Copy Files Phase Xcode + Run Script Phase + bundledPythonPath() en PythonBridge
-- Ejecutar 08-03-PLAN.md: verify-bundle.sh + BundlePathTests.swift + build Release + checkpoint humano
+- Ninguno pendiente de v3.0. Decidir siguiente milestone (v4+) o hacer commit de Fases 9+10 y docs (ver Blockers/Concerns).
 
 ### Blockers/Concerns
 
-- Ninguno. `--json` confirmado en extractor_url.py línea 250.
+- Nada bloqueante. Todos los cambios de Fase 9 y Fase 10 (código Swift + docs de planning) siguen sin commitear en `git status` — el usuario no ha pedido aún hacer el commit; preguntar antes de commitear (ver flujo de cierre en `.planning/phases/10-ux-zero-config/CHECKPOINT-HUMANO.md`, Paso 5.4).
 
 ## Deferred Items (desde v2.0)
 
@@ -70,6 +75,6 @@ Decisiones relevantes para v3.0:
 
 ## Session Continuity
 
-Last session: 2026-06-14T19:42:00Z
-Stopped at: Definiendo requirements para v3.0
-Resume file: None
+Last session: 2026-08-18T00:00:00Z
+Stopped at: Milestone v3.0 cerrado tras checkpoint humano en Xcode (Build Succeeded, 49 tests/3 skipped/0 fallos, checklist visual OK). Pendiente: preguntar al usuario si quiere commitear Fase 9 + Fase 10 + docs.
+Resume file: .planning/phases/10-ux-zero-config/10-01-SUMMARY.md
