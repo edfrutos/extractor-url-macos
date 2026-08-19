@@ -8,8 +8,8 @@ El proyecto tiene dos capas:
 1. **Motor Python** (`core.py` + `extractor_url.py`) — CLI + GUI `tkinter`,
    funciona de forma independiente en cualquier plataforma con Python 3.
 2. **App macOS nativa** (`ExtractorApp/`, SwiftUI) — envuelve el motor Python
-   vía subprocess y añade preview, export a Markdown/HTML/PDF y (desde v3.0)
-   un runtime Python embebido para funcionar sin instalación previa.
+   vía subprocess y añade preview, export a Markdown/HTML/PDF, con un runtime
+   Python embebido (desde v3.0) para funcionar sin instalación previa.
 
 ## Funcionalidad
 
@@ -19,6 +19,10 @@ El proyecto tiene dos capas:
   `html.parser`).
 - Conversión a Markdown vía `trafilatura` (principal) con fallback a
   `markdownify` sobre el contenido limpiado.
+- Fallback automático a Playwright (Chromium headless) cuando la extracción
+  estática detecta contenido insuficiente (posible SPA sin hidratar) — sin
+  flag manual; si Playwright no está instalado, degrada al resultado
+  estático sin fallar (v4.0).
 - Selector CSS opcional para acotar la extracción a un fragmento concreto;
   un selector inexistente o mal formado falla explícitamente en vez de
   ampliar el alcance en silencio.
@@ -53,20 +57,23 @@ gestiona la UI, el filesystem y la exportación.
   y `.pdf` vectorial con texto seleccionable.
 - Universal binary (arm64 + x86_64), Hardened Runtime ON, App Sandbox OFF,
   deployment target macOS 13.0+.
-- Runtime Python embebido en el propio `.app` (en construcción, ver estado
-  más abajo): el usuario no necesita instalar Python ni configurar rutas.
+- Runtime Python embebido en el propio `.app`: el usuario no necesita
+  instalar Python ni configurar rutas — funciona de serie desde el primer
+  lanzamiento (v3.0). Playwright/Chromium (fallback JS del motor) queda
+  fuera del bundle por su peso; la app sigue funcionando igual sin él.
 
 ## Entorno de desarrollo (motor Python)
 
 ```bash
 source .venv/bin/activate
-pip install requests beautifulsoup4 lxml markdownify trafilatura pytest
+pip install requests beautifulsoup4 lxml markdownify trafilatura playwright pytest
+playwright install chromium        # binarios del browser — paso aparte, opcional para pasar los tests
 ```
 
 ```bash
 pylint extractor_url.py core.py    # usa .pylintrc local
 mypy extractor_url.py core.py      # verificación de tipos
-pytest tests/                      # 17 tests: conversor, CLI, título
+pytest tests/                      # 28 tests: conversor, CLI, título, fallback JS
 pytest tests/ -k nombre_del_test -v
 pytest tests/ --cov=extractor_url
 ```
@@ -82,8 +89,8 @@ xcodebuild test -scheme ExtractorApp -destination 'platform=macOS'
 
 ```text
 extractor_url.py          # punto de entrada CLI y GUI (tkinter)
-core.py                   # descarga, caché, limpieza y conversión
-tests/                    # pytest: conversor, CLI, título; fixtures HTML locales
+core.py                   # descarga, caché, limpieza, conversión y fallback JS (Playwright)
+tests/                    # pytest: conversor, CLI, título, fallback JS; fixtures HTML locales
 scripts/                  # bundle-python.sh, verify-bundle.sh (empaquetado runtime v3.0)
 ExtractorApp/              # proyecto Xcode de la app macOS SwiftUI
 .planning/                 # metodología GSD: PROJECT.md, ROADMAP.md, STATE.md, fases
@@ -103,32 +110,14 @@ fases y criterios de éxito, `STATE.md` es el punto de retomo entre sesiones.
 |---|---|---|
 | v1.0 — Stabilization | ✅ Completado | Suite pytest, pylint 10/10, contratos CLI explícitos |
 | v2.0 — SwiftUI Native App | ✅ Completado | App macOS nativa, bridge Python async, export MD/HTML/PDF, universal binary, UI premium |
-| v3.0 — Standalone App | 🚧 En curso | Empaquetar el runtime Python dentro del `.app` para eliminar la configuración manual de rutas |
+| v3.0 — Standalone App | ✅ Completado | Runtime Python embebido en el `.app`, zero-config desde el primer lanzamiento, verificado con `xcodebuild` real (49 tests) |
+| v4.0 — Contenido Dinámico (JS) | ✅ Completado | Fallback automático a Playwright para SPAs sobre el motor Python, verificado con `pytest` real (28 tests) |
 
-**v3.0 — fases:**
-
-| Fase | Objetivo | Estado |
-|---|---|---|
-| 8. Bundle Python Runtime | Python universal + dependencias vendorizadas dentro de `Contents/Resources/` | ✅ Completada y verificada (verify-bundle 14 OK, 7/7 BundlePathTests) |
-| 9. Bridge Auto-detección | `PythonBridge` resuelve rutas del bundle automáticamente, con fallback desde overrides de `UserDefaults` (v2.0) | ✅ Completada y verificada (13/13 PythonBridgeTests, 45/45 suite completa) |
-| 10. UX Zero-Config | Badge "Usando Python incluido (Python X.X.X)" en `SettingsView` + sección de override colapsable como opción avanzada | ⚠️ Código completo, **sin compilar** — ver nota abajo |
-
-> **Fase 10 — pendiente de verificación en Xcode.** El código (`PythonOperatingMode`
-> en `SettingsViewModel`, `bundledPythonVersion()` en `PythonBridge`, badge +
-> sección colapsable en `SettingsView`, 4 tests nuevos) se escribió en un
-> entorno sin Xcode ni `swiftc`, así que a diferencia de las fases 3-9 no se ha
-> podido ejecutar `xcodebuild build`/`test` para confirmarlo. De paso se
-> corrigió `enum PathSource` (Fase 9) para declarar `Equatable` explícitamente
-> — Swift no sintetiza esa conformidad aunque el enum no tenga valores
-> asociados, y los tests existentes de `PythonBridgeTests` dependen de ella.
-> Antes de dar la Fase 10 (y el milestone v3.0) por cerrados, hay que compilar
-> y correr la suite en un Mac real — comandos exactos en
-> `.planning/phases/10-ux-zero-config/10-01-SUMMARY.md`.
-
-**Fuera de alcance (decisión explícita):** distribución en App Store, soporte
-de páginas con renderizado JavaScript (Playwright), historial/cola de
-extracciones, notarización para terceros — todo diferido a v4+ o descartado
-por ser una herramienta de uso personal.
+**Fuera de alcance (decisión explícita):** distribución en App Store,
+historial/cola de extracciones, notarización para terceros, flag manual
+`--js`/`--no-js` (el fallback JS es solo automático), embeber
+Playwright/Chromium en el `.app` bundle SwiftUI (+300MB) — todo diferido a
+v5+ o descartado por ser una herramienta de uso personal.
 
 ## Idioma
 
