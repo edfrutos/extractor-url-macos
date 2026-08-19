@@ -49,12 +49,11 @@ Decisiones relevantes para v4.0:
 
 ### Pending Todos
 
-- Ninguno pendiente de v4.0. Decidir siguiente milestone (v5+) o hacer commit/push de Fase 11 + docs (ver Blockers/Concerns).
-- Recomendado no bloqueante: repetir `pytest tests/` en el `.venv` real del Mac (macOS, Python 3.12) antes de considerar esto verificado "en el entorno real del usuario" — la verificación de esta sesión se hizo en un venv Linux ad-hoc equivalente, no en el `.venv` del propio repo.
+- Ninguno pendiente de v4.0. Decidir siguiente milestone (v5+).
 
 ### Blockers/Concerns
 
-- Nada bloqueante. Cambios de Fase 11 (core.py, requirements.txt, CLAUDE.md, tests/, docs de planning) siguen sin commitear en `git status` — preguntar al usuario antes de commitear/pushear, igual que en v3.0.
+- Nada bloqueante. Fase 11 commiteada (`03beba2`) y pusheada a `origin/main`. Verificada doblemente: venv ad-hoc de sandbox (Linux) y `.venv` real del Mac (Python 3.12.4, playwright 1.62.0) — `pytest tests/` 28/28 en ambos.
 
 ## Deferred Items (desde v4.0)
 

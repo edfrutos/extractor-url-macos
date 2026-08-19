@@ -119,10 +119,11 @@ mypy core.py        → Success: no issues found
 
 Nota: el `.venv` del propio repo (macOS, Python 3.12 vía symlink al
 framework de Python.org) no es utilizable en este sandbox Linux — la
-verificación se hizo con un venv equivalente creado ad-hoc. Recomendado
-(no bloqueante) repetir `pytest tests/` en el `.venv` real del Mac antes
-de dar la fase por cerrada de cara al usuario, igual que con cualquier
-cambio de este repo.
+primera verificación se hizo con un venv equivalente creado ad-hoc.
+
+**Confirmado también en el `.venv` real del Mac** (Python 3.12.4,
+pytest-9.0.3, playwright 1.62.0 ya presente): `pytest tests/` → 28
+passed en 2.48s, sin fallos. Doble verificación superada.
 
 ## Self-Check
 
