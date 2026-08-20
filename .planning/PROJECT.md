@@ -57,29 +57,41 @@ Convertir páginas web en Markdown útil y limpio de forma fiable, repetible y s
 - ✓ UPDATE-05: `appcast.xml` alojado en el repo, servido vía `raw.githubusercontent.com`, confirmado en vivo con `curl`; binario como asset de GitHub Release. — Validated in Phase 13
 - ✓ UPDATE-06: `RELEASING.md` documenta el proceso completo; ninguna credencial expuesta en el repo en todo el checkpoint. — Validated in Phase 13
 
+### Active (v6.0)
+
+- [ ] HIST-01: `core.py`/`extractor_url.py` persiste un historial de extracciones (URL, fecha, formato, resultado/error) en almacenamiento local.
+- [ ] HIST-02: La app SwiftUI muestra el historial y permite reabrir/reexportar una extracción previa sin repetirla.
+- [ ] HIST-03: El usuario puede encolar varias URLs (CLI y/o app) y procesarlas secuencialmente sin intervención por cada una.
+- [ ] FLAG-01: `--js` fuerza el fallback Playwright sin depender de la heurística `_looks_insufficient()`.
+- [ ] FLAG-02: `--no-js` desactiva el fallback Playwright aunque la heurística lo activaría.
+- [ ] CHANNEL-01: `scripts/release-macos.sh` soporta publicar en un canal `beta` (`sparkle:channel`) sin afectar al canal por defecto.
+- [ ] CHANNEL-02: La app puede optar (vía `SPUUpdaterDelegate.allowedChannelsForUpdater`) a recibir actualizaciones del canal beta.
+- [ ] BUNDLEJS-01: El pipeline de bundling (Fase 8) vendoriza Playwright + Chromium dentro del `.app`, firmados y notarizables (Developer ID + hardened runtime en todos los binarios internos de Chromium).
+- [ ] BUNDLEJS-02: El fallback JS del motor Python funciona en la app SwiftUI sin que el usuario instale Playwright por separado.
+- [ ] POLISH-01: `_bump_version` en `scripts/release-macos.sh` acota el `sed` a los bloques del target `ExtractorApp` únicamente (no toca `ExtractorAppTests`).
+- [ ] POLISH-02: Investigado y documentado el bug del buscador de paquetes de Xcode 26.6; Sparkle migrado a paquete remoto si se confirma resuelto.
+
 ### Out of Scope
 
 - App Store o distribución comercial — no es el objetivo.
-- Embeber Playwright/Chromium en el `.app` bundle de la app SwiftUI — v4 es solo motor Python (CLI); +300MB de peso no es aceptable para el bundle zero-config de v3. Revisar en v6+ si hay demanda real.
-- Flag manual `--js`/`--no-js` para forzar u omitir el fallback — v4 usa solo detección automática; un control manual explícito queda diferido.
-- Historial de extracciones y cola — v6+.
-- Canales beta/nightly, rollouts por fases — Sparkle los soporta pero v5.0 no los necesita (pocos usuarios).
-- Notarización para **distribución pública a terceros** (App Store, web pública) sigue fuera de alcance — la notarización de v5.0 es solo para que las actualizaciones vía Sparkle no muestren avisos de Gatekeeper en las propias instalaciones del autor, no para publicar la app a desconocidos.
+- Notarización para **distribución pública a terceros** (App Store, web pública) sigue fuera de alcance — la notarización existente es solo para que las actualizaciones vía Sparkle no muestren avisos de Gatekeeper en las propias instalaciones del autor.
+- Rollouts por fases de Sparkle (`sparkle:phasedRolloutInterval`) — v6.0 cubre canales beta/nightly, pero los rollouts progresivos por grupos quedan diferidos a v7+ si hay más usuarios.
 
 ## Context
 
-El proyecto tiene dos capas: el motor Python (`core.py` + `extractor_url.py`) y la app nativa SwiftUI (`ExtractorApp/`). La app lanza el motor vía `Foundation.Process()` con `--json`. v3.0 eliminó la dependencia del usuario de instalar Python y configurar rutas. v4.0 amplió el motor Python para extraer contenido de páginas que requieren JavaScript (SPAs). v5.0 añade auto-actualización a la app SwiftUI (Sparkle) para eliminar la distribución 100% manual del `.app`.
+El proyecto tiene dos capas: el motor Python (`core.py` + `extractor_url.py`) y la app nativa SwiftUI (`ExtractorApp/`). La app lanza el motor vía `Foundation.Process()` con `--json`. v3.0 eliminó la dependencia del usuario de instalar Python y configurar rutas. v4.0 amplió el motor Python para extraer contenido de páginas que requieren JavaScript (SPAs). v5.0 añadió auto-actualización a la app SwiftUI (Sparkle). v6.0 cubre el backlog diferido de v4.0/v5.0: historial y cola de extracciones, control manual del fallback JS, canales beta de Sparkle, Playwright embebido en el bundle, y pulido técnico menor.
 
-## Current Milestone: v5.0 Auto-actualización (Sparkle) — COMPLETADO 2026-08-20
+## Current Milestone: v6.0 Historial y Distribución Completa
 
-**Goal:** La app comprueba e instala nuevas versiones de sí misma automáticamente (Sparkle 2), sin que el usuario tenga que descargar y reemplazar el `.app` a mano — con un pipeline de release reproducible (build → firma Developer ID → notarización → appcast → GitHub Releases).
+**Goal:** Cerrar el backlog explícito de v4.0/v5.0 — historial/cola de extracciones (funcionalidad más pedida), control manual del fallback JS, canales beta de Sparkle, Playwright embebido en el `.app` bundle, y limpieza técnica menor.
 
 **Target features:**
 
-- Sparkle 2 integrado en `ExtractorApp.xcodeproj` vía SPM, con comprobación automática (24h) + ítem de menú manual
-- `appcast.xml` alojado en GitHub Releases del propio repo, sin infraestructura nueva
-- `scripts/release-macos.sh` automatiza el pipeline completo de publicación
-- Actualizaciones firmadas con EdDSA (Sparkle) + Developer ID notarizado (Gatekeeper) — doble verificación
+- Historial de extracciones persistente + cola de URLs a procesar
+- `--js`/`--no-js` como flags explícitos junto a la heurística automática existente
+- Canal `beta` en el pipeline de release y en la app (opt-in)
+- Playwright + Chromium vendorizados en el `.app` bundle, firmados y notarizables
+- `_bump_version` acotado al target correcto; revisión del bug de búsqueda de paquetes de Xcode 26.6
 
 ## Current State
 
@@ -88,6 +100,7 @@ Milestone v2.0 (SwiftUI Native App) completado: app macOS nativa, bridge Python 
 Milestone v3.0 (Standalone App) completado y cerrado: Fases 8, 9 y 10 verificadas con `xcodebuild` real (Build Succeeded, 49 tests/3 skipped/0 fallos, checklist visual OK) — ver `.planning/phases/10-ux-zero-config/10-01-SUMMARY.md`.
 Milestone v4.0 (Contenido Dinámico) completado y cerrado: Fase 11 implementa `_looks_insufficient()` + `_fetch_via_playwright()` en `core.py`, integrados en `_fetch_raw()`. Verificado con `pytest tests/` (28/28), `pylint` 10/10 y `mypy` limpio en un venv equivalente al del repo — ver `.planning/phases/11-playwright-fallback/11-01-SUMMARY.md`.
 Milestone v5.0 (Auto-actualización) completado y cerrado: Fase 12 (Sparkle integrado en la app, paquete local por un bug de búsqueda de Xcode 26.6) y Fase 13 (`scripts/release-macos.sh` — build, firma Developer ID, notarización, appcast firmado con EdDSA, publicación en GitHub Releases) verificadas con un release real: `https://github.com/edfrutos/extractor-url-macos/releases/tag/v1.0`, `appcast.xml` publicado y confirmado en vivo — ver `.planning/phases/13-release-pipeline/13-01-SUMMARY.md` para los 4 bugs reales encontrados y corregidos durante el checkpoint (team ID en exportOptions.plist, hardened runtime del Python embebido, orden de bootstrap, firma EdDSA de generate_appcast).
+Milestone v6.0 (Historial y Distribución Completa) en definición: 5 fases (14-18) cubriendo el backlog diferido de v4.0/v5.0. Fase 17 (Playwright/Chromium embebido) es significativamente más grande que el resto — comparable en alcance a la Fase 8 completa de v3.0, pero para Chromium (múltiples binarios internos que firmar/notarizar, no solo un intérprete).
 
 ## Constraints
 
@@ -130,6 +143,7 @@ Milestone v5.0 (Auto-actualización) completado y cerrado: Fase 12 (Sparkle inte
 | [v5.0] `_resign_bundled_python()` re-firma el runtime Python embebido (Fase 8) con `--options runtime` tras exportar | `xcodebuild -exportArchive` no aplica hardened runtime a binarios sueltos copiados vía Build Phase, fuera del grafo de frameworks de Xcode — notarytool los rechaza sin ello. Encontrado en el checkpoint de Fase 13 | ✓ Good (Phase 13) |
 | [v5.0] `sign_update` explícito como fallback si `generate_appcast` no firma el enclosure | `generate_appcast` no añadía `sparkle:edSignature` pese a que `sign_update` (mismos defaults de Keychain) sí firma en aislamiento — causa raíz no determinada, pero el fallback garantiza que el appcast siempre queda firmado | ✓ Good (Phase 13) |
 | [v5.0] `exportOptions.plist` incluye `teamID` explícito (no solo `method`+`signingStyle`) | `xcodebuild -exportArchive` con firma Automatic sin team ID fijo falla con "No Team Found in Archive" al ejecutarse desde línea de comandos (no reproduce el comportamiento de la UI de Xcode) | ✓ Good (Phase 13) |
+| [v6.0] Orden de fases 14→18 fijado por el usuario ("en el orden establecido, TODO") | El usuario pidió cubrir todo el backlog de v4.0/v5.0 en el orden en que se presentó (historial → flags → canales → bundle JS → pulido), no priorizado por Claude | Pending (Phase 14) |
 
 ## Evolution
 
@@ -139,4 +153,4 @@ Este documento evoluciona en transiciones de fase y límites de milestone.
 **Después de cada milestone:** revisar Core Value, auditar Out of Scope, actualizar Context.
 
 ---
-*Last updated: 2026-08-20 — Milestone v5.0 Auto-actualización (Sparkle) cerrado: primer release real v1.0 publicado y verificado en vivo (appcast.xml firmado, GitHub Release)*
+*Last updated: 2026-08-20 — Milestone v6.0 Historial y Distribución Completa definido: 5 fases (14-18) cubriendo el backlog diferido de v4.0/v5.0*

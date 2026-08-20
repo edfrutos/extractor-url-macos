@@ -73,3 +73,18 @@
 - **Primer release real publicado**: [v1.0](https://github.com/edfrutos/extractor-url-macos/releases/tag/v1.0), `appcast.xml` verificado en vivo con firma EdDSA correcta
 
 **Phases:** 2 (12→13) | **Requirements:** UPDATE-01→06 (todos validados)
+
+---
+
+## v6.0 — Historial y Distribución Completa 🔄 (en definición)
+
+**Goal:** Cerrar el backlog explícito de v4.0/v5.0 — historial/cola de extracciones, control manual del fallback JS, canales beta de Sparkle, Playwright embebido en el `.app` bundle, y pulido técnico menor. Orden fijado por el usuario: historial → flags → canales → bundle JS → pulido.
+
+**Fases:**
+- Fase 14 — Historial y cola de extracciones
+- Fase 15 — Flag manual `--js`/`--no-js`
+- Fase 16 — Canales beta de Sparkle
+- Fase 17 — Playwright/Chromium embebido en el bundle (la más grande — comparable a la Fase 8 completa de v3.0)
+- Fase 18 — Pulido técnico (`_bump_version`, bug del buscador de Xcode 26.6)
+
+**Phases:** 5 (14→18) | **Requirements:** HIST-01→03, FLAG-01→02, CHANNEL-01→02, BUNDLEJS-01→02, POLISH-01→02

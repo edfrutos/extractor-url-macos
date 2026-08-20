@@ -351,3 +351,124 @@ Plans:
 |-------|----------------|--------|-----------|
 | 12. Integración Sparkle en la app | 1/1 | Complete | 2026-08-20 |
 | 13. Pipeline de release y publicación | 1/1 | Complete | 2026-08-20 |
+
+---
+
+## v6.0 Historial y Distribución Completa
+
+## Overview
+
+Cierra el backlog explícito diferido en v4.0/v5.0. Cinco temas sin relación
+técnica directa entre sí — historial/cola de extracciones (motor Python +
+app), control manual del fallback JS (motor Python), canales beta de
+Sparkle (pipeline de release + app), Playwright embebido en el bundle
+(empaquetado, retoma la Fase 8), y pulido técnico menor. Orden fijado
+explícitamente por el usuario: 14 → 15 → 16 → 17 → 18, sin depender unas de
+otras salvo donde se indica.
+
+**Aviso de alcance**: la Fase 17 (Playwright/Chromium embebido) es
+sustancialmente más grande que el resto — descargar y vendorizar Chromium
+(varios binarios internos: helpers de proceso, GPU, renderer, crashpad
+handler, etc.), cada uno firmado con Developer ID + hardened runtime para
+ser notarizable, es un proyecto comparable en alcance a toda la Fase 8 de
+v3.0 (que solo tuvo que resolver esto para un único intérprete Python).
+Tratarla como su propio sub-ciclo de research/plan/checkpoint cuando le
+toque el turno, no asumir que será tan rápida como las fases 14-16.
+
+### Checklist v6.0
+
+- [ ] **Phase 14: Historial y cola de extracciones** - Persistencia de extracciones previas + procesamiento de varias URLs en cola.
+- [ ] **Phase 15: Flag manual `--js`/`--no-js`** - Control explícito del fallback Playwright junto a la heurística automática de v4.0.
+- [ ] **Phase 16: Canales beta de Sparkle** - Publicar y recibir actualizaciones en un canal `beta` opcional.
+- [ ] **Phase 17: Playwright/Chromium embebido en el bundle** - El fallback JS funciona en la app SwiftUI sin depender de una instalación externa de Playwright.
+- [ ] **Phase 18: Pulido técnico** - Acotar `_bump_version`, investigar el bug del buscador de paquetes de Xcode 26.6.
+
+### Phase 14: Historial y cola de extracciones
+
+**Goal**: El usuario puede consultar extracciones anteriores sin repetirlas, y puede encolar varias URLs para procesarlas secuencialmente sin intervención manual por cada una.
+**Depends on**: Nothing nuevo — extiende motor Python (`core.py`/`extractor_url.py`) y app SwiftUI (`ContentView`/nueva vista de historial), sin tocar Sparkle ni el bundling.
+**Requirements**: HIST-01, HIST-02, HIST-03
+**Success Criteria** (what must be TRUE):
+
+  1. Cada extracción completada (éxito o error) queda registrada localmente con URL, fecha, formato y resultado/mensaje de error.
+  2. El usuario puede ver el historial desde la app y reabrir/reexportar una extracción previa sin volver a descargar la URL.
+  3. El usuario puede encolar varias URLs (desde la app y/o la CLI) y el sistema las procesa una a una sin que el usuario tenga que relanzar el comando/pulsar Extraer por cada una.
+  4. El historial no depende de servicios externos — almacenamiento local, consistente con el core value del proyecto.
+
+**Plans**: por definir (research/planning pendiente)
+
+**UI hint**: yes
+
+### Phase 15: Flag manual `--js`/`--no-js`
+
+**Goal**: El usuario puede forzar u omitir explícitamente el fallback Playwright desde la CLI, sin depender únicamente de la heurística automática de `_looks_insufficient()` (v4.0).
+**Depends on**: Phase 11 (v4.0) — extiende `core.py`/`extractor_url.py`, no la sustituye.
+**Requirements**: FLAG-01, FLAG-02
+**Success Criteria** (what must be TRUE):
+
+  1. `--js` fuerza el render con Playwright aunque la heurística automática no lo hubiera activado.
+  2. `--no-js` desactiva el fallback Playwright aunque la heurística automática sí lo activaría.
+  3. Sin pasar ninguno de los dos flags, el comportamiento es exactamente el de v4.0 (heurística automática, sin cambios).
+  4. Tests cubren los 2 flags sin depender de un browser real, siguiendo el mismo patrón de mocking que `tests/test_js_fallback.py`.
+
+**Plans**: por definir (research/planning pendiente)
+
+**UI hint**: no
+
+### Phase 16: Canales beta de Sparkle
+
+**Goal**: Es posible publicar una versión en un canal `beta` separado del canal por defecto, y la app puede optar (opt-in) a recibirlas, sin afectar a los usuarios en el canal estable.
+**Depends on**: Phase 13 (`scripts/release-macos.sh` y el pipeline de publicación ya existentes).
+**Requirements**: CHANNEL-01, CHANNEL-02
+**Success Criteria** (what must be TRUE):
+
+  1. `scripts/release-macos.sh` acepta un flag/variable para publicar en el canal `beta` (`sparkle:channel`) sin tocar las entradas del canal por defecto en el mismo `appcast.xml`.
+  2. La app, si el usuario opta al canal beta, ve y puede instalar versiones marcadas como `beta` vía `SPUUpdaterDelegate.allowedChannelsForUpdater`.
+  3. Un usuario que NO ha optado al canal beta nunca ve ni recibe una versión beta — el canal por defecto sigue funcionando exactamente igual que en v5.0.
+
+**Plans**: por definir (research/planning pendiente)
+
+**UI hint**: yes
+
+### Phase 17: Playwright/Chromium embebido en el bundle
+
+**Goal**: El `.app` bundle incluye Playwright + Chromium vendorizados, firmados con Developer ID y con hardened runtime en todos los binarios internos, de forma que el fallback JS del motor Python funciona en la app SwiftUI sin que el usuario instale nada por separado — y el bundle sigue siendo notarizable.
+**Depends on**: Phase 8 (v3.0, patrón de bundling del runtime Python) y Phase 13 (v5.0, pipeline de firma/notarización) — reutiliza y extiende ambos.
+**Requirements**: BUNDLEJS-01, BUNDLEJS-02
+**Success Criteria** (what must be TRUE):
+
+  1. El pipeline de bundling descarga y vendoriza Chromium (vía Playwright) dentro de `Contents/Resources/`, universal o con la estrategia de arquitectura que corresponda según lo que ofrezca Playwright.
+  2. Todos los binarios internos de Chromium relevantes (helpers de proceso, GPU, renderer, `crashpad_handler`, etc.) quedan firmados con Developer ID + hardened runtime — el `.app` pasa notarización sin errores de "hardened runtime no habilitado" (mismo tipo de problema ya resuelto para el Python embebido en la Fase 13, pero multiplicado a muchos más binarios).
+  3. Una extracción de una SPA real desde la app SwiftUI (sin Playwright instalado en el sistema del usuario) activa el fallback JS embebido y devuelve contenido correcto.
+  4. El incremento de tamaño del bundle (~300MB+) queda documentado y aceptado explícitamente — no es un límite duro del proyecto pero sí una decisión consciente a registrar.
+
+**Plans**: por definir (research/planning pendiente — fase grande, ver aviso de alcance en el Overview)
+
+**UI hint**: no
+
+### Phase 18: Pulido técnico
+
+**Goal**: Limpiar dos deudas técnicas menores identificadas durante el checkpoint de la Fase 13, sin afectar funcionalidad.
+**Depends on**: Phase 13.
+**Requirements**: POLISH-01, POLISH-02
+**Success Criteria** (what must be TRUE):
+
+  1. `_bump_version` en `scripts/release-macos.sh` solo modifica `CURRENT_PROJECT_VERSION`/`MARKETING_VERSION` de los bloques del target `ExtractorApp` — `ExtractorAppTests` queda intacto.
+  2. Investigado el bug de búsqueda de paquetes de Xcode 26.6 (raíz del workaround de paquete local de la Fase 12) — documentado si se identifica la causa, o confirmado que sigue sin resolverse.
+  3. Si el bug de Xcode se confirma resuelto (nueva versión de Xcode, fix identificado), Sparkle se migra de paquete local a referencia remota real con versión pinneada.
+
+**Plans**: por definir (research/planning pendiente)
+
+**UI hint**: no
+
+### Estado v6.0
+
+**Execution Order:** Phases execute in the order fixed by the user: 14 → 15 → 16 → 17 → 18
+
+| Phase | Plans Complete | Status | Completed |
+|-------|----------------|--------|-----------|
+| 14. Historial y cola de extracciones | 0/? | Planning | — |
+| 15. Flag manual `--js`/`--no-js` | 0/? | Planning | — |
+| 16. Canales beta de Sparkle | 0/? | Planning | — |
+| 17. Playwright/Chromium embebido en el bundle | 0/? | Planning | — |
+| 18. Pulido técnico | 0/? | Planning | — |

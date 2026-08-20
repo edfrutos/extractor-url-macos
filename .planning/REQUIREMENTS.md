@@ -82,12 +82,10 @@
 
 ## Future Requirements
 
-- Historial y cola de extracciones — v5+
-- Notarización y distribución a terceros — v5+
-- Actualización automática del runtime Python bundleado — v5+
-- Flags `--no-images`, `--no-links`, `--clipboard` — v5+
-- Flag manual `--js`/`--no-js` para forzar u omitir el fallback Playwright — v5+ si la heurística automática de v4 resulta insuficiente
-- Embeber Playwright/Chromium en el `.app` bundle SwiftUI — v5+ si hay demanda real, pese al coste de +300MB
+- Notarización y distribución a terceros (App Store, web pública) — v7+
+- Actualización automática del runtime Python bundleado — v7+
+- Flags `--no-images`, `--no-links`, `--clipboard` — v7+
+- Rollouts por fases de Sparkle (`sparkle:phasedRolloutInterval`) — v7+ si hay más usuarios
 
 ## Out of Scope (v4.0)
 
@@ -114,6 +112,11 @@
 | JS-01…04 | v4.0 | ✅ Complete | Phase 11 |
 | UPDATE-01…03 | v5.0 | ✅ Complete | Phase 12 |
 | UPDATE-04…06 | v5.0 | ✅ Complete | Phase 13 |
+| HIST-01…03 | v6.0 | ⬜ Pending | Phase 14 |
+| FLAG-01…02 | v6.0 | ⬜ Pending | Phase 15 |
+| CHANNEL-01…02 | v6.0 | ⬜ Pending | Phase 16 |
+| BUNDLEJS-01…02 | v6.0 | ⬜ Pending | Phase 17 |
+| POLISH-01…02 | v6.0 | ⬜ Pending | Phase 18 |
 
 ## Validated (v5.0 — Sparkle en la app)
 
@@ -128,6 +131,43 @@
 - [x] **UPDATE-04**: `scripts/release-macos.sh` automatiza build → firma Developer ID → notarización → generación de appcast → publicación en GitHub Releases. — Phase 13, release real v1.0 publicado
 - [x] **UPDATE-05**: `appcast.xml` alojado en el propio repo (`raw.githubusercontent.com`); binarios como assets de GitHub Release. — Phase 13, verificado con curl en vivo
 - [x] **UPDATE-06**: Documentación del proceso de release (`RELEASING.md`), incluida la gestión segura de la clave privada EdDSA y las credenciales de notarización. — Phase 13
+
+---
+
+## Active (v6.0 — Historial y Distribución Completa)
+
+Orden fijado por el usuario: historial → flags → canales → bundle JS → pulido.
+
+### HIST — Historial y cola de extracciones (Phase 14)
+
+- [ ] **HIST-01**: `core.py`/`extractor_url.py` persiste un historial de extracciones (URL, fecha, formato, resultado/error) en almacenamiento local.
+- [ ] **HIST-02**: La app SwiftUI muestra el historial y permite reabrir/reexportar una extracción previa sin repetirla.
+- [ ] **HIST-03**: El usuario puede encolar varias URLs (CLI y/o app) y procesarlas secuencialmente sin intervención por cada una.
+
+### FLAG — Control manual del fallback JS (Phase 15)
+
+- [ ] **FLAG-01**: `--js` fuerza el fallback Playwright sin depender de `_looks_insufficient()`.
+- [ ] **FLAG-02**: `--no-js` desactiva el fallback Playwright aunque la heurística lo activaría.
+
+### CHANNEL — Canales beta de Sparkle (Phase 16)
+
+- [ ] **CHANNEL-01**: `scripts/release-macos.sh` soporta publicar en el canal `beta` (`sparkle:channel`) sin afectar al canal por defecto.
+- [ ] **CHANNEL-02**: La app puede optar al canal beta vía `SPUUpdaterDelegate.allowedChannelsForUpdater`.
+
+### BUNDLEJS — Playwright embebido en el bundle (Phase 17)
+
+- [ ] **BUNDLEJS-01**: El pipeline de bundling (Fase 8) vendoriza Playwright + Chromium dentro del `.app`, firmados y notarizables (Developer ID + hardened runtime en todos los binarios internos de Chromium).
+- [ ] **BUNDLEJS-02**: El fallback JS del motor Python funciona en la app SwiftUI sin que el usuario instale Playwright por separado.
+
+### POLISH — Pulido técnico (Phase 18)
+
+- [ ] **POLISH-01**: `_bump_version` en `scripts/release-macos.sh` acota el `sed` a los bloques del target `ExtractorApp` únicamente.
+- [ ] **POLISH-02**: Investigado y documentado el bug del buscador de paquetes de Xcode 26.6; Sparkle migrado a paquete remoto si se confirma resuelto.
+
+## Out of Scope (v6.0)
+
+- **App Store / notarización pública**: uso personal, sin distribución a terceros.
+- **Rollouts por fases de Sparkle**: v6.0 cubre canales beta, no `phasedRolloutInterval` — v7+ si hay más usuarios.
 
 ## Notes
 
