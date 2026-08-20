@@ -22,6 +22,7 @@ set -euo pipefail
 
 # ── Configuración ──────────────────────────────────────────────────────────
 NOTARY_PROFILE="${NOTARY_PROFILE:-ExtractorApp-Notary}"
+DEVELOPER_TEAM_ID="${DEVELOPER_TEAM_ID:-V29BTBRY6G}"
 GITHUB_REPO="edfrutos/extractor-url-macos"
 SCHEME="ExtractorApp"
 
@@ -122,13 +123,15 @@ _build_and_export() {
 		-archivePath "${CACHE_DIR}/ExtractorApp.xcarchive" \
 		-destination 'generic/platform=macOS'
 
-	cat >"${CACHE_DIR}/exportOptions.plist" <<'PLIST'
+	cat >"${CACHE_DIR}/exportOptions.plist" <<PLIST
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
 	<key>method</key>
 	<string>developer-id</string>
+	<key>teamID</key>
+	<string>${DEVELOPER_TEAM_ID}</string>
 	<key>signingStyle</key>
 	<string>automatic</string>
 </dict>
@@ -140,6 +143,45 @@ PLIST
 		-archivePath "${CACHE_DIR}/ExtractorApp.xcarchive" \
 		-exportPath "${CACHE_DIR}/export" \
 		-exportOptionsPlist "${CACHE_DIR}/exportOptions.plist"
+}
+
+# ── Re-firmar el runtime Python embebido con Hardened Runtime ──────────────
+# El firmado final que aplica `xcodebuild -exportArchive` no añade
+# `--options runtime` a binarios sueltos copiados vía Build Phase (como
+# Contents/Resources/python/bin/python3.13 de la Fase 8) — solo a los
+# componentes que reconoce en su propio grafo (ejecutable principal,
+# frameworks embebidos). notarytool los rechaza sin hardened runtime.
+# Se re-firma bottom-up (igual orden que bundle-python.sh: .so → .dylib →
+# python3.13) con la MISMA identidad Developer ID que ya firmó el .app, y
+# se vuelve a sellar el bundle completo al final (necesario tras modificar
+# contenido firmado dentro de él).
+_resign_bundled_python() {
+	local app_path="${CACHE_DIR}/export/${SCHEME}.app"
+	local python_dir="${app_path}/Contents/Resources/python"
+
+	if [[ ! -d "${python_dir}" ]]; then
+		echo "Aviso: ${python_dir} no existe — nada que re-firmar (¿bundle Python no presente en este build?)." >&2
+		return 0
+	fi
+
+	local identity
+	identity="$(codesign -dv --verbose=4 "${app_path}" 2>&1 | sed -n 's/^Authority=//p' | head -1)"
+	if [[ -z "${identity}" ]]; then
+		echo "Error: no se pudo determinar la identidad de firma Developer ID del .app exportado." >&2
+		exit 1
+	fi
+
+	echo "Re-firmando el runtime Python embebido con hardened runtime (identidad: ${identity})…"
+
+	find "${python_dir}" -name "*.so" -exec \
+		codesign --force --timestamp --options runtime --sign "${identity}" {} \;
+	find "${python_dir}" -name "*.dylib" -exec \
+		codesign --force --timestamp --options runtime --sign "${identity}" {} \;
+	codesign --force --timestamp --options runtime --sign "${identity}" \
+		"${python_dir}/bin/python3.13"
+
+	echo "Re-sellando el .app completo tras modificar contenido firmado…"
+	codesign --force --deep --timestamp --options runtime --sign "${identity}" "${app_path}"
 }
 
 # ── Empaquetado (ditto, nunca zip/unzip genéricos — Pitfall 1) ─────────────
@@ -177,6 +219,7 @@ _notarize_and_staple() {
 # ── Archivar históricamente (para delta updates de generate_appcast) ──────
 _archive_and_generate_appcast() {
 	local zip_path="${CACHE_DIR}/${SCHEME}-${VERSION}.zip"
+	local zip_name="${SCHEME}-${VERSION}.zip"
 	mkdir -p "${ARCHIVE_DIR}"
 	cp "${zip_path}" "${ARCHIVE_DIR}/"
 
@@ -185,6 +228,29 @@ _archive_and_generate_appcast() {
 		--download-url-prefix "https://github.com/${GITHUB_REPO}/releases/download/v${VERSION}/" \
 		-o "${ARCHIVE_DIR}/appcast.xml" \
 		"${ARCHIVE_DIR}"
+
+	# generate_appcast no siempre añade sparkle:edSignature al enclosure
+	# (comportamiento verificado en el checkpoint humano — sign_update por
+	# separado sí firma de forma fiable). Si falta, la añadimos a mano.
+	if ! grep -q "${zip_name}\".*sparkle:edSignature" "${ARCHIVE_DIR}/appcast.xml"; then
+		echo "generate_appcast no firmó el enclosure — firmando con sign_update…"
+		local sig_output ed_sig
+		sig_output="$("${SPARKLE_TOOLS_DIR}/bin/sign_update" "${ARCHIVE_DIR}/${zip_name}")"
+		ed_sig="$(sed -n 's/.*\(sparkle:edSignature="[^"]*"\).*/\1/p' <<<"${sig_output}")"
+
+		if [[ -z "${ed_sig}" ]]; then
+			echo "Error: sign_update no devolvió una firma EdDSA utilizable." >&2
+			echo "Salida de sign_update: ${sig_output}" >&2
+			exit 1
+		fi
+
+		sed -i '' "/${zip_name}/s#length=\"#${ed_sig} length=\"#" "${ARCHIVE_DIR}/appcast.xml"
+
+		if ! grep -q "sparkle:edSignature" "${ARCHIVE_DIR}/appcast.xml"; then
+			echo "Error: no se pudo insertar sparkle:edSignature en appcast.xml." >&2
+			exit 1
+		fi
+	fi
 }
 
 # ── Publicar en GitHub Releases ────────────────────────────────────────────
@@ -206,6 +272,7 @@ _ensure_sparkle_tools
 _preflight_checks
 _bump_version
 _build_and_export
+_resign_bundled_python
 _notarize_and_staple
 _archive_and_generate_appcast
 _publish_release
