@@ -303,7 +303,7 @@ en `Info.plist` antes de tener sentido generar claves/appcast reales.
 ### Checklist v5.0
 
 - [x] **Phase 12: Integración Sparkle en la app** - Sparkle 2 vía SPM (local, ver desviación en 12-01-SUMMARY.md), `SPUStandardUpdaterController`, ítem de menú "Buscar actualizaciones…". (completed 2026-08-20)
-- [ ] **Phase 13: Pipeline de release y publicación** - `scripts/release-macos.sh` automatiza build→firma→notarización→appcast→GitHub Releases. (definida a nivel de roadmap, research pendiente — depende de Fase 12)
+- [ ] **Phase 13: Pipeline de release y publicación** - `scripts/release-macos.sh` automatiza build→firma→notarización→appcast→GitHub Releases. (código y RELEASING.md escritos 2026-08-20, checkpoint humano pendiente — primer release real)
 
 ### Phase 12: Integración Sparkle en la app
 
@@ -336,7 +336,10 @@ Plans:
   3. Una instalación previa de la app (build Developer ID notarizado, versión anterior) detecta la nueva versión vía Sparkle, la descarga, instala y relanza sin avisos de Gatekeeper.
   4. La clave privada EdDSA y las credenciales de notarización nunca aparecen en el repo — documentado explícitamente en `RELEASING.md` o equivalente.
 
-**Plans**: por definir (research/planning pendiente, bloqueado en el checkpoint humano de Fase 12)
+**Plans**: 1 plan — Wave 1: 13-01-PLAN.md
+
+Plans:
+- [x] 13-01-PLAN.md — scripts/release-macos.sh + RELEASING.md (código y docs escritos 2026-08-20, checkpoint humano de primer release real pendiente)
 
 **UI hint**: no
 
@@ -347,4 +350,4 @@ Plans:
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 12. Integración Sparkle en la app | 1/1 | Complete | 2026-08-20 |
-| 13. Pipeline de release y publicación | 0/? | Planning | — |
+| 13. Pipeline de release y publicación | 1/1 (código) | Checkpoint humano pendiente | — |
