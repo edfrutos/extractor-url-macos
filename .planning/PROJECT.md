@@ -57,11 +57,12 @@ Convertir páginas web en Markdown útil y limpio de forma fiable, repetible y s
 - ✓ UPDATE-05: `appcast.xml` alojado en el repo, servido vía `raw.githubusercontent.com`, confirmado en vivo con `curl`; binario como asset de GitHub Release. — Validated in Phase 13
 - ✓ UPDATE-06: `RELEASING.md` documenta el proceso completo; ninguna credencial expuesta en el repo en todo el checkpoint. — Validated in Phase 13
 
+- ✓ HIST-01: `core.py` persiste un historial de extracciones (metadatos, no contenido) en `~/.cache/extractor-url/history.jsonl`. — Validated in Phase 14 (14-01)
+- ✓ HIST-03: `extractor_url.py --batch <archivo> --json` procesa varias URLs secuencialmente, NDJSON, continúa tras un fallo individual. — Validated in Phase 14 (14-01)
+
 ### Active (v6.0)
 
-- [ ] HIST-01: `core.py`/`extractor_url.py` persiste un historial de extracciones (URL, fecha, formato, resultado/error) en almacenamiento local.
-- [ ] HIST-02: La app SwiftUI muestra el historial y permite reabrir/reexportar una extracción previa sin repetirla.
-- [ ] HIST-03: El usuario puede encolar varias URLs (CLI y/o app) y procesarlas secuencialmente sin intervención por cada una.
+- [ ] HIST-02: La app SwiftUI muestra el historial y permite reabrir/reexportar una extracción previa sin repetirla. (Fase 14-02, pendiente de definir)
 - [ ] FLAG-01: `--js` fuerza el fallback Playwright sin depender de la heurística `_looks_insufficient()`.
 - [ ] FLAG-02: `--no-js` desactiva el fallback Playwright aunque la heurística lo activaría.
 - [ ] CHANNEL-01: `scripts/release-macos.sh` soporta publicar en un canal `beta` (`sparkle:channel`) sin afectar al canal por defecto.
@@ -100,7 +101,7 @@ Milestone v2.0 (SwiftUI Native App) completado: app macOS nativa, bridge Python 
 Milestone v3.0 (Standalone App) completado y cerrado: Fases 8, 9 y 10 verificadas con `xcodebuild` real (Build Succeeded, 49 tests/3 skipped/0 fallos, checklist visual OK) — ver `.planning/phases/10-ux-zero-config/10-01-SUMMARY.md`.
 Milestone v4.0 (Contenido Dinámico) completado y cerrado: Fase 11 implementa `_looks_insufficient()` + `_fetch_via_playwright()` en `core.py`, integrados en `_fetch_raw()`. Verificado con `pytest tests/` (28/28), `pylint` 10/10 y `mypy` limpio en un venv equivalente al del repo — ver `.planning/phases/11-playwright-fallback/11-01-SUMMARY.md`.
 Milestone v5.0 (Auto-actualización) completado y cerrado: Fase 12 (Sparkle integrado en la app, paquete local por un bug de búsqueda de Xcode 26.6) y Fase 13 (`scripts/release-macos.sh` — build, firma Developer ID, notarización, appcast firmado con EdDSA, publicación en GitHub Releases) verificadas con un release real: `https://github.com/edfrutos/extractor-url-macos/releases/tag/v1.0`, `appcast.xml` publicado y confirmado en vivo — ver `.planning/phases/13-release-pipeline/13-01-SUMMARY.md` para los 4 bugs reales encontrados y corregidos durante el checkpoint (team ID en exportOptions.plist, hardened runtime del Python embebido, orden de bootstrap, firma EdDSA de generate_appcast).
-Milestone v6.0 (Historial y Distribución Completa) en definición: 5 fases (14-18) cubriendo el backlog diferido de v4.0/v5.0. Fase 17 (Playwright/Chromium embebido) es significativamente más grande que el resto — comparable en alcance a la Fase 8 completa de v3.0, pero para Chromium (múltiples binarios internos que firmar/notarizar, no solo un intérprete).
+Milestone v6.0 (Historial y Distribución Completa) en marcha: Fase 14 (historial y cola) — lado Python completado (14-01: `record_history_entry()`/`load_history()` en `core.py`, `--batch` NDJSON en `extractor_url.py`, 40 tests/pylint 10/10/mypy limpio), pendiente 14-02 (vista de historial en la app SwiftUI, HIST-02). Fases 15-18 sin empezar. Fase 17 (Playwright/Chromium embebido) es significativamente más grande que el resto — comparable en alcance a la Fase 8 completa de v3.0.
 
 ## Constraints
 
@@ -143,7 +144,10 @@ Milestone v6.0 (Historial y Distribución Completa) en definición: 5 fases (14-
 | [v5.0] `_resign_bundled_python()` re-firma el runtime Python embebido (Fase 8) con `--options runtime` tras exportar | `xcodebuild -exportArchive` no aplica hardened runtime a binarios sueltos copiados vía Build Phase, fuera del grafo de frameworks de Xcode — notarytool los rechaza sin ello. Encontrado en el checkpoint de Fase 13 | ✓ Good (Phase 13) |
 | [v5.0] `sign_update` explícito como fallback si `generate_appcast` no firma el enclosure | `generate_appcast` no añadía `sparkle:edSignature` pese a que `sign_update` (mismos defaults de Keychain) sí firma en aislamiento — causa raíz no determinada, pero el fallback garantiza que el appcast siempre queda firmado | ✓ Good (Phase 13) |
 | [v5.0] `exportOptions.plist` incluye `teamID` explícito (no solo `method`+`signingStyle`) | `xcodebuild -exportArchive` con firma Automatic sin team ID fijo falla con "No Team Found in Archive" al ejecutarse desde línea de comandos (no reproduce el comportamiento de la UI de Xcode) | ✓ Good (Phase 13) |
-| [v6.0] Orden de fases 14→18 fijado por el usuario ("en el orden establecido, TODO") | El usuario pidió cubrir todo el backlog de v4.0/v5.0 en el orden en que se presentó (historial → flags → canales → bundle JS → pulido), no priorizado por Claude | Pending (Phase 14) |
+| [v6.0] Orden de fases 14→18 fijado por el usuario ("en el orden establecido, TODO") | El usuario pidió cubrir todo el backlog de v4.0/v5.0 en el orden en que se presentó (historial → flags → canales → bundle JS → pulido), no priorizado por Claude | ✓ Good (Phase 14 iniciada en ese orden) |
+| [v6.0] Historial guarda solo metadatos, no el contenido extraído | Reabrir una entrada reextrae vía la caché HTTP ya existente (`_fetch_raw`) en vez de duplicar datos — mantiene `history.jsonl` pequeño y evita desincronización entre historial y caché | ✓ Good (Phase 14-01) |
+| [v6.0] `--batch` exige `--json` explícitamente | Evita ampliar el comportamiento en silencio con un formato de texto plano ad-hoc para múltiples resultados — mismo principio que "selector CSS inválido falla explícito" ya establecido en v1.0 | ✓ Good (Phase 14-01) |
+| [v6.0] `_lookup_title()` extraída como función compartida entre `main()` y `_run_batch()` | Eliminó duplicación real y bajó `pylint` de 9.95 a 10.00/10 (`too-many-statements` en `main()`) — refactor genuino, no solo un disable cosmético | ✓ Good (Phase 14-01) |
 
 ## Evolution
 
@@ -153,4 +157,4 @@ Este documento evoluciona en transiciones de fase y límites de milestone.
 **Después de cada milestone:** revisar Core Value, auditar Out of Scope, actualizar Context.
 
 ---
-*Last updated: 2026-08-20 — Milestone v6.0 Historial y Distribución Completa definido: 5 fases (14-18) cubriendo el backlog diferido de v4.0/v5.0*
+*Last updated: 2026-08-20 — Fase 14 (Historial y cola): lado Python completo y verificado (14-01); pendiente 14-02 (vista SwiftUI)*

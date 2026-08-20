@@ -60,6 +60,39 @@ _MIN_VISIBLE_TEXT_LENGTH = 100
 
 _CACHE_DIR = Path.home() / ".cache" / "extractor-url"
 
+# --- Historial de extracciones ---
+
+_HISTORY_FILE = _CACHE_DIR / "history.jsonl"
+
+
+def record_history_entry(entry: dict) -> None:
+    """Añade una entrada al historial (best-effort, nunca lanza)."""
+    try:
+        _CACHE_DIR.mkdir(parents=True, exist_ok=True)
+        with _HISTORY_FILE.open("a", encoding="utf-8") as f:
+            f.write(json.dumps(entry, ensure_ascii=False) + "\n")
+    except OSError:
+        pass
+
+
+def load_history(limit: Optional[int] = None) -> list[dict]:
+    """Devuelve las entradas del historial, más reciente primero."""
+    if not _HISTORY_FILE.exists():
+        return []
+    entries = []
+    with _HISTORY_FILE.open("r", encoding="utf-8") as f:
+        for line in f:
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                entries.append(json.loads(line))
+            except json.JSONDecodeError:
+                continue
+    entries.reverse()
+    return entries[:limit] if limit else entries
+
+
 def _create_retry_session() -> requests.Session:
     """Crea una sesión de requests con una estrategia de reintentos."""
     session = requests.Session()

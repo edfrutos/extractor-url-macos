@@ -112,7 +112,8 @@
 | JS-01…04 | v4.0 | ✅ Complete | Phase 11 |
 | UPDATE-01…03 | v5.0 | ✅ Complete | Phase 12 |
 | UPDATE-04…06 | v5.0 | ✅ Complete | Phase 13 |
-| HIST-01…03 | v6.0 | ⬜ Pending | Phase 14 |
+| HIST-01, HIST-03 | v6.0 | ✅ Complete | Phase 14 (14-01) |
+| HIST-02 | v6.0 | ⬜ Pending | Phase 14 (14-02) |
 | FLAG-01…02 | v6.0 | ⬜ Pending | Phase 15 |
 | CHANNEL-01…02 | v6.0 | ⬜ Pending | Phase 16 |
 | BUNDLEJS-01…02 | v6.0 | ⬜ Pending | Phase 17 |
@@ -140,9 +141,9 @@ Orden fijado por el usuario: historial → flags → canales → bundle JS → p
 
 ### HIST — Historial y cola de extracciones (Phase 14)
 
-- [ ] **HIST-01**: `core.py`/`extractor_url.py` persiste un historial de extracciones (URL, fecha, formato, resultado/error) en almacenamiento local.
-- [ ] **HIST-02**: La app SwiftUI muestra el historial y permite reabrir/reexportar una extracción previa sin repetirla.
-- [ ] **HIST-03**: El usuario puede encolar varias URLs (CLI y/o app) y procesarlas secuencialmente sin intervención por cada una.
+- [x] **HIST-01**: `core.py`/`extractor_url.py` persiste un historial de extracciones (URL, fecha, formato, resultado/error) en almacenamiento local. — Phase 14 (14-01), `~/.cache/extractor-url/history.jsonl`
+- [ ] **HIST-02**: La app SwiftUI muestra el historial y permite reabrir/reexportar una extracción previa sin repetirla. (Fase 14-02, pendiente de definir)
+- [x] **HIST-03**: El usuario puede encolar varias URLs (CLI y/o app) y procesarlas secuencialmente sin intervención por cada una. — Phase 14 (14-01), `--batch` NDJSON en la CLI
 
 ### FLAG — Control manual del fallback JS (Phase 15)
 

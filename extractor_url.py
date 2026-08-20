@@ -12,12 +12,54 @@ import json
 import sys
 import threading
 import tkinter as tk
+from datetime import datetime, timezone
 from tkinter import filedialog, messagebox, ttk
 from typing import Any, Optional, Union
 
 from bs4 import BeautifulSoup, FeatureNotFound
 
-from core import extract_formatted_content, _fetch_raw, _extract_title
+from core import (
+    extract_formatted_content,
+    _fetch_raw,
+    _extract_title,
+    record_history_entry,
+)
+
+
+def _lookup_title(url: str, timeout: int, use_cache: bool) -> Optional[str]:
+    """Extrae el <title> de una URL ya descargada (segunda llamada = hit de caché)."""
+    raw_result = _fetch_raw(url, timeout=timeout, use_cache=use_cache)
+    if raw_result is None:
+        return None
+    html_text, _ = raw_result
+    try:
+        title_soup = BeautifulSoup(html_text, "lxml")
+    except FeatureNotFound:
+        title_soup = BeautifulSoup(html_text, "html.parser")
+    return _extract_title(title_soup, html_text)
+
+
+def _history_entry(  # pylint: disable=too-many-arguments
+    url: str,
+    output_type: Optional[str],
+    selector: Optional[str],
+    status: str,
+    *,
+    char_count: Optional[int] = None,
+    title: Optional[str] = None,
+    error_message: Optional[str] = None,
+) -> dict:
+    """Construye una entrada de historial (sin el contenido extraído)."""
+    return {
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "url": url,
+        "output_type": output_type,
+        "selector": selector,
+        "status": status,
+        "char_count": char_count,
+        "title": title,
+        "error_message": error_message,
+    }
 
 
 # ---------------------------------------------------------------------------
@@ -149,6 +191,21 @@ class _ExtractorGui:  # pylint: disable=too-few-public-methods
                 timeout=30,
                 use_cache=True,
             )
+            if result is None:
+                record_history_entry(
+                    _history_entry(
+                        url, return_type, selector, "error",
+                        error_message="No se pudo extraer el contenido de la URL.",
+                    )
+                )
+            else:
+                result_text = result if isinstance(result, str) else str(result)
+                record_history_entry(
+                    _history_entry(
+                        url, return_type, selector, "success",
+                        char_count=len(result_text),
+                    )
+                )
             self.root.after(0, lambda: self._on_result(result))
 
         threading.Thread(target=_worker, daemon=True).start()
@@ -251,10 +308,22 @@ def main() -> None:
         action="store_true",
         help="Devolver la salida en formato JSON estructurado",
     )
+    parser.add_argument(
+        "--batch",
+        metavar="ARCHIVO",
+        help="Archivo con una URL por línea; procesa todas secuencialmente (requiere --json)",
+    )
     parser.set_defaults(use_cache=True)
 
 
     args = parser.parse_args()
+
+    if args.batch:
+        if not args.json:
+            print("Error: --batch requiere --json.", file=sys.stderr)
+            sys.exit(2)
+        _run_batch(args)
+        return
 
     if args.gui or args.url is None:
         _run_gui()
@@ -277,6 +346,12 @@ def main() -> None:
     )
 
     if result is None:
+        record_history_entry(
+            _history_entry(
+                args.url, args.type, args.selector, "error",
+                error_message="No se pudo extraer el contenido de la URL.",
+            )
+        )
         if args.json:
             _print_json_output({
                 "status": "error",
@@ -288,16 +363,13 @@ def main() -> None:
     result_str = result if isinstance(result, str) else str(result)
 
     if args.json:
-        # Extraer title de forma independiente (segunda llamada = hit de caché)
-        page_title: Optional[str] = None
-        raw_result = _fetch_raw(args.url, timeout=args.timeout, use_cache=args.use_cache)
-        if raw_result is not None:
-            html_text, _ = raw_result
-            try:
-                title_soup = BeautifulSoup(html_text, "lxml")
-            except FeatureNotFound:
-                title_soup = BeautifulSoup(html_text, "html.parser")
-            page_title = _extract_title(title_soup, html_text)
+        page_title = _lookup_title(args.url, args.timeout, args.use_cache)
+        record_history_entry(
+            _history_entry(
+                args.url, args.type, args.selector, "success",
+                char_count=len(result_str), title=page_title,
+            )
+        )
         _print_json_output({
             "status": "success",
             "url": args.url,
@@ -309,6 +381,13 @@ def main() -> None:
         })
         return
 
+    record_history_entry(
+        _history_entry(
+            args.url, args.type, args.selector, "success",
+            char_count=len(result_str),
+        )
+    )
+
     if args.output:
         try:
             with open(args.output, "w", encoding="utf-8") as f:
@@ -319,6 +398,71 @@ def main() -> None:
             sys.exit(1)
     else:
         print(result_str)
+
+
+def _run_batch(args: argparse.Namespace) -> None:
+    """Procesa varias URLs desde un archivo, una por línea (requiere --json).
+
+    Imprime un objeto JSON por línea (NDJSON) — uno por URL, en el mismo
+    orden que aparecen en el archivo. Cada URL se procesa de forma
+    independiente: si una falla, su línea refleja status "error" y el
+    bucle continúa con la siguiente (nunca aborta las restantes).
+    """
+    content_type_map = {
+        "text": "text",
+        "html": "html_string",
+        "markdown": "markdown_structure",
+    }
+    content_type = content_type_map.get(args.type, "text")
+
+    try:
+        with open(args.batch, "r", encoding="utf-8") as f:
+            urls = [line.strip() for line in f if line.strip()]
+    except OSError as e:
+        print(f"Error al leer {args.batch}: {e}", file=sys.stderr)
+        sys.exit(1)
+
+    for url in urls:
+        result = extract_formatted_content(
+            url,
+            return_type=content_type,
+            selector=args.selector,
+            timeout=args.timeout,
+            use_cache=args.use_cache,
+        )
+
+        if result is None:
+            record_history_entry(
+                _history_entry(
+                    url, args.type, args.selector, "error",
+                    error_message="No se pudo extraer el contenido de la URL.",
+                )
+            )
+            print(json.dumps({
+                "status": "error",
+                "url": url,
+                "error_message": "No se pudo extraer el contenido de la URL.",
+            }, ensure_ascii=False))
+            continue
+
+        result_str = result if isinstance(result, str) else str(result)
+        page_title = _lookup_title(url, args.timeout, args.use_cache)
+
+        record_history_entry(
+            _history_entry(
+                url, args.type, args.selector, "success",
+                char_count=len(result_str), title=page_title,
+            )
+        )
+        print(json.dumps({
+            "status": "success",
+            "url": url,
+            "selector": args.selector,
+            "output_type": args.type,
+            "char_count": len(result_str),
+            "content": result_str,
+            "title": page_title,
+        }, ensure_ascii=False))
 
 
 if __name__ == "__main__":

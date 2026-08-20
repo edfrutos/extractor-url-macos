@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v6.0
 milestone_name: Historial y Distribución Completa
-status: planning
+status: executing
 last_updated: "2026-08-20T00:00:00.000Z"
-last_activity: 2026-08-20 -- Milestone v6.0 definido (5 fases: 14-18); pendiente research de la Fase 14
+last_activity: 2026-08-20 -- Fase 14-01 (historial y cola, lado Python) completa y verificada: pytest 40/40, pylint 10/10, mypy limpio
 progress:
   total_phases: 5
   completed_phases: 0
-  total_plans: 0
-  completed_plans: 0
-  percent: 0
+  total_plans: 1
+  completed_plans: 1
+  percent: 10
 ---
 
 # Project State
@@ -20,18 +20,18 @@ progress:
 See: .planning/PROJECT.md (updated 2026-08-20)
 
 **Core value:** Convertir páginas web en Markdown útil y limpio de forma fiable, repetible y sin depender de servicios externos.
-**Current focus:** Fase 14 — Historial y cola de extracciones. Definida a nivel de ROADMAP (goal/requirements/success criteria); falta research y plan.
+**Current focus:** Fase 14 — lado Python (historial + `--batch`) completo y verificado. Falta 14-02 (vista de historial en la app SwiftUI, HIST-02) antes de dar la Fase 14 por cerrada; luego Fases 15-18 sin empezar.
 
 ## Current Position
 
 Phase: 14 — Historial y cola de extracciones
-Plan: ninguno todavía
-Status: Planning — solo definido el goal/requirements/success criteria en ROADMAP.md
-Last activity: 2026-08-20 — Milestone v6.0 iniciado: PROJECT.md, REQUIREMENTS.md, MILESTONES.md y ROADMAP.md actualizados con las 5 fases (14 Historial, 15 Flag manual JS, 16 Canales Sparkle, 17 Bundle Playwright, 18 Pulido técnico), orden fijado por el usuario. Directorios `.planning/phases/14-historial-cola/` a `.planning/phases/18-pulido-tecnico/` creados.
+Plan: 14-01 (Python) completo; 14-02 (Swift) por definir
+Status: In progress — HIST-01/HIST-03 validados, HIST-02 pendiente
+Last activity: 2026-08-20 — `core.py`: `_HISTORY_FILE`, `record_history_entry()` (best-effort, solo metadatos, nunca contenido), `load_history()` (ignora líneas corruptas). `extractor_url.py`: `_history_entry()`, `_lookup_title()` (extraída para eliminar duplicación entre `main()` y `_run_batch()`), historial alimentado desde los 3 caminos (éxito/error/GUI), flag `--batch` (exige `--json`, NDJSON, continúa tras fallo individual). 12 tests nuevos (7 `test_history.py` + 5 `test_cli.py`). Verificado: pytest 40/40, pylint 10.00/10 (tras refactor de `_lookup_title`, subió de 9.95), mypy limpio.
 
 ```
-v6.0 Progress: [          ] 0% — en planificación
-Phase 14: [          ] 0/? planes (research pendiente)
+v6.0 Progress: [=         ] 10% — Fase 14 lado Python completo, resto sin empezar
+Phase 14: [=====     ] 14-01 (Python) completo / 14-02 (Swift) pendiente
 Phase 15: [          ] 0/? planes
 Phase 16: [          ] 0/? planes
 Phase 17: [          ] 0/? planes (fase grande — ver aviso de alcance en ROADMAP.md)
@@ -50,15 +50,19 @@ Decisiones relevantes para v6.0:
 - [v6.0]: Fase 15 (flag manual) extiende v4.0 sin cambiar el comportamiento por defecto — sin pasar `--js`/`--no-js`, el comportamiento sigue siendo la heurística automática existente.
 - [v6.0]: Fase 16 (canales beta) reutiliza el pipeline de la Fase 13 (`scripts/release-macos.sh`) — no un pipeline paralelo nuevo.
 - [v6.0]: Fase 17 reutiliza el patrón de bundling de la Fase 8 y el patrón de firma/notarización de la Fase 13 — no reinventa ninguno de los dos desde cero.
+- [v6.0]: Historial en JSON Lines (`~/.cache/extractor-url/history.jsonl`), reutilizando `_CACHE_DIR` ya existente — sin SQLite ni ubicación nueva. Solo metadatos, nunca el contenido extraído.
+- [v6.0]: `--batch` exige `--json` explícitamente — falla con `sys.exit(2)` si no, mismo principio que "selector CSS inválido falla explícito" de v1.0.
+- [v6.0]: La cola de la app SwiftUI (14-02) reutilizará `PythonBridge.run()` en bucle — no se cambia el contrato JSON de una extracción individual.
 
 ### Pending Todos
 
-- Iniciar research de la Fase 14 (historial y cola de extracciones): dónde persistir el historial (JSON local, SQLite, UserDefaults — a decidir en research), cómo expone la CLI la cola de URLs, qué vista nueva necesita la app SwiftUI.
-- Tras completar cada fase, seguir el mismo patrón de cierre usado en v4.0/v5.0: SUMMARY.md, mover requirements a Validated, actualizar ROADMAP/STATE/PROJECT/REQUIREMENTS/MILESTONES.
+- Definir y ejecutar la Fase 14-02: vista de historial en la app SwiftUI (HIST-02) — lee `history.jsonl` directamente del disco, sin pasar por el bridge. Necesitará research corta + plan + checkpoint humano en Xcode (como Fase 12).
+- Tras cerrar 14-02, dar la Fase 14 completa por cerrada y avanzar a la Fase 15 (flag manual `--js`/`--no-js`).
+- Recomendado no bloqueante: repetir `pytest tests/`/`pylint`/`mypy` de 14-01 en el `.venv` real del Mac.
 
 ### Blockers/Concerns
 
-- Ninguno bloqueante — el milestone está en fase de definición, no de implementación. La Fase 17 merece una nota de atención por su tamaño (ver Decisions arriba), pero no bloquea empezar por la Fase 14.
+- Ninguno bloqueante. La Fase 17 merece una nota de atención por su tamaño (ver Decisions arriba), pero no bloquea el resto de fases.
 
 ## Deferred Items (desde v6.0)
 
@@ -72,5 +76,5 @@ Decisiones relevantes para v6.0:
 ## Session Continuity
 
 Last session: 2026-08-20T00:00:00Z
-Stopped at: Milestone v6.0 definido en los 4 ficheros de planning (5 fases). Falta research y plan de la Fase 14 antes de empezar a escribir código.
-Resume file: .planning/ROADMAP.md (sección "v6.0 Historial y Distribución Completa")
+Stopped at: Fase 14-01 (historial y cola, lado Python) completa y verificada. Pendiente: definir 14-02 (vista SwiftUI) o preguntar al usuario si quiere commitear/pushear primero.
+Resume file: .planning/phases/14-historial-cola/14-01-SUMMARY.md
