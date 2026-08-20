@@ -198,8 +198,12 @@ _publish_release() {
 }
 
 # ── Main ─────────────────────────────────────────────────────────────────
-_preflight_checks
+# _ensure_sparkle_tools va ANTES de _preflight_checks a propósito: la
+# primera vez que se ejecuta este script, generate_keys (necesario para
+# sustituir el placeholder de SUPublicEDKey) todavía no está descargado —
+# si _preflight_checks corriera primero, nunca se llegaría a descargarlo.
 _ensure_sparkle_tools
+_preflight_checks
 _bump_version
 _build_and_export
 _notarize_and_staple
