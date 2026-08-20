@@ -62,12 +62,14 @@
 
 ---
 
-## v5.0 — Auto-actualización (Sparkle) 🔄 (en curso)
+## v5.0 — Auto-actualización (Sparkle) ✓ (2026-08-20)
 
 **Goal:** La app comprueba e instala nuevas versiones de sí misma automáticamente (Sparkle 2), con un pipeline de release reproducible (build → firma Developer ID → notarización → appcast → GitHub Releases), sin infraestructura de hosting nueva.
 
-**En progreso:**
-- Fase 12 (integración Sparkle en la app): código escrito, pendiente checkpoint humano en Xcode.
-- Fase 13 (pipeline de release): definida a nivel de ROADMAP, sin research todavía.
+**Shipped:**
+- Sparkle 2 integrado en `ExtractorAppApp.swift` (`SPUStandardUpdaterController`, comprobación automática 24h + ítem de menú "Buscar actualizaciones…")
+- `scripts/release-macos.sh`: pipeline completo (build, firma Developer ID, notarización + staplear, re-firma del runtime Python embebido con hardened runtime, empaquetado, appcast firmado con EdDSA, publicación en GitHub Releases)
+- `RELEASING.md` documentando la configuración de una sola vez y el uso repetido
+- **Primer release real publicado**: [v1.0](https://github.com/edfrutos/extractor-url-macos/releases/tag/v1.0), `appcast.xml` verificado en vivo con firma EdDSA correcta
 
-**Phases:** 2 (12→13) | **Requirements:** UPDATE-01→06
+**Phases:** 2 (12→13) | **Requirements:** UPDATE-01→06 (todos validados)

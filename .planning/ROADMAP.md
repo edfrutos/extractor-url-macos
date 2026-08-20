@@ -303,7 +303,7 @@ en `Info.plist` antes de tener sentido generar claves/appcast reales.
 ### Checklist v5.0
 
 - [x] **Phase 12: Integración Sparkle en la app** - Sparkle 2 vía SPM (local, ver desviación en 12-01-SUMMARY.md), `SPUStandardUpdaterController`, ítem de menú "Buscar actualizaciones…". (completed 2026-08-20)
-- [ ] **Phase 13: Pipeline de release y publicación** - `scripts/release-macos.sh` automatiza build→firma→notarización→appcast→GitHub Releases. (código y RELEASING.md escritos 2026-08-20, checkpoint humano pendiente — primer release real)
+- [x] **Phase 13: Pipeline de release y publicación** - `scripts/release-macos.sh` automatiza build→firma→notarización→appcast→GitHub Releases. (completed 2026-08-20 — primer release real v1.0 publicado)
 
 ### Phase 12: Integración Sparkle en la app
 
@@ -339,7 +339,7 @@ Plans:
 **Plans**: 1 plan — Wave 1: 13-01-PLAN.md
 
 Plans:
-- [x] 13-01-PLAN.md — scripts/release-macos.sh + RELEASING.md (código y docs escritos 2026-08-20, checkpoint humano de primer release real pendiente)
+- [x] 13-01-PLAN.md — scripts/release-macos.sh + RELEASING.md + primer release real v1.0 (completed 2026-08-20)
 
 **UI hint**: no
 
@@ -350,4 +350,4 @@ Plans:
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 12. Integración Sparkle en la app | 1/1 | Complete | 2026-08-20 |
-| 13. Pipeline de release y publicación | 1/1 (código) | Checkpoint humano pendiente | — |
+| 13. Pipeline de release y publicación | 1/1 | Complete | 2026-08-20 |

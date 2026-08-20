@@ -53,11 +53,9 @@ Convertir páginas web en Markdown útil y limpio de forma fiable, repetible y s
 - ✓ UPDATE-02: `SPUStandardUpdaterController` inicializado en `ExtractorAppApp.swift`, comprobación automática en segundo plano + ítem de menú "Buscar actualizaciones…" confirmado visible en checkpoint humano. — Validated in Phase 12
 - ✓ UPDATE-03: `INFOPLIST_KEY_SUFeedURL`/`INFOPLIST_KEY_SUPublicEDKey` en Debug y Release del target ExtractorApp; clave pública con placeholder explícito hasta Fase 13. — Validated in Phase 12
 
-### Active (v5.0)
-
-- [ ] UPDATE-04: `scripts/release-macos.sh` automatiza build → firma Developer ID → notarización → generación de appcast → publicación en GitHub Releases.
-- [ ] UPDATE-05: `appcast.xml` alojado en el propio repo (servido vía `raw.githubusercontent.com`); binarios como assets de GitHub Release — sin infraestructura de hosting nueva.
-- [ ] UPDATE-06: Documentación del proceso de release completo, incluida la gestión segura de la clave privada EdDSA y las credenciales de notarización (nunca committeadas).
+- ✓ UPDATE-04: `scripts/release-macos.sh` automatiza build → firma Developer ID → notarización → generación de appcast → publicación en GitHub Releases — verificado con el release real v1.0. — Validated in Phase 13
+- ✓ UPDATE-05: `appcast.xml` alojado en el repo, servido vía `raw.githubusercontent.com`, confirmado en vivo con `curl`; binario como asset de GitHub Release. — Validated in Phase 13
+- ✓ UPDATE-06: `RELEASING.md` documenta el proceso completo; ninguna credencial expuesta en el repo en todo el checkpoint. — Validated in Phase 13
 
 ### Out of Scope
 
@@ -72,7 +70,7 @@ Convertir páginas web en Markdown útil y limpio de forma fiable, repetible y s
 
 El proyecto tiene dos capas: el motor Python (`core.py` + `extractor_url.py`) y la app nativa SwiftUI (`ExtractorApp/`). La app lanza el motor vía `Foundation.Process()` con `--json`. v3.0 eliminó la dependencia del usuario de instalar Python y configurar rutas. v4.0 amplió el motor Python para extraer contenido de páginas que requieren JavaScript (SPAs). v5.0 añade auto-actualización a la app SwiftUI (Sparkle) para eliminar la distribución 100% manual del `.app`.
 
-## Current Milestone: v5.0 Auto-actualización (Sparkle)
+## Current Milestone: v5.0 Auto-actualización (Sparkle) — COMPLETADO 2026-08-20
 
 **Goal:** La app comprueba e instala nuevas versiones de sí misma automáticamente (Sparkle 2), sin que el usuario tenga que descargar y reemplazar el `.app` a mano — con un pipeline de release reproducible (build → firma Developer ID → notarización → appcast → GitHub Releases).
 
@@ -89,7 +87,7 @@ Milestone v1.0 (Stabilization) completado: suite `pytest` con 14 tests, pylint 1
 Milestone v2.0 (SwiftUI Native App) completado: app macOS nativa, bridge Python async, export MD/HTML/PDF, universal binary, UI premium con dark mode automático.
 Milestone v3.0 (Standalone App) completado y cerrado: Fases 8, 9 y 10 verificadas con `xcodebuild` real (Build Succeeded, 49 tests/3 skipped/0 fallos, checklist visual OK) — ver `.planning/phases/10-ux-zero-config/10-01-SUMMARY.md`.
 Milestone v4.0 (Contenido Dinámico) completado y cerrado: Fase 11 implementa `_looks_insufficient()` + `_fetch_via_playwright()` en `core.py`, integrados en `_fetch_raw()`. Verificado con `pytest tests/` (28/28), `pylint` 10/10 y `mypy` limpio en un venv equivalente al del repo — ver `.planning/phases/11-playwright-fallback/11-01-SUMMARY.md`.
-Milestone v5.0 (Auto-actualización) en marcha: Fase 12 (integración Sparkle en la app) escrita en código — `ExtractorAppApp.swift`, `Views/CheckForUpdatesView.swift` nuevo, 2 claves `INFOPLIST_KEY_SU*` en `project.pbxproj` — pendiente checkpoint humano en Xcode (añadir el paquete SPM Sparkle, compilar, verificar el ítem de menú). Fase 13 (pipeline de release: claves EdDSA, notarización, `appcast.xml`, `scripts/release-macos.sh`) definida a nivel de ROADMAP, sin research todavía — depende de que la Fase 12 esté verificada.
+Milestone v5.0 (Auto-actualización) completado y cerrado: Fase 12 (Sparkle integrado en la app, paquete local por un bug de búsqueda de Xcode 26.6) y Fase 13 (`scripts/release-macos.sh` — build, firma Developer ID, notarización, appcast firmado con EdDSA, publicación en GitHub Releases) verificadas con un release real: `https://github.com/edfrutos/extractor-url-macos/releases/tag/v1.0`, `appcast.xml` publicado y confirmado en vivo — ver `.planning/phases/13-release-pipeline/13-01-SUMMARY.md` para los 4 bugs reales encontrados y corregidos durante el checkpoint (team ID en exportOptions.plist, hardened runtime del Python embebido, orden de bootstrap, firma EdDSA de generate_appcast).
 
 ## Constraints
 
@@ -123,12 +121,15 @@ Milestone v5.0 (Auto-actualización) en marcha: Fase 12 (integración Sparkle en
 | [v4.0] Playwright/Chromium no se embebe en el `.app` bundle SwiftUI | +300MB rompería la experiencia zero-config de v3.0 (bundle actual ~30-60MB); v4 es solo motor Python, la app queda fuera de este milestone | ✓ Good (Phase 11) |
 | [v4.0] `_MIN_VISIBLE_TEXT_LENGTH = 100` (no 200 como proponía el research inicial) | La fixture de test "HTML rico" existente (`edefrutos_me.html`) mide solo 145 caracteres de texto visible — un umbral de 200 la marcaba como falso positivo. Encontrado al ejecutar los tests durante la implementación | ✓ Good (Phase 11) |
 | [v4.0] `# type: ignore[import-not-found]` antes de `# pylint: disable=...` en la misma línea (no después) | mypy no reconoce la directiva `type: ignore` si aparece tras otro comentario en la misma línea física — encontrado al verificar `mypy core.py` | ✓ Good (Phase 11) |
-| [v5.0] Sparkle 2 (no WinSparkle/NetSparkle/manual) para auto-update | Único framework de referencia para auto-update en macOS fuera del App Store; soporta App Sandbox OFF sin complejidad extra | Pending (Phase 12) |
-| [v5.0] Appcast alojado en GitHub Releases (`raw.githubusercontent.com` + assets de release) | El repo ya está en GitHub — sin infraestructura de hosting nueva, patrón usado en la práctica por otros proyectos macOS+Sparkle | Pending (Phase 12/13) |
-| [v5.0] Comprobación automática (24h, por defecto de Sparkle) + manual, sin toggle propio en Preferencias | Sparkle ya expone su propia UI nativa para que el usuario desactive el auto-check y persiste la preferencia — construir una UI propia sería duplicar trabajo | Pending (Phase 12) |
+| [v5.0] Sparkle 2 (no WinSparkle/NetSparkle/manual) para auto-update | Único framework de referencia para auto-update en macOS fuera del App Store; soporta App Sandbox OFF sin complejidad extra | ✓ Good (Phase 12/13, release real publicado) |
+| [v5.0] Appcast alojado en GitHub Releases (`raw.githubusercontent.com` + assets de release) | El repo ya está en GitHub — sin infraestructura de hosting nueva, patrón usado en la práctica por otros proyectos macOS+Sparkle | ✓ Good (Phase 13, confirmado con curl en vivo) |
+| [v5.0] Comprobación automática (24h, por defecto de Sparkle) + manual, sin toggle propio en Preferencias | Sparkle ya expone su propia UI nativa para que el usuario desactive el auto-check y persiste la preferencia — construir una UI propia sería duplicar trabajo | ✓ Good (Phase 12) |
 | [v5.0] Claves `SUFeedURL`/`SUPublicEDKey` vía `INFOPLIST_KEY_*` en Build Settings, no un `Info.plist` físico | Este proyecto usa `GENERATE_INFOPLIST_FILE = YES` (Xcode 16+) — no existe un `.plist` editable a mano, hay que seguir el mecanismo real del proyecto | ✓ Good (Phase 12, confirmado leyendo `project.pbxproj`) |
 | [v5.0] Paquete SPM Sparkle añadido manualmente en Xcode (no editando `project.pbxproj` a mano) | Las referencias `XCRemoteSwiftPackageReference`/`XCSwiftPackageProductDependency` requieren el resolver real de Xcode; editarlas a ciegas arriesga corromper el proyecto | ✓ Good (Phase 12) |
-| [v5.0] `scripts/release-macos.sh` automatiza el pipeline de publicación (decisión explícita del usuario) | Evita repetir a mano build→firma→notarización→appcast→GitHub Release en cada versión, siguiendo el patrón ya establecido de `scripts/bundle-python.sh` | Pending (Phase 13) |
+| [v5.0] `scripts/release-macos.sh` automatiza el pipeline de publicación (decisión explícita del usuario) | Evita repetir a mano build→firma→notarización→appcast→GitHub Release en cada versión, siguiendo el patrón ya establecido de `scripts/bundle-python.sh` | ✓ Good (Phase 13, release v1.0 publicado con el script) |
+| [v5.0] `_resign_bundled_python()` re-firma el runtime Python embebido (Fase 8) con `--options runtime` tras exportar | `xcodebuild -exportArchive` no aplica hardened runtime a binarios sueltos copiados vía Build Phase, fuera del grafo de frameworks de Xcode — notarytool los rechaza sin ello. Encontrado en el checkpoint de Fase 13 | ✓ Good (Phase 13) |
+| [v5.0] `sign_update` explícito como fallback si `generate_appcast` no firma el enclosure | `generate_appcast` no añadía `sparkle:edSignature` pese a que `sign_update` (mismos defaults de Keychain) sí firma en aislamiento — causa raíz no determinada, pero el fallback garantiza que el appcast siempre queda firmado | ✓ Good (Phase 13) |
+| [v5.0] `exportOptions.plist` incluye `teamID` explícito (no solo `method`+`signingStyle`) | `xcodebuild -exportArchive` con firma Automatic sin team ID fijo falla con "No Team Found in Archive" al ejecutarse desde línea de comandos (no reproduce el comportamiento de la UI de Xcode) | ✓ Good (Phase 13) |
 
 ## Evolution
 
@@ -138,4 +139,4 @@ Este documento evoluciona en transiciones de fase y límites de milestone.
 **Después de cada milestone:** revisar Core Value, auditar Out of Scope, actualizar Context.
 
 ---
-*Last updated: 2026-08-19 — Milestone v5.0 Auto-actualización (Sparkle) iniciado: Fase 12 (integración app) escrita en código, pendiente checkpoint humano en Xcode*
+*Last updated: 2026-08-20 — Milestone v5.0 Auto-actualización (Sparkle) cerrado: primer release real v1.0 publicado y verificado en vivo (appcast.xml firmado, GitHub Release)*

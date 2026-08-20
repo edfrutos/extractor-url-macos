@@ -113,7 +113,7 @@
 | UX-01…03 | v3.0 | ✅ Complete | Phase 10 |
 | JS-01…04 | v4.0 | ✅ Complete | Phase 11 |
 | UPDATE-01…03 | v5.0 | ✅ Complete | Phase 12 |
-| UPDATE-04…06 | v5.0 | ⬜ Pending | Phase 13 |
+| UPDATE-04…06 | v5.0 | ✅ Complete | Phase 13 |
 
 ## Validated (v5.0 — Sparkle en la app)
 
@@ -121,15 +121,13 @@
 
 - [x] **UPDATE-01**: Sparkle 2.x integrado en `ExtractorApp.xcodeproj` (paquete local, no remoto — ver desviación en `12-01-SUMMARY.md`). — Phase 12
 - [x] **UPDATE-02**: `SPUStandardUpdaterController` inicializado, comprobación automática (24h) + ítem de menú manual "Buscar actualizaciones…" confirmado en checkpoint humano. — Phase 12
-- [x] **UPDATE-03**: `INFOPLIST_KEY_SUFeedURL`/`INFOPLIST_KEY_SUPublicEDKey` en Debug y Release (placeholder de clave hasta Fase 13). — Phase 12
-
-## Active (v5.0 — Pipeline de release)
+- [x] **UPDATE-03**: `INFOPLIST_KEY_SUFeedURL`/`INFOPLIST_KEY_SUPublicEDKey` en Debug y Release — clave real desde Fase 13 (`pdjSqDBJV9/d5LtjgvRvAQ+FzR4V7K/Q2qCaF2Zjrlk=`). — Phase 12/13
 
 ### UPDATE — Pipeline de release
 
-- [ ] **UPDATE-04**: `scripts/release-macos.sh` automatiza build → firma Developer ID → notarización → generación de appcast → publicación en GitHub Releases.
-- [ ] **UPDATE-05**: `appcast.xml` alojado en el propio repo (`raw.githubusercontent.com`); binarios como assets de GitHub Release.
-- [ ] **UPDATE-06**: Documentación del proceso de release, incluida la gestión segura de la clave privada EdDSA y las credenciales de notarización.
+- [x] **UPDATE-04**: `scripts/release-macos.sh` automatiza build → firma Developer ID → notarización → generación de appcast → publicación en GitHub Releases. — Phase 13, release real v1.0 publicado
+- [x] **UPDATE-05**: `appcast.xml` alojado en el propio repo (`raw.githubusercontent.com`); binarios como assets de GitHub Release. — Phase 13, verificado con curl en vivo
+- [x] **UPDATE-06**: Documentación del proceso de release (`RELEASING.md`), incluida la gestión segura de la clave privada EdDSA y las credenciales de notarización. — Phase 13
 
 ## Notes
 
