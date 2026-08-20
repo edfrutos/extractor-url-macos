@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		6938562E2FDFF363008D32EB /* extractor_url.py in CopyFiles */ = {isa = PBXBuildFile; fileRef = 6938562D2FDFF363008D32EB /* extractor_url.py */; };
 		693856302FDFF374008D32EB /* core.py in CopyFiles */ = {isa = PBXBuildFile; fileRef = 6938562F2FDFF374008D32EB /* core.py */; };
+		69981AD43036EB5100B1EE3E /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = 69981AD33036EB5100B1EE3E /* Sparkle */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -60,6 +61,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				69981AD43036EB5100B1EE3E /* Sparkle in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -80,6 +82,7 @@
 				6938562D2FDFF363008D32EB /* extractor_url.py */,
 				694A971D2FDAB1D900884317 /* ExtractorApp */,
 				7B5C0002FDAB1D900884317 /* ExtractorAppTests */,
+				69981ACF3036E9D200B1EE3E /* Frameworks */,
 				694A971C2FDAB1D900884317 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -91,6 +94,13 @@
 				7B5C0001FDAB1D900884317 /* ExtractorAppTests.xctest */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		69981ACF3036E9D200B1EE3E /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -115,6 +125,7 @@
 			);
 			name = ExtractorApp;
 			packageProductDependencies = (
+				69981AD33036EB5100B1EE3E /* Sparkle */,
 			);
 			productName = ExtractorApp;
 			productReference = 694A971B2FDAB1D900884317 /* ExtractorApp.app */;
@@ -170,6 +181,9 @@
 			);
 			mainGroup = 694A97122FDAB1D900884317;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				69981AD23036EB4700B1EE3E /* XCLocalSwiftPackageReference "../../.build-cache/Sparkle" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 694A971C2FDAB1D900884317 /* Products */;
 			projectDirPath = "";
@@ -379,6 +393,8 @@
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				INFOPLIST_KEY_SUFeedURL = "https://raw.githubusercontent.com/edfrutos/extractor-url-macos/main/appcast.xml";
+				INFOPLIST_KEY_SUPublicEDKey = "PENDIENTE-FASE-13-generate_keys";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
@@ -418,6 +434,8 @@
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				INFOPLIST_KEY_SUFeedURL = "https://raw.githubusercontent.com/edfrutos/extractor-url-macos/main/appcast.xml";
+				INFOPLIST_KEY_SUPublicEDKey = "PENDIENTE-FASE-13-generate_keys";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
@@ -513,6 +531,21 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		69981AD23036EB4700B1EE3E /* XCLocalSwiftPackageReference "../../.build-cache/Sparkle" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = "../../.build-cache/Sparkle";
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		69981AD33036EB5100B1EE3E /* Sparkle */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 69981AD23036EB4700B1EE3E /* XCLocalSwiftPackageReference "../../.build-cache/Sparkle" */;
+			productName = Sparkle;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 694A97132FDAB1D900884317 /* Project object */;
 }

@@ -49,28 +49,39 @@ Convertir páginas web en Markdown útil y limpio de forma fiable, repetible y s
 - ✓ JS-03: Si Playwright/Chromium no están instalados, la extracción degrada al resultado estático sin excepción no controlada — verificado real (sin mockear) en un entorno sin Playwright instalado. — Validated in Phase 11
 - ✓ JS-04: 8 tests nuevos en `tests/test_js_fallback.py` cubren las 4 ramas con fixtures/mocks; `pytest tests/` (28 tests) pasa sin requerir un browser real. — Validated in Phase 11
 
+- ✓ UPDATE-01: Sparkle 2.x integrado en `ExtractorApp.xcodeproj` (paquete local en `.build-cache/Sparkle`, ver desviación del plan en `12-01-SUMMARY.md` — el buscador remoto de Xcode 26.6 fallaba universalmente). — Validated in Phase 12
+- ✓ UPDATE-02: `SPUStandardUpdaterController` inicializado en `ExtractorAppApp.swift`, comprobación automática en segundo plano + ítem de menú "Buscar actualizaciones…" confirmado visible en checkpoint humano. — Validated in Phase 12
+- ✓ UPDATE-03: `INFOPLIST_KEY_SUFeedURL`/`INFOPLIST_KEY_SUPublicEDKey` en Debug y Release del target ExtractorApp; clave pública con placeholder explícito hasta Fase 13. — Validated in Phase 12
+
+### Active (v5.0)
+
+- [ ] UPDATE-04: `scripts/release-macos.sh` automatiza build → firma Developer ID → notarización → generación de appcast → publicación en GitHub Releases.
+- [ ] UPDATE-05: `appcast.xml` alojado en el propio repo (servido vía `raw.githubusercontent.com`); binarios como assets de GitHub Release — sin infraestructura de hosting nueva.
+- [ ] UPDATE-06: Documentación del proceso de release completo, incluida la gestión segura de la clave privada EdDSA y las credenciales de notarización (nunca committeadas).
+
 ### Out of Scope
 
 - App Store o distribución comercial — no es el objetivo.
-- Embeber Playwright/Chromium en el `.app` bundle de la app SwiftUI — v4 es solo motor Python (CLI); +300MB de peso no es aceptable para el bundle zero-config de v3. Revisar en v5+ si hay demanda real.
+- Embeber Playwright/Chromium en el `.app` bundle de la app SwiftUI — v4 es solo motor Python (CLI); +300MB de peso no es aceptable para el bundle zero-config de v3. Revisar en v6+ si hay demanda real.
 - Flag manual `--js`/`--no-js` para forzar u omitir el fallback — v4 usa solo detección automática; un control manual explícito queda diferido.
-- Historial de extracciones y cola — v4+.
-- Notarización para distribución a terceros — uso personal, sin distribución pública.
+- Historial de extracciones y cola — v6+.
+- Canales beta/nightly, rollouts por fases — Sparkle los soporta pero v5.0 no los necesita (pocos usuarios).
+- Notarización para **distribución pública a terceros** (App Store, web pública) sigue fuera de alcance — la notarización de v5.0 es solo para que las actualizaciones vía Sparkle no muestren avisos de Gatekeeper en las propias instalaciones del autor, no para publicar la app a desconocidos.
 
 ## Context
 
-El proyecto tiene dos capas: el motor Python (`core.py` + `extractor_url.py`) y la app nativa SwiftUI (`ExtractorApp/`). La app lanza el motor vía `Foundation.Process()` con `--json`. v3.0 eliminó la dependencia del usuario de instalar Python y configurar rutas. v4.0 amplía el motor Python para extraer contenido de páginas que requieren JavaScript (SPAs), sin tocar la app SwiftUI ni el bundling de v3.0.
+El proyecto tiene dos capas: el motor Python (`core.py` + `extractor_url.py`) y la app nativa SwiftUI (`ExtractorApp/`). La app lanza el motor vía `Foundation.Process()` con `--json`. v3.0 eliminó la dependencia del usuario de instalar Python y configurar rutas. v4.0 amplió el motor Python para extraer contenido de páginas que requieren JavaScript (SPAs). v5.0 añade auto-actualización a la app SwiftUI (Sparkle) para eliminar la distribución 100% manual del `.app`.
 
-## Current Milestone: v4.0 Contenido Dinámico (JS) — COMPLETADO 2026-08-18
+## Current Milestone: v5.0 Auto-actualización (Sparkle)
 
-**Goal:** El motor Python extrae contenido correctamente de páginas que dependen de JavaScript del lado del cliente, cayendo a Playwright automáticamente solo cuando la extracción estática resulta insuficiente — sin penalizar velocidad ni comportamiento en sitios estáticos, y sin romper el entorno bundleado de la app (que no incluye Playwright).
+**Goal:** La app comprueba e instala nuevas versiones de sí misma automáticamente (Sparkle 2), sin que el usuario tenga que descargar y reemplazar el `.app` a mano — con un pipeline de release reproducible (build → firma Developer ID → notarización → appcast → GitHub Releases).
 
 **Target features:**
 
-- Heurística de detección de contenido estático insuficiente en `core.py`
-- Fallback automático a Playwright (Chromium headless) cuando la heurística se activa
-- Degradación silenciosa (sin crash) si Playwright no está instalado — comportamiento actual preservado como base
-- Cobertura de tests con fixtures/mocks, sin dependencia de red real ni de un browser en CI estándar
+- Sparkle 2 integrado en `ExtractorApp.xcodeproj` vía SPM, con comprobación automática (24h) + ítem de menú manual
+- `appcast.xml` alojado en GitHub Releases del propio repo, sin infraestructura nueva
+- `scripts/release-macos.sh` automatiza el pipeline completo de publicación
+- Actualizaciones firmadas con EdDSA (Sparkle) + Developer ID notarizado (Gatekeeper) — doble verificación
 
 ## Current State
 
@@ -78,6 +89,7 @@ Milestone v1.0 (Stabilization) completado: suite `pytest` con 14 tests, pylint 1
 Milestone v2.0 (SwiftUI Native App) completado: app macOS nativa, bridge Python async, export MD/HTML/PDF, universal binary, UI premium con dark mode automático.
 Milestone v3.0 (Standalone App) completado y cerrado: Fases 8, 9 y 10 verificadas con `xcodebuild` real (Build Succeeded, 49 tests/3 skipped/0 fallos, checklist visual OK) — ver `.planning/phases/10-ux-zero-config/10-01-SUMMARY.md`.
 Milestone v4.0 (Contenido Dinámico) completado y cerrado: Fase 11 implementa `_looks_insufficient()` + `_fetch_via_playwright()` en `core.py`, integrados en `_fetch_raw()`. Verificado con `pytest tests/` (28/28), `pylint` 10/10 y `mypy` limpio en un venv equivalente al del repo — ver `.planning/phases/11-playwright-fallback/11-01-SUMMARY.md`.
+Milestone v5.0 (Auto-actualización) en marcha: Fase 12 (integración Sparkle en la app) escrita en código — `ExtractorAppApp.swift`, `Views/CheckForUpdatesView.swift` nuevo, 2 claves `INFOPLIST_KEY_SU*` en `project.pbxproj` — pendiente checkpoint humano en Xcode (añadir el paquete SPM Sparkle, compilar, verificar el ítem de menú). Fase 13 (pipeline de release: claves EdDSA, notarización, `appcast.xml`, `scripts/release-macos.sh`) definida a nivel de ROADMAP, sin research todavía — depende de que la Fase 12 esté verificada.
 
 ## Constraints
 
@@ -111,6 +123,12 @@ Milestone v4.0 (Contenido Dinámico) completado y cerrado: Fase 11 implementa `_
 | [v4.0] Playwright/Chromium no se embebe en el `.app` bundle SwiftUI | +300MB rompería la experiencia zero-config de v3.0 (bundle actual ~30-60MB); v4 es solo motor Python, la app queda fuera de este milestone | ✓ Good (Phase 11) |
 | [v4.0] `_MIN_VISIBLE_TEXT_LENGTH = 100` (no 200 como proponía el research inicial) | La fixture de test "HTML rico" existente (`edefrutos_me.html`) mide solo 145 caracteres de texto visible — un umbral de 200 la marcaba como falso positivo. Encontrado al ejecutar los tests durante la implementación | ✓ Good (Phase 11) |
 | [v4.0] `# type: ignore[import-not-found]` antes de `# pylint: disable=...` en la misma línea (no después) | mypy no reconoce la directiva `type: ignore` si aparece tras otro comentario en la misma línea física — encontrado al verificar `mypy core.py` | ✓ Good (Phase 11) |
+| [v5.0] Sparkle 2 (no WinSparkle/NetSparkle/manual) para auto-update | Único framework de referencia para auto-update en macOS fuera del App Store; soporta App Sandbox OFF sin complejidad extra | Pending (Phase 12) |
+| [v5.0] Appcast alojado en GitHub Releases (`raw.githubusercontent.com` + assets de release) | El repo ya está en GitHub — sin infraestructura de hosting nueva, patrón usado en la práctica por otros proyectos macOS+Sparkle | Pending (Phase 12/13) |
+| [v5.0] Comprobación automática (24h, por defecto de Sparkle) + manual, sin toggle propio en Preferencias | Sparkle ya expone su propia UI nativa para que el usuario desactive el auto-check y persiste la preferencia — construir una UI propia sería duplicar trabajo | Pending (Phase 12) |
+| [v5.0] Claves `SUFeedURL`/`SUPublicEDKey` vía `INFOPLIST_KEY_*` en Build Settings, no un `Info.plist` físico | Este proyecto usa `GENERATE_INFOPLIST_FILE = YES` (Xcode 16+) — no existe un `.plist` editable a mano, hay que seguir el mecanismo real del proyecto | ✓ Good (Phase 12, confirmado leyendo `project.pbxproj`) |
+| [v5.0] Paquete SPM Sparkle añadido manualmente en Xcode (no editando `project.pbxproj` a mano) | Las referencias `XCRemoteSwiftPackageReference`/`XCSwiftPackageProductDependency` requieren el resolver real de Xcode; editarlas a ciegas arriesga corromper el proyecto | ✓ Good (Phase 12) |
+| [v5.0] `scripts/release-macos.sh` automatiza el pipeline de publicación (decisión explícita del usuario) | Evita repetir a mano build→firma→notarización→appcast→GitHub Release en cada versión, siguiendo el patrón ya establecido de `scripts/bundle-python.sh` | Pending (Phase 13) |
 
 ## Evolution
 
@@ -120,4 +138,4 @@ Este documento evoluciona en transiciones de fase y límites de milestone.
 **Después de cada milestone:** revisar Core Value, auditar Out of Scope, actualizar Context.
 
 ---
-*Last updated: 2026-08-18 — Milestone v4.0 Contenido Dinámico (JS) cerrado: fallback automático a Playwright implementado y verificado (pytest 28/28, pylint 10/10, mypy limpio)*
+*Last updated: 2026-08-19 — Milestone v5.0 Auto-actualización (Sparkle) iniciado: Fase 12 (integración app) escrita en código, pendiente checkpoint humano en Xcode*

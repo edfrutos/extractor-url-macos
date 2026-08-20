@@ -59,3 +59,15 @@
 - `requirements.txt` + `CLAUDE.md` documentan la nueva dependencia y su instalación en dos pasos
 
 **Phases:** 1 (11) | **Requirements:** JS-01→04 (todos validados)
+
+---
+
+## v5.0 — Auto-actualización (Sparkle) 🔄 (en curso)
+
+**Goal:** La app comprueba e instala nuevas versiones de sí misma automáticamente (Sparkle 2), con un pipeline de release reproducible (build → firma Developer ID → notarización → appcast → GitHub Releases), sin infraestructura de hosting nueva.
+
+**En progreso:**
+- Fase 12 (integración Sparkle en la app): código escrito, pendiente checkpoint humano en Xcode.
+- Fase 13 (pipeline de release): definida a nivel de ROADMAP, sin research todavía.
+
+**Phases:** 2 (12→13) | **Requirements:** UPDATE-01→06

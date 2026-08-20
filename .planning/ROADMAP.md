@@ -283,3 +283,68 @@ Plans:
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 11. Playwright Fallback para Contenido Dinámico | 1/1 | Complete | 2026-08-18 |
+
+---
+
+## v5.0 Auto-actualización (Sparkle)
+
+## Overview
+
+Eliminar la distribución 100% manual del `.app`: la app comprueba e instala
+sus propias actualizaciones vía Sparkle 2, con un pipeline de release
+reproducible (`scripts/release-macos.sh`) que construye, firma con
+Developer ID, notariza, genera el appcast firmado con EdDSA, y publica en
+GitHub Releases del propio repo — sin infraestructura de hosting nueva.
+
+UPDATE-01 (paquete SPM añadido en Xcode) es la dependencia bloqueante de
+toda la Fase 12; UPDATE-04..06 (Fase 13) dependen de que UPDATE-03 exista
+en `Info.plist` antes de tener sentido generar claves/appcast reales.
+
+### Checklist v5.0
+
+- [x] **Phase 12: Integración Sparkle en la app** - Sparkle 2 vía SPM (local, ver desviación en 12-01-SUMMARY.md), `SPUStandardUpdaterController`, ítem de menú "Buscar actualizaciones…". (completed 2026-08-20)
+- [ ] **Phase 13: Pipeline de release y publicación** - `scripts/release-macos.sh` automatiza build→firma→notarización→appcast→GitHub Releases. (definida a nivel de roadmap, research pendiente — depende de Fase 12)
+
+### Phase 12: Integración Sparkle en la app
+
+**Goal**: La app inicializa Sparkle 2 (`SPUStandardUpdaterController`) en su entry point SwiftUI, comprueba actualizaciones automáticamente en segundo plano (comportamiento por defecto de Sparkle, 24h) y expone un ítem de menú manual "Buscar actualizaciones…" — sin tocar `ContentView`, `SettingsView`, `PythonBridge` ni el motor Python.
+**Depends on**: Nothing nuevo — extiende la app SwiftUI existente (v2.0/v3.0); ortogonal al motor Python (v1.0/v4.0).
+**Requirements**: UPDATE-01, UPDATE-02, UPDATE-03
+**Success Criteria** (what must be TRUE):
+
+  1. El paquete SPM `sparkle-project/Sparkle` está añadido al target `ExtractorApp` y el proyecto compila (`Build Succeeded`) en Xcode.
+  2. `ExtractorAppApp.swift` inicializa `SPUStandardUpdaterController` una sola vez y expone `CheckForUpdatesView` vía `CommandGroup(after: .appInfo)`.
+  3. El ítem de menú "Buscar actualizaciones…" aparece en el menú de la app junto a "Acerca de ExtractorApp" al ejecutar la app en Xcode.
+  4. `Info.plist` (vía `INFOPLIST_KEY_SUFeedURL`/`INFOPLIST_KEY_SUPublicEDKey`) apunta al appcast real de GitHub Releases, con la clave pública como placeholder explícito hasta la Fase 13.
+
+**Plans**: 1 plan — Wave 1: 12-01-PLAN.md
+
+Plans:
+- [x] 12-01-PLAN.md — ExtractorAppApp.swift + CheckForUpdatesView.swift + INFOPLIST_KEY_SU* + paquete Sparkle local en .build-cache/ (completed 2026-08-20)
+
+**UI hint**: yes
+
+### Phase 13: Pipeline de release y publicación
+
+**Goal**: Existe un proceso reproducible (`scripts/release-macos.sh`) para publicar una nueva versión de la app: genera/reutiliza las claves EdDSA, construye y firma con Developer ID, notariza, genera el appcast firmado, y publica el binario + appcast en GitHub Releases del repo — de forma que una actualización instalada vía Sparkle no muestre avisos de Gatekeeper.
+**Depends on**: Phase 12 (UPDATE-03 debe existir en `Info.plist` antes de que generar un appcast real tenga sentido).
+**Requirements**: UPDATE-04, UPDATE-05, UPDATE-06
+**Success Criteria** (what must be TRUE):
+
+  1. `scripts/release-macos.sh` construye, firma (Developer ID), notariza (`notarytool submit --wait` + `stapler staple`), genera el appcast (`generate_appcast`) y publica en GitHub Releases (`gh release create`/`upload`) sin pasos manuales adicionales más allá de proporcionar credenciales vía variables de entorno.
+  2. El `appcast.xml` resultante, servido vía `raw.githubusercontent.com`, es válido y su `<enclosure>` incluye la firma EdDSA correcta.
+  3. Una instalación previa de la app (build Developer ID notarizado, versión anterior) detecta la nueva versión vía Sparkle, la descarga, instala y relanza sin avisos de Gatekeeper.
+  4. La clave privada EdDSA y las credenciales de notarización nunca aparecen en el repo — documentado explícitamente en `RELEASING.md` o equivalente.
+
+**Plans**: por definir (research/planning pendiente, bloqueado en el checkpoint humano de Fase 12)
+
+**UI hint**: no
+
+### Estado v5.0
+
+**Execution Order:** Phases execute in numeric order: 12 → 13
+
+| Phase | Plans Complete | Status | Completed |
+|-------|----------------|--------|-----------|
+| 12. Integración Sparkle en la app | 1/1 | Complete | 2026-08-20 |
+| 13. Pipeline de release y publicación | 0/? | Planning | — |

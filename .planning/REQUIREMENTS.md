@@ -112,9 +112,29 @@
 | BRIDGE-05…07 | v3.0 | ✅ Complete | Phase 09 |
 | UX-01…03 | v3.0 | ✅ Complete | Phase 10 |
 | JS-01…04 | v4.0 | ✅ Complete | Phase 11 |
+| UPDATE-01…03 | v5.0 | ✅ Complete | Phase 12 |
+| UPDATE-04…06 | v5.0 | ⬜ Pending | Phase 13 |
+
+## Validated (v5.0 — Sparkle en la app)
+
+### UPDATE — Integración Sparkle
+
+- [x] **UPDATE-01**: Sparkle 2.x integrado en `ExtractorApp.xcodeproj` (paquete local, no remoto — ver desviación en `12-01-SUMMARY.md`). — Phase 12
+- [x] **UPDATE-02**: `SPUStandardUpdaterController` inicializado, comprobación automática (24h) + ítem de menú manual "Buscar actualizaciones…" confirmado en checkpoint humano. — Phase 12
+- [x] **UPDATE-03**: `INFOPLIST_KEY_SUFeedURL`/`INFOPLIST_KEY_SUPublicEDKey` en Debug y Release (placeholder de clave hasta Fase 13). — Phase 12
+
+## Active (v5.0 — Pipeline de release)
+
+### UPDATE — Pipeline de release
+
+- [ ] **UPDATE-04**: `scripts/release-macos.sh` automatiza build → firma Developer ID → notarización → generación de appcast → publicación en GitHub Releases.
+- [ ] **UPDATE-05**: `appcast.xml` alojado en el propio repo (`raw.githubusercontent.com`); binarios como assets de GitHub Release.
+- [ ] **UPDATE-06**: Documentación del proceso de release, incluida la gestión segura de la clave privada EdDSA y las credenciales de notarización.
 
 ## Notes
 
 - App Sandbox OFF se mantiene — sin cambios de entitlements en v4 (la app SwiftUI no se toca).
 - Playwright requiere `pip install playwright` + `playwright install chromium` — documentado en `CLAUDE.md` (sección Entorno).
 - Umbral final de heurística: `_MIN_VISIBLE_TEXT_LENGTH = 100` (ajustado desde 200 durante la implementación por un falso positivo contra la fixture de test existente — ver `11-01-SUMMARY.md`).
+- `UPDATE-01` es la dependencia bloqueante de v5.0: sin el paquete Sparkle añadido (paso humano en Xcode), ni `UPDATE-02` ni `UPDATE-03` pueden compilar, y `UPDATE-04..06` (Fase 13) no tienen nada real que firmar/publicar.
+- La clave privada EdDSA de Sparkle NUNCA se commitea — vive en el Keychain del Mac que ejecuta `generate_keys`. Solo la clave pública (`SUPublicEDKey`) va en el repo.
