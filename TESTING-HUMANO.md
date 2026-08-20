@@ -315,6 +315,45 @@ Con resultado exitoso cargado (preview visible, `contentReady = true`):
 
 ---
 
+## 12. Auto-actualización (Sparkle — v5.0)
+
+**Pasos:** Con la app compilada e instalada (build Developer ID, no de
+desarrollo — el flujo real de Sparkle solo se comporta de forma
+representativa contra un build firmado/notarizado, ver `RELEASING.md`).
+
+### 12A. Ítem de menú
+
+| # | Qué comprobar | Resultado esperado |
+|---|---------------|--------------------|
+| 12A.1 | Menú de la app | "Buscar actualizaciones…" aparece justo después de "Acerca de ExtractorApp" |
+| 12A.2 | Estado inicial | Habilitado una vez Sparkle determina que puede comprobar (puede tardar un instante tras el lanzamiento) |
+| 12A.3 | Pulsar el ítem | Se abre la ventana estándar de Sparkle mostrando el resultado de la comprobación |
+
+### 12B. Con una versión anterior instalada
+
+**Pasos:** Instalar una versión con `CFBundleVersion` menor que la última publicada en el appcast, pulsar "Buscar actualizaciones…".
+
+| # | Qué comprobar | Resultado esperado |
+|---|---------------|--------------------|
+| 12B.1 | Detección | Sparkle muestra la ventana de "Nueva versión disponible" con notas de la versión |
+| 12B.2 | Descarga e instalación | Sin avisos de Gatekeeper ("desarrollador no identificado") — el ticket de notarización va grapado al binario |
+| 12B.3 | Relanzamiento | La app se cierra y vuelve a abrir automáticamente en la versión nueva |
+
+### 12C. Ya en la última versión
+
+| # | Qué comprobar | Resultado esperado |
+|---|---------------|--------------------|
+| 12C.1 | Pulsar "Buscar actualizaciones…" | Mensaje de "Ya tienes la última versión" — sin errores ni avisos de clave EdDSA |
+
+### 12D. Comprobación automática en segundo plano
+
+| # | Qué comprobar | Resultado esperado |
+|---|---------------|--------------------|
+| 12D.1 | Primera vez que se lanza una versión nueva de la app | Sparkle no pregunta hasta el segundo lanzamiento (comportamiento estándar, mejor primera impresión) |
+| 12D.2 | `defaults delete <bundle-id> SULastCheckTime` + relanzar | Fuerza una comprobación inmediata en vez de esperar las 24h por defecto |
+
+---
+
 ## Checklist de firma final
 
 Marcar todos antes de declarar v2.0 apta para distribución:
@@ -336,3 +375,10 @@ Marcar todos antes de declarar v2.0 apta para distribución:
 - [ ] Sección "Configuración avanzada" colapsada por defecto en modo bundle
 - [ ] Configurar override manual válido → badge cambia a "Usando configuración manual"
 - [ ] Borrar el override → badge vuelve a "Usando Python incluido" sin reiniciar la app
+
+### Checklist v5.0 — Auto-actualización (Sparkle)
+
+- [ ] "Buscar actualizaciones…" visible en el menú de la app
+- [ ] Con una versión anterior instalada, detecta y ofrece la nueva sin avisos de Gatekeeper
+- [ ] Instala y relanza correctamente tras confirmar la actualización
+- [ ] En la última versión, informa que no hay nada nuevo sin errores

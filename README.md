@@ -61,6 +61,10 @@ gestiona la UI, el filesystem y la exportación.
   instalar Python ni configurar rutas — funciona de serie desde el primer
   lanzamiento (v3.0). Playwright/Chromium (fallback JS del motor) queda
   fuera del bundle por su peso; la app sigue funcionando igual sin él.
+- Auto-actualización vía Sparkle 2: comprobación automática en segundo
+  plano (cada 24h) + ítem de menú "Buscar actualizaciones…"; releases
+  firmados con EdDSA y notarizados por Apple, publicados en GitHub
+  Releases (v5.0, ver `RELEASING.md`).
 
 ## Entorno de desarrollo (motor Python)
 
@@ -91,10 +95,11 @@ xcodebuild test -scheme ExtractorApp -destination 'platform=macOS'
 extractor_url.py          # punto de entrada CLI y GUI (tkinter)
 core.py                   # descarga, caché, limpieza, conversión y fallback JS (Playwright)
 tests/                    # pytest: conversor, CLI, título, fallback JS; fixtures HTML locales
-scripts/                  # bundle-python.sh, verify-bundle.sh (empaquetado runtime v3.0)
+scripts/                  # bundle-python.sh, verify-bundle.sh (v3.0), release-macos.sh (v5.0)
 ExtractorApp/              # proyecto Xcode de la app macOS SwiftUI
 .planning/                 # metodología GSD: PROJECT.md, ROADMAP.md, STATE.md, fases
 TESTING-HUMANO.md          # guía de verificación manual de la app macOS
+RELEASING.md               # cómo publicar una versión nueva (Sparkle, notarización)
 AGENTS.md / CLAUDE.md      # guía para agentes IA que trabajan en este repo
 ```
 
@@ -112,12 +117,16 @@ fases y criterios de éxito, `STATE.md` es el punto de retomo entre sesiones.
 | v2.0 — SwiftUI Native App | ✅ Completado | App macOS nativa, bridge Python async, export MD/HTML/PDF, universal binary, UI premium |
 | v3.0 — Standalone App | ✅ Completado | Runtime Python embebido en el `.app`, zero-config desde el primer lanzamiento, verificado con `xcodebuild` real (49 tests) |
 | v4.0 — Contenido Dinámico (JS) | ✅ Completado | Fallback automático a Playwright para SPAs sobre el motor Python, verificado con `pytest` real (28 tests) |
+| v5.0 — Auto-actualización (Sparkle) | ✅ Completado | Sparkle 2 integrado en la app, pipeline de release (`scripts/release-macos.sh`) con firma Developer ID + notarización + appcast EdDSA, primer release real publicado |
 
 **Fuera de alcance (decisión explícita):** distribución en App Store,
-historial/cola de extracciones, notarización para terceros, flag manual
-`--js`/`--no-js` (el fallback JS es solo automático), embeber
-Playwright/Chromium en el `.app` bundle SwiftUI (+300MB) — todo diferido a
-v5+ o descartado por ser una herramienta de uso personal.
+historial/cola de extracciones, flag manual `--js`/`--no-js` (el fallback
+JS es solo automático), embeber Playwright/Chromium en el `.app` bundle
+SwiftUI (+300MB), canales beta/rollouts por fases de Sparkle — todo
+diferido a v6+ o descartado por ser una herramienta de uso personal. La
+notarización de v5.0 es solo para que las actualizaciones vía Sparkle no
+muestren avisos de Gatekeeper en las instalaciones del autor — no implica
+distribución pública a terceros.
 
 ## Idioma
 
