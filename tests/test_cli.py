@@ -323,3 +323,130 @@ def test_batch_continua_tras_una_url_fallida(
     results = [json.loads(line) for line in lines]
     assert results[0]["status"] == "error"
     assert results[1]["status"] == "success"
+
+
+# ---------------------------------------------------------------------------
+# --js / --no-js (Fase 15)
+# ---------------------------------------------------------------------------
+
+
+def test_js_flag_propaga_js_mode_force(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+    tmp_path: Path,
+) -> None:
+    """--js propaga js_mode='force' a extract_formatted_content."""
+    _use_tmp_history(monkeypatch, tmp_path)
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        ["extractor_url.py", "https://example.com", "--json", "--no-cache", "--js"],
+    )
+    captured_kwargs: dict[str, object] = {}
+
+    def _fake_extract(*_args: object, **kwargs: object) -> str:
+        captured_kwargs.update(kwargs)
+        return "contenido"
+
+    monkeypatch.setattr(extractor_url, "extract_formatted_content", _fake_extract)
+
+    with pytest.raises(SystemExit, match="0"):
+        extractor_url.main()
+
+    assert captured_kwargs["js_mode"] == "force"
+
+
+def test_no_js_flag_propaga_js_mode_off(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+    tmp_path: Path,
+) -> None:
+    """--no-js propaga js_mode='off' a extract_formatted_content."""
+    _use_tmp_history(monkeypatch, tmp_path)
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        ["extractor_url.py", "https://example.com", "--json", "--no-cache", "--no-js"],
+    )
+    captured_kwargs: dict[str, object] = {}
+
+    def _fake_extract(*_args: object, **kwargs: object) -> str:
+        captured_kwargs.update(kwargs)
+        return "contenido"
+
+    monkeypatch.setattr(extractor_url, "extract_formatted_content", _fake_extract)
+
+    with pytest.raises(SystemExit, match="0"):
+        extractor_url.main()
+
+    assert captured_kwargs["js_mode"] == "off"
+
+
+def test_sin_flags_js_propaga_js_mode_auto(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+    tmp_path: Path,
+) -> None:
+    """Sin --js ni --no-js, js_mode es 'auto' (comportamiento v4.0 sin cambios)."""
+    _use_tmp_history(monkeypatch, tmp_path)
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        ["extractor_url.py", "https://example.com", "--json", "--no-cache"],
+    )
+    captured_kwargs: dict[str, object] = {}
+
+    def _fake_extract(*_args: object, **kwargs: object) -> str:
+        captured_kwargs.update(kwargs)
+        return "contenido"
+
+    monkeypatch.setattr(extractor_url, "extract_formatted_content", _fake_extract)
+
+    with pytest.raises(SystemExit, match="0"):
+        extractor_url.main()
+
+    assert captured_kwargs["js_mode"] == "auto"
+
+
+def test_js_y_no_js_a_la_vez_falla_explicito(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """--js y --no-js simultáneos fallan vía argparse (mutuamente excluyentes)."""
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        ["extractor_url.py", "https://example.com", "--json", "--js", "--no-js"],
+    )
+
+    with pytest.raises(SystemExit, match="2"):
+        extractor_url.main()
+
+    assert "not allowed with argument" in capsys.readouterr().err
+
+
+def test_batch_propaga_js_mode_a_todas_las_urls(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+    tmp_path: Path,
+) -> None:
+    """--batch aplica el mismo js_mode (resuelto una vez) a todas las URLs."""
+    _use_tmp_history(monkeypatch, tmp_path)
+    batch_file = tmp_path / "urls.txt"
+    batch_file.write_text("https://a.com\nhttps://b.com\n", encoding="utf-8")
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        ["extractor_url.py", "--batch", str(batch_file), "--json", "--no-cache", "--js"],
+    )
+    captured_js_modes: list[object] = []
+
+    def _fake_extract(*_args: object, **kwargs: object) -> str:
+        captured_js_modes.append(kwargs.get("js_mode"))
+        return "contenido"
+
+    monkeypatch.setattr(extractor_url, "extract_formatted_content", _fake_extract)
+
+    extractor_url.main()
+
+    assert captured_js_modes == ["force", "force"]

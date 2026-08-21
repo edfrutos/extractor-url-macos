@@ -113,8 +113,23 @@ _HTTP_SESSION = _create_retry_session()
 # Descarga
 # ---------------------------------------------------------------------------
 
-def _fetch_raw(url: str, timeout: int = 15, use_cache: bool = True) -> Optional[tuple[str, str]]:
-    """Descarga una URL (con caché opcional) y devuelve (html_text, url_final)."""
+def _fetch_raw(
+    url: str,
+    timeout: int = 15,
+    use_cache: bool = True,
+    js_mode: str = "auto",
+) -> Optional[tuple[str, str]]:
+    """Descarga una URL (con caché opcional) y devuelve (html_text, url_final).
+
+    js_mode controla el fallback Playwright (Fase 11/15):
+    - "auto" (defecto): heurística _looks_insufficient() decide, igual que v4.0.
+    - "force": renderiza siempre con Playwright, ignorando la heurística.
+    - "off": nunca renderiza con Playwright, ignorando la heurística.
+
+    Un js_mode distinto de "auto" salta la LECTURA de la caché (una URL ya
+    cacheada de una ejecución anterior no debe anular el efecto explícito
+    del flag) pero conserva la escritura al final, igual que siempre.
+    """
     if not url.startswith(("http://", "https://")):
         url = "https://" + url
 
@@ -124,7 +139,7 @@ def _fetch_raw(url: str, timeout: int = 15, use_cache: bool = True) -> Optional[
 
     if use_cache:
         _CACHE_DIR.mkdir(parents=True, exist_ok=True)
-        if cache_file.exists():
+        if js_mode == "auto" and cache_file.exists():
             try:
                 with cache_file.open("r", encoding="utf-8") as f:
                     cached_data = json.load(f)
@@ -145,9 +160,13 @@ def _fetch_raw(url: str, timeout: int = 15, use_cache: bool = True) -> Optional[
         html_text = response.text
         final_url = response.url
 
-        # Fallback JS (Fase 11): si el HTML estático parece insuficiente
-        # (posible SPA sin hidratar), reintentar renderizando con Playwright.
-        if _looks_insufficient(html_text):
+        # Fallback JS (Fase 11) + control manual (Fase 15): "force" renderiza
+        # siempre, "off" nunca, "auto" deja decidir a la heurística.
+        if js_mode == "force":
+            rendered = _fetch_via_playwright(url, timeout)
+            if rendered is not None:
+                html_text = rendered
+        elif js_mode != "off" and _looks_insufficient(html_text):
             rendered = _fetch_via_playwright(url, timeout)
             if rendered is not None:
                 html_text = rendered
@@ -171,9 +190,11 @@ def _fetch_raw(url: str, timeout: int = 15, use_cache: bool = True) -> Optional[
         return None
 
 
-def _fetch_soup(url: str, timeout: int = 15, use_cache: bool = True) -> Optional[BeautifulSoup]:
+def _fetch_soup(
+    url: str, timeout: int = 15, use_cache: bool = True, js_mode: str = "auto",
+) -> Optional[BeautifulSoup]:
     """Descarga una URL y devuelve un objeto BeautifulSoup."""
-    raw = _fetch_raw(url, timeout=timeout, use_cache=use_cache)
+    raw = _fetch_raw(url, timeout=timeout, use_cache=use_cache, js_mode=js_mode)
     if raw is None:
         return None
     html_text, _ = raw
@@ -351,20 +372,21 @@ def _format_soup_content(
 # API pública
 # ---------------------------------------------------------------------------
 
-def extract_formatted_content(
+def extract_formatted_content(  # pylint: disable=too-many-arguments,too-many-positional-arguments
     url: str,
     return_type: str = "text",
     selector: Optional[str] = None,
     timeout: int = 15,
     use_cache: bool = True,
+    js_mode: str = "auto",
 ) -> Optional[Union[str, BeautifulSoup]]:
     """Extrae contenido formateado de una página web."""
     if return_type == "markdown_structure":
         return extract_html_structure_to_markdown(
-            url, selector=selector, timeout=timeout, use_cache=use_cache
+            url, selector=selector, timeout=timeout, use_cache=use_cache, js_mode=js_mode
         )
 
-    soup = _fetch_soup(url, timeout=timeout, use_cache=use_cache)
+    soup = _fetch_soup(url, timeout=timeout, use_cache=use_cache, js_mode=js_mode)
     if soup is None:
         return None
 
@@ -372,10 +394,14 @@ def extract_formatted_content(
 
 
 def extract_html_structure_to_markdown(
-    url: str, selector: Optional[str] = None, timeout: int = 15, use_cache: bool = True,
+    url: str,
+    selector: Optional[str] = None,
+    timeout: int = 15,
+    use_cache: bool = True,
+    js_mode: str = "auto",
 ) -> Optional[str]:
     """Convierte el contenido principal de una URL a Markdown fiel."""
-    raw = _fetch_raw(url, timeout=timeout, use_cache=use_cache)
+    raw = _fetch_raw(url, timeout=timeout, use_cache=use_cache, js_mode=js_mode)
     if raw is None:
         return None
 

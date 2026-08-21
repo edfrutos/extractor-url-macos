@@ -26,9 +26,11 @@ from core import (
 )
 
 
-def _lookup_title(url: str, timeout: int, use_cache: bool) -> Optional[str]:
+def _lookup_title(
+    url: str, timeout: int, use_cache: bool, js_mode: str = "auto",
+) -> Optional[str]:
     """Extrae el <title> de una URL ya descargada (segunda llamada = hit de caché)."""
-    raw_result = _fetch_raw(url, timeout=timeout, use_cache=use_cache)
+    raw_result = _fetch_raw(url, timeout=timeout, use_cache=use_cache, js_mode=js_mode)
     if raw_result is None:
         return None
     html_text, _ = raw_result
@@ -37,6 +39,15 @@ def _lookup_title(url: str, timeout: int, use_cache: bool) -> Optional[str]:
     except FeatureNotFound:
         title_soup = BeautifulSoup(html_text, "html.parser")
     return _extract_title(title_soup, html_text)
+
+
+def _resolve_js_mode(args: argparse.Namespace) -> str:
+    """Traduce los flags --js/--no-js (mutuamente excluyentes) a js_mode."""
+    if args.js:
+        return "force"
+    if args.no_js:
+        return "off"
+    return "auto"
 
 
 def _history_entry(  # pylint: disable=too-many-arguments
@@ -298,6 +309,24 @@ def main() -> None:
         dest="use_cache",
         help="No utilizar la caché para esta petición",
     )
+    js_group = parser.add_mutually_exclusive_group()
+    js_group.add_argument(
+        "--js",
+        action="store_true",
+        help=(
+            "Fuerza el render con Playwright (Chromium headless), aunque "
+            "la heurística automática no lo active"
+        ),
+    )
+    js_group.add_argument(
+        "--no-js",
+        action="store_true",
+        dest="no_js",
+        help=(
+            "Desactiva el fallback Playwright, aunque la heurística "
+            "automática sí lo activaría"
+        ),
+    )
     parser.add_argument(
         "--gui",
         action="store_true",
@@ -335,6 +364,7 @@ def main() -> None:
         "markdown": "markdown_structure",
     }
     content_type = content_type_map.get(args.type, "text")
+    js_mode = _resolve_js_mode(args)
 
     # Llamada a la función importada desde core.py
     result = extract_formatted_content(
@@ -343,6 +373,7 @@ def main() -> None:
         selector=args.selector,
         timeout=args.timeout,
         use_cache=args.use_cache,
+        js_mode=js_mode,
     )
 
     if result is None:
@@ -363,7 +394,7 @@ def main() -> None:
     result_str = result if isinstance(result, str) else str(result)
 
     if args.json:
-        page_title = _lookup_title(args.url, args.timeout, args.use_cache)
+        page_title = _lookup_title(args.url, args.timeout, args.use_cache, js_mode=js_mode)
         record_history_entry(
             _history_entry(
                 args.url, args.type, args.selector, "success",
@@ -414,6 +445,7 @@ def _run_batch(args: argparse.Namespace) -> None:
         "markdown": "markdown_structure",
     }
     content_type = content_type_map.get(args.type, "text")
+    js_mode = _resolve_js_mode(args)
 
     try:
         with open(args.batch, "r", encoding="utf-8") as f:
@@ -429,6 +461,7 @@ def _run_batch(args: argparse.Namespace) -> None:
             selector=args.selector,
             timeout=args.timeout,
             use_cache=args.use_cache,
+            js_mode=js_mode,
         )
 
         if result is None:
@@ -446,7 +479,7 @@ def _run_batch(args: argparse.Namespace) -> None:
             continue
 
         result_str = result if isinstance(result, str) else str(result)
-        page_title = _lookup_title(url, args.timeout, args.use_cache)
+        page_title = _lookup_title(url, args.timeout, args.use_cache, js_mode=js_mode)
 
         record_history_entry(
             _history_entry(
