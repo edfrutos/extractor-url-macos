@@ -279,7 +279,7 @@ private final class IOCollector: @unchecked Sendable {
     }
 
     /// Intenta marcar como finalizado. Devuelve true solo la primera vez.
-    func tryFinish() -> Bool {
+    nonisolated func tryFinish() -> Bool {
         lock.lock()
         defer { lock.unlock() }
         guard !done else { return false }

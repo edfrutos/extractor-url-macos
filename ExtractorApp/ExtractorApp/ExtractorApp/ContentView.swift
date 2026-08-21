@@ -7,6 +7,7 @@ struct ContentView: View {
     @State private var isExpanded: Bool = false
     @State private var extractButtonScale: CGFloat = 1.0
     @State private var heroAppear: Bool = false
+    @State private var showingHistory: Bool = false
 
     var body: some View {
         ZStack {
@@ -35,6 +36,14 @@ struct ContentView: View {
                 heroAppear = true
             }
         }
+        .sheet(isPresented: $showingHistory) {
+            HistoryView { entry in
+                vm.urlString = entry.url
+                vm.outputType = entry.outputType ?? "text"
+                vm.selectorCSS = entry.selector ?? ""
+                vm.extract()
+            }
+        }
     }
 
     // MARK: - Hero Section
@@ -59,6 +68,14 @@ struct ContentView: View {
             .animation(.easeOut(duration: 0.45).delay(0.1), value: heroAppear)
 
             Spacer()
+
+            Button {
+                showingHistory = true
+            } label: {
+                Image(systemName: "clock.arrow.circlepath")
+            }
+            .buttonStyle(.plain)
+            .help("Historial de extracciones")
 
             if vm.isExtracting {
                 HStack(spacing: 6) {
