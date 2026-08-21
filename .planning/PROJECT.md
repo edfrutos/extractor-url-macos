@@ -58,11 +58,11 @@ Convertir páginas web en Markdown útil y limpio de forma fiable, repetible y s
 - ✓ UPDATE-06: `RELEASING.md` documenta el proceso completo; ninguna credencial expuesta en el repo en todo el checkpoint. — Validated in Phase 13
 
 - ✓ HIST-01: `core.py` persiste un historial de extracciones (metadatos, no contenido) en `~/.cache/extractor-url/history.jsonl`. — Validated in Phase 14 (14-01)
+- ✓ HIST-02: La app SwiftUI muestra el historial y permite reabrir una extracción previa sin repetirla (rellena campos + reextrae vía `ExtractionViewModel.extract()`). — Validated in Phase 14 (14-02), checkpoint humano en Xcode
 - ✓ HIST-03: `extractor_url.py --batch <archivo> --json` procesa varias URLs secuencialmente, NDJSON, continúa tras un fallo individual. — Validated in Phase 14 (14-01)
 
 ### Active (v6.0)
 
-- [ ] HIST-02: La app SwiftUI muestra el historial y permite reabrir/reexportar una extracción previa sin repetirla. (Fase 14-02, pendiente de definir)
 - [ ] FLAG-01: `--js` fuerza el fallback Playwright sin depender de la heurística `_looks_insufficient()`.
 - [ ] FLAG-02: `--no-js` desactiva el fallback Playwright aunque la heurística lo activaría.
 - [ ] CHANNEL-01: `scripts/release-macos.sh` soporta publicar en un canal `beta` (`sparkle:channel`) sin afectar al canal por defecto.
@@ -101,7 +101,7 @@ Milestone v2.0 (SwiftUI Native App) completado: app macOS nativa, bridge Python 
 Milestone v3.0 (Standalone App) completado y cerrado: Fases 8, 9 y 10 verificadas con `xcodebuild` real (Build Succeeded, 49 tests/3 skipped/0 fallos, checklist visual OK) — ver `.planning/phases/10-ux-zero-config/10-01-SUMMARY.md`.
 Milestone v4.0 (Contenido Dinámico) completado y cerrado: Fase 11 implementa `_looks_insufficient()` + `_fetch_via_playwright()` en `core.py`, integrados en `_fetch_raw()`. Verificado con `pytest tests/` (28/28), `pylint` 10/10 y `mypy` limpio en un venv equivalente al del repo — ver `.planning/phases/11-playwright-fallback/11-01-SUMMARY.md`.
 Milestone v5.0 (Auto-actualización) completado y cerrado: Fase 12 (Sparkle integrado en la app, paquete local por un bug de búsqueda de Xcode 26.6) y Fase 13 (`scripts/release-macos.sh` — build, firma Developer ID, notarización, appcast firmado con EdDSA, publicación en GitHub Releases) verificadas con un release real: `https://github.com/edfrutos/extractor-url-macos/releases/tag/v1.0`, `appcast.xml` publicado y confirmado en vivo — ver `.planning/phases/13-release-pipeline/13-01-SUMMARY.md` para los 4 bugs reales encontrados y corregidos durante el checkpoint (team ID en exportOptions.plist, hardened runtime del Python embebido, orden de bootstrap, firma EdDSA de generate_appcast).
-Milestone v6.0 (Historial y Distribución Completa) en marcha: Fase 14 (historial y cola) — lado Python completado (14-01: `record_history_entry()`/`load_history()` en `core.py`, `--batch` NDJSON en `extractor_url.py`, 40 tests/pylint 10/10/mypy limpio), pendiente 14-02 (vista de historial en la app SwiftUI, HIST-02). Fases 15-18 sin empezar. Fase 17 (Playwright/Chromium embebido) es significativamente más grande que el resto — comparable en alcance a la Fase 8 completa de v3.0.
+Milestone v6.0 (Historial y Distribución Completa) en marcha: Fase 14 (historial y cola) completa — 14-01 Python (`record_history_entry()`/`load_history()` en `core.py`, `--batch` NDJSON en `extractor_url.py`, 40 tests/pylint 10/10/mypy limpio) + 14-02 Swift (`HistoryEntry`/`HistoryViewModel`/`HistoryView` + integración `ContentView`, checkpoint humano en Xcode verificado: Build Succeeded, historial visible, reabrir funciona; de paso corregida una condición de carrera real en `PythonBridge.IOCollector.result()`). Commit `7fa4095` pusheado a `origin/main`. Fases 15-18 sin empezar. Fase 17 (Playwright/Chromium embebido) es significativamente más grande que el resto — comparable en alcance a la Fase 8 completa de v3.0.
 
 ## Constraints
 
@@ -148,6 +148,8 @@ Milestone v6.0 (Historial y Distribución Completa) en marcha: Fase 14 (historia
 | [v6.0] Historial guarda solo metadatos, no el contenido extraído | Reabrir una entrada reextrae vía la caché HTTP ya existente (`_fetch_raw`) en vez de duplicar datos — mantiene `history.jsonl` pequeño y evita desincronización entre historial y caché | ✓ Good (Phase 14-01) |
 | [v6.0] `--batch` exige `--json` explícitamente | Evita ampliar el comportamiento en silencio con un formato de texto plano ad-hoc para múltiples resultados — mismo principio que "selector CSS inválido falla explícito" ya establecido en v1.0 | ✓ Good (Phase 14-01) |
 | [v6.0] `_lookup_title()` extraída como función compartida entre `main()` y `_run_batch()` | Eliminó duplicación real y bajó `pylint` de 9.95 a 10.00/10 (`too-many-statements` en `main()`) — refactor genuino, no solo un disable cosmético | ✓ Good (Phase 14-01) |
+| [v6.0] `HistoryEntry.loadAll()` (Swift) reimplementa el parseo de `history.jsonl` en vez de invocar Python | La app solo lee el archivo del disco directamente — no hay razón para pagar el coste de un subprocess solo para listar el historial; mismo formato/orden y tolerancia a líneas corruptas que `load_history()` | ✓ Good (Phase 14-02) |
+| [v6.0] "Reabrir" siempre reextrae vía `vm.extract()`, nunca un modo "mostrar sin reextraer" | Mantiene un único flujo de extracción en `ExtractionViewModel` — la caché HTTP de Python ya hace la reextracción rápida en el caso común, sin necesidad de un camino especial en `PythonBridge` | ✓ Good (Phase 14-02) |
 
 ## Evolution
 
@@ -157,4 +159,4 @@ Este documento evoluciona en transiciones de fase y límites de milestone.
 **Después de cada milestone:** revisar Core Value, auditar Out of Scope, actualizar Context.
 
 ---
-*Last updated: 2026-08-20 — Fase 14 (Historial y cola): lado Python completo y verificado (14-01); pendiente 14-02 (vista SwiftUI)*
+*Last updated: 2026-08-21 — Fase 14 (Historial y cola) completa: Python (14-01) + SwiftUI (14-02), checkpoint humano verificado en Xcode*

@@ -3,35 +3,35 @@ gsd_state_version: 1.0
 milestone: v6.0
 milestone_name: Historial y Distribución Completa
 status: executing
-last_updated: "2026-08-20T00:00:00.000Z"
-last_activity: 2026-08-20 -- Fase 14-01 (historial y cola, lado Python) completa y verificada: pytest 40/40, pylint 10/10, mypy limpio
+last_updated: "2026-08-21T00:00:00.000Z"
+last_activity: 2026-08-21 -- Fase 14 (historial y cola) completa: 14-02 (vista SwiftUI) verificada en checkpoint humano real (Build Succeeded, historial visible, reabrir funciona)
 progress:
   total_phases: 5
-  completed_phases: 0
-  total_plans: 1
-  completed_plans: 1
-  percent: 10
+  completed_phases: 1
+  total_plans: 2
+  completed_plans: 2
+  percent: 20
 ---
 
 # Project State
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-08-20)
+See: .planning/PROJECT.md (updated 2026-08-21)
 
 **Core value:** Convertir páginas web en Markdown útil y limpio de forma fiable, repetible y sin depender de servicios externos.
-**Current focus:** Fase 14 — lado Python (historial + `--batch`) completo y verificado. Falta 14-02 (vista de historial en la app SwiftUI, HIST-02) antes de dar la Fase 14 por cerrada; luego Fases 15-18 sin empezar.
+**Current focus:** Fase 14 completa (Python + SwiftUI, HIST-01/02/03 validados). Siguiente: Fase 15 (flag manual `--js`/`--no-js`).
 
 ## Current Position
 
-Phase: 14 — Historial y cola de extracciones
-Plan: 14-01 (Python) completo; 14-02 (Swift) por definir
-Status: In progress — HIST-01/HIST-03 validados, HIST-02 pendiente
-Last activity: 2026-08-20 — `core.py`: `_HISTORY_FILE`, `record_history_entry()` (best-effort, solo metadatos, nunca contenido), `load_history()` (ignora líneas corruptas). `extractor_url.py`: `_history_entry()`, `_lookup_title()` (extraída para eliminar duplicación entre `main()` y `_run_batch()`), historial alimentado desde los 3 caminos (éxito/error/GUI), flag `--batch` (exige `--json`, NDJSON, continúa tras fallo individual). 12 tests nuevos (7 `test_history.py` + 5 `test_cli.py`). Verificado: pytest 40/40, pylint 10.00/10 (tras refactor de `_lookup_title`, subió de 9.95), mypy limpio.
+Phase: 14 — Historial y cola de extracciones (Complete)
+Plan: 14-01 (Python) + 14-02 (Swift) completos
+Status: Complete — HIST-01/HIST-02/HIST-03 validados
+Last activity: 2026-08-21 — 14-02: `Models/HistoryEntry.swift` (Codable + `loadAll()`, lee `~/.cache/extractor-url/history.jsonl`), `ViewModels/HistoryViewModel.swift`, `Views/HistoryView.swift` (lista + reabrir), `ContentView.swift` (botón historial + `.sheet`). De paso, corregida una condición de carrera real en `PythonBridge.IOCollector.result()` (leía `outData`/`errData` sin el `NSLock` que las protege). Checkpoint humano en Xcode verificado: Build Succeeded, historial visible con entradas reales, reabrir repuebla campos y reextrae. Commit `7fa4095` pusheado a `origin/main`.
 
 ```
-v6.0 Progress: [=         ] 10% — Fase 14 lado Python completo, resto sin empezar
-Phase 14: [=====     ] 14-01 (Python) completo / 14-02 (Swift) pendiente
+v6.0 Progress: [==        ] 20% — Fase 14 completa, resto sin empezar
+Phase 14: [==========] Complete (14-01 Python + 14-02 Swift)
 Phase 15: [          ] 0/? planes
 Phase 16: [          ] 0/? planes
 Phase 17: [          ] 0/? planes (fase grande — ver aviso de alcance en ROADMAP.md)
@@ -52,12 +52,12 @@ Decisiones relevantes para v6.0:
 - [v6.0]: Fase 17 reutiliza el patrón de bundling de la Fase 8 y el patrón de firma/notarización de la Fase 13 — no reinventa ninguno de los dos desde cero.
 - [v6.0]: Historial en JSON Lines (`~/.cache/extractor-url/history.jsonl`), reutilizando `_CACHE_DIR` ya existente — sin SQLite ni ubicación nueva. Solo metadatos, nunca el contenido extraído.
 - [v6.0]: `--batch` exige `--json` explícitamente — falla con `sys.exit(2)` si no, mismo principio que "selector CSS inválido falla explícito" de v1.0.
-- [v6.0]: La cola de la app SwiftUI (14-02) reutilizará `PythonBridge.run()` en bucle — no se cambia el contrato JSON de una extracción individual.
+- [v6.0]: `HistoryEntry.loadAll()` (Swift) es una implementación independiente de `load_history()` (Python), mismo formato/orden — la app SwiftUI solo LEE `history.jsonl` del disco, nunca escribe ni invoca Python para el historial.
+- [v6.0]: "Reabrir" una entrada de historial reutiliza `ExtractionViewModel.extract()` tal cual (asigna `urlString`/`outputType`/`selectorCSS` y llama) — no reimplementa el flujo de extracción ni añade un modo especial al bridge.
 
 ### Pending Todos
 
-- Definir y ejecutar la Fase 14-02: vista de historial en la app SwiftUI (HIST-02) — lee `history.jsonl` directamente del disco, sin pasar por el bridge. Necesitará research corta + plan + checkpoint humano en Xcode (como Fase 12).
-- Tras cerrar 14-02, dar la Fase 14 completa por cerrada y avanzar a la Fase 15 (flag manual `--js`/`--no-js`).
+- Avanzar a la Fase 15 (flag manual `--js`/`--no-js`) — necesitará research corta + plan.
 - Recomendado no bloqueante: repetir `pytest tests/`/`pylint`/`mypy` de 14-01 en el `.venv` real del Mac.
 
 ### Blockers/Concerns
@@ -75,6 +75,6 @@ Decisiones relevantes para v6.0:
 
 ## Session Continuity
 
-Last session: 2026-08-20T00:00:00Z
-Stopped at: Fase 14-01 (historial y cola, lado Python) completa y verificada. Pendiente: definir 14-02 (vista SwiftUI) o preguntar al usuario si quiere commitear/pushear primero.
-Resume file: .planning/phases/14-historial-cola/14-01-SUMMARY.md
+Last session: 2026-08-21T00:00:00Z
+Stopped at: Fase 14 completa (14-01 Python + 14-02 Swift), checkpoint humano verificado, commit `7fa4095` pusheado a `origin/main`. Pendiente: iniciar Fase 15 (flag manual `--js`/`--no-js`).
+Resume file: .planning/phases/14-historial-cola/14-02-SUMMARY.md

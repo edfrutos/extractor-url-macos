@@ -377,7 +377,7 @@ toque el turno, no asumir que será tan rápida como las fases 14-16.
 
 ### Checklist v6.0
 
-- [ ] **Phase 14: Historial y cola de extracciones** - Persistencia de extracciones previas + procesamiento de varias URLs en cola.
+- [x] **Phase 14: Historial y cola de extracciones** - Persistencia de extracciones previas + procesamiento de varias URLs en cola. (completed 2026-08-21)
 - [ ] **Phase 15: Flag manual `--js`/`--no-js`** - Control explícito del fallback Playwright junto a la heurística automática de v4.0.
 - [ ] **Phase 16: Canales beta de Sparkle** - Publicar y recibir actualizaciones en un canal `beta` opcional.
 - [ ] **Phase 17: Playwright/Chromium embebido en el bundle** - El fallback JS funciona en la app SwiftUI sin depender de una instalación externa de Playwright.
@@ -395,11 +395,11 @@ toque el turno, no asumir que será tan rápida como las fases 14-16.
   3. El usuario puede encolar varias URLs (desde la app y/o la CLI) y el sistema las procesa una a una sin que el usuario tenga que relanzar el comando/pulsar Extraer por cada una.
   4. El historial no depende de servicios externos — almacenamiento local, consistente con el core value del proyecto.
 
-**Plans**: 1 plan completo (Python) — Wave 1: 14-01-PLAN.md; 14-02 (Swift, HIST-02) pendiente de definir
+**Plans**: 2 planes — Wave 1: 14-01-PLAN.md (Python) · 14-02-PLAN.md (Swift)
 
 Plans:
 - [x] 14-01-PLAN.md — `record_history_entry()`/`load_history()` en core.py, `--batch` NDJSON en extractor_url.py (completed 2026-08-20, pytest 40/40, pylint 10/10, mypy limpio)
-- [ ] 14-02-PLAN.md — vista de historial en la app SwiftUI (HIST-02), por definir
+- [x] 14-02-PLAN.md — vista de historial en la app SwiftUI (HIST-02): HistoryEntry/HistoryViewModel/HistoryView + integración ContentView, checkpoint humano en Xcode verificado (completed 2026-08-21)
 
 **UI hint**: yes
 
@@ -471,7 +471,7 @@ Plans:
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 14. Historial y cola de extracciones | 1/2 | In progress (lado Python completo, falta 14-02 Swift) | — |
+| 14. Historial y cola de extracciones | 2/2 | Complete | 2026-08-21 |
 | 15. Flag manual `--js`/`--no-js` | 0/? | Planning | — |
 | 16. Canales beta de Sparkle | 0/? | Planning | — |
 | 17. Playwright/Chromium embebido en el bundle | 0/? | Planning | — |
