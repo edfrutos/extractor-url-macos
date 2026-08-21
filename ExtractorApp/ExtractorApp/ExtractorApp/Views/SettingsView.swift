@@ -32,6 +32,17 @@ struct SettingsView: View {
                         .font(.headline)
                 }
 
+                // MARK: Actualizaciones (Fase 16: opt-in a canal beta)
+                Section {
+                    Toggle("Recibir actualizaciones beta", isOn: $vm.betaChannelOptIn)
+                    Text("Las versiones beta pueden ser menos estables. Puedes desactivar esto en cualquier momento.")
+                        .font(.caption2)
+                        .foregroundStyle(.tertiary)
+                } header: {
+                    Label("Actualizaciones", systemImage: "arrow.down.circle")
+                        .font(.headline)
+                }
+
                 // MARK: Configuracion avanzada (colapsable, opcional)
                 Section {
                     Button {

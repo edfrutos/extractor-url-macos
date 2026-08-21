@@ -84,7 +84,38 @@ ejecuta tú mismo los comandos que imprime al terminar. Es la acción que
 activa el feed de Sparkle para los usuarios existentes; queda bajo tu
 control explícito.
 
-## 3. Verificación post-release
+## 3. Publicar un canal beta (opcional)
+
+`scripts/release-macos.sh` acepta un segundo argumento opcional con el
+nombre del canal:
+
+```bash
+scripts/release-macos.sh 1.1-beta.1 beta
+```
+
+Sin ese segundo argumento, el comportamiento es exactamente el de
+siempre (canal por defecto/estable). Con él:
+
+- `generate_appcast` recibe `--channel beta`, que etiqueta **solo el item
+  nuevo** que se añade en esta ejecución con `<sparkle:channel>beta</sparkle:channel>`
+  — los releases estables ya publicados nunca se re-etiquetan ni se tocan.
+- El GitHub Release se marca `--prerelease` y su título/notas incluyen
+  `(beta)`, para que quede claro navegando la lista de releases a mano.
+- Solo las apps cuyo usuario haya activado "Recibir actualizaciones beta"
+  en Preferencias verán y podrán instalar esta versión — el resto sigue
+  viendo únicamente el canal estable, sin cambios.
+
+**Usa un `MARKETING_VERSION` distinto para cada beta** (ej. `1.1-beta.1`,
+`1.1-beta.2`, …), nunca el mismo que la versión estable que planeas
+publicar después. `generate_appcast` identifica los items existentes por
+build number (`CURRENT_PROJECT_VERSION`, que este script ya sube
+automáticamente y nunca colisiona) pero si reutilizas literalmente el
+mismo `MARKETING_VERSION` para una beta y luego para el release "de
+verdad", el segundo `gh release create "v${VERSION}"` fallaría por tag
+duplicado (el preflight ya lo detecta explícito) — evita la confusión
+usando un sufijo `-beta.N` mientras pruebas.
+
+## 4. Verificación post-release
 
 ```bash
 curl -I https://raw.githubusercontent.com/edfrutos/extractor-url-macos/main/appcast.xml
@@ -99,7 +130,7 @@ Si tienes una instalación anterior de la app a mano, pulsa
 "Buscar actualizaciones…" desde su menú y confirma que detecta e instala la
 nueva versión sin avisos de Gatekeeper.
 
-## 4. Seguridad
+## 5. Seguridad
 
 Ninguna de las tres piezas de secreto de este pipeline vive en el repo:
 
@@ -110,7 +141,7 @@ Ninguna de las tres piezas de secreto de este pipeline vive en el repo:
 `scripts/release-macos.sh` solo referencia nombres de perfil de Keychain
 (`NOTARY_PROFILE`) — nunca lee ni escribe el material secreto en sí.
 
-## 5. Troubleshooting
+## 6. Troubleshooting
 
 **`unzip` o `zip` rompen la firma ("app is damaged")** — usa siempre
 `ditto -c -k --sequesterRsrc --keepParent` para comprimir, y `ditto -x -k`

@@ -13,7 +13,13 @@
 #   3. `gh auth login` ya hecho.
 #
 # USO:
-#   scripts/release-macos.sh <version>      # ej: scripts/release-macos.sh 1.1
+#   scripts/release-macos.sh <version> [canal]   # ej: scripts/release-macos.sh 1.1
+#                                                 #     scripts/release-macos.sh 1.1-beta.1 beta
+#
+# El canal es opcional. Sin él, el comportamiento es el de siempre (canal
+# estable/por defecto). Con un canal (ej. "beta"), el release solo es
+# visible para apps cuyo SPUUpdaterDelegate haya optado a ese canal — los
+# releases estables ya publicados nunca se re-etiquetan (ver 16-RESEARCH.md).
 #
 # Tras terminar, el script deja appcast.xml actualizado en la raíz del
 # repo e imprime el `git add/commit/push` exacto a ejecutar — no lo hace
@@ -34,7 +40,8 @@ CACHE_DIR="${PROJECT_DIR}/.build-cache/release"
 SPARKLE_TOOLS_DIR="${PROJECT_DIR}/.build-cache/sparkle-tools"
 ARCHIVE_DIR="${CACHE_DIR}/archive"
 
-VERSION="${1:?Uso: scripts/release-macos.sh <version, ej. 1.1>}"
+VERSION="${1:?Uso: scripts/release-macos.sh <version, ej. 1.1> [canal, ej. beta]}"
+CHANNEL="${2:-}"
 
 # ── Validaciones previas ───────────────────────────────────────────────────
 # Fallan pronto y explícito — nunca a medio pipeline con secretos a medias.
@@ -223,9 +230,21 @@ _archive_and_generate_appcast() {
 	mkdir -p "${ARCHIVE_DIR}"
 	cp "${zip_path}" "${ARCHIVE_DIR}/"
 
-	echo "Generando appcast.xml (incluye histórico completo en ${ARCHIVE_DIR})…"
+	# --channel solo etiqueta el item NUEVO que se añade en esta ejecución
+	# (generate_appcast compara contra el appcast.xml existente y solo
+	# aplica --channel cuando crea un item que no existía — los releases
+	# estables ya publicados nunca se re-etiquetan, ver 16-RESEARCH.md).
+	local channel_args=()
+	if [[ -n "${CHANNEL}" ]]; then
+		channel_args=(--channel "${CHANNEL}")
+		echo "Generando appcast.xml en el canal '${CHANNEL}' (incluye histórico completo en ${ARCHIVE_DIR})…"
+	else
+		echo "Generando appcast.xml (canal por defecto/estable, incluye histórico completo en ${ARCHIVE_DIR})…"
+	fi
+
 	"${SPARKLE_TOOLS_DIR}/bin/generate_appcast" \
 		--download-url-prefix "https://github.com/${GITHUB_REPO}/releases/download/v${VERSION}/" \
+		"${channel_args[@]}" \
 		-o "${ARCHIVE_DIR}/appcast.xml" \
 		"${ARCHIVE_DIR}"
 
@@ -256,11 +275,22 @@ _archive_and_generate_appcast() {
 # ── Publicar en GitHub Releases ────────────────────────────────────────────
 _publish_release() {
 	local zip_path="${ARCHIVE_DIR}/${SCHEME}-${VERSION}.zip"
+	local title="${SCHEME} ${VERSION}"
+	local notes="Release ${VERSION}"
+	local gh_flags=()
+
+	if [[ -n "${CHANNEL}" ]]; then
+		title="${title} (${CHANNEL})"
+		notes="${notes} — canal ${CHANNEL}"
+		gh_flags=(--prerelease)
+	fi
+
 	echo "Publicando release v${VERSION} en ${GITHUB_REPO}…"
 	gh release create "v${VERSION}" "${zip_path}" \
 		--repo "${GITHUB_REPO}" \
-		--title "${SCHEME} ${VERSION}" \
-		--notes "Release ${VERSION}"
+		--title "${title}" \
+		--notes "${notes}" \
+		"${gh_flags[@]}"
 }
 
 # ── Main ─────────────────────────────────────────────────────────────────

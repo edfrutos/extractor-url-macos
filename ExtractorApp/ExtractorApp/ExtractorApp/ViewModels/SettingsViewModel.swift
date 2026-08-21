@@ -74,6 +74,12 @@ final class SettingsViewModel: ObservableObject {
         }
     }
 
+    /// Opt-in a actualizaciones del canal beta de Sparkle (Fase 16).
+    /// Leído directamente por `ExtractorUpdaterDelegate.allowedChannels(for:)`
+    /// — no necesita refrescar nada al cambiar, Sparkle lo consulta en la
+    /// siguiente comprobación (automática o manual).
+    @AppStorage("betaChannelOptIn") var betaChannelOptIn: Bool = false
+
     // MARK: Validation state (@Published para reactividad en View)
 
     @Published private(set) var pythonValidation: PathValidationState = .empty
