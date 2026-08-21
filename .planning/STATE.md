@@ -57,12 +57,13 @@ Decisiones relevantes para v6.0:
 
 ### Pending Todos
 
-- Avanzar a la Fase 15 (flag manual `--js`/`--no-js`) — necesitará research corta + plan.
+- Fase 15 (flag manual `--js`/`--no-js`): research completa (`15-RESEARCH.md`), falta el plan de implementación (`15-01-PLAN.md`).
 - Recomendado no bloqueante: repetir `pytest tests/`/`pylint`/`mypy` de 14-01 en el `.venv` real del Mac.
 
 ### Blockers/Concerns
 
 - Ninguno bloqueante. La Fase 17 merece una nota de atención por su tamaño (ver Decisions arriba), pero no bloquea el resto de fases.
+- **Bug real de Xcode 26.6 confirmado** (relacionado con `POLISH-02`): `GENERATE_INFOPLIST_FILE = YES` no sintetiza NINGUNA clave `INFOPLIST_KEY_*` personalizada en el `Info.plist` generado (`SUFeedURL`, `SUPublicEDKey`, `NSHumanReadableCopyright` — las 3 ausentes, confirmado con DerivedData borrado por completo, no era caché). Efecto observado: "Buscar actualizaciones…" fallaba con `You must specify the URL of the appcast as the SUFeedURL key...`. Corregido con un `Info.plist` físico parcial (`ExtractorApp/Info.plist`, solo esas 3 claves) + `INFOPLIST_FILE` en build settings, combinado con `GENERATE_INFOPLIST_FILE = YES` (mecanismo de merge documentado por Apple) — verificado en Mac real: las claves aparecen en el `.app` compilado y "Buscar actualizaciones…" funciona sin error.
 
 ## Deferred Items (desde v6.0)
 

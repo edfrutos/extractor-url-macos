@@ -150,6 +150,7 @@ Milestone v6.0 (Historial y Distribución Completa) en marcha: Fase 14 (historia
 | [v6.0] `_lookup_title()` extraída como función compartida entre `main()` y `_run_batch()` | Eliminó duplicación real y bajó `pylint` de 9.95 a 10.00/10 (`too-many-statements` en `main()`) — refactor genuino, no solo un disable cosmético | ✓ Good (Phase 14-01) |
 | [v6.0] `HistoryEntry.loadAll()` (Swift) reimplementa el parseo de `history.jsonl` en vez de invocar Python | La app solo lee el archivo del disco directamente — no hay razón para pagar el coste de un subprocess solo para listar el historial; mismo formato/orden y tolerancia a líneas corruptas que `load_history()` | ✓ Good (Phase 14-02) |
 | [v6.0] "Reabrir" siempre reextrae vía `vm.extract()`, nunca un modo "mostrar sin reextraer" | Mantiene un único flujo de extracción en `ExtractionViewModel` — la caché HTTP de Python ya hace la reextracción rápida en el caso común, sin necesidad de un camino especial en `PythonBridge` | ✓ Good (Phase 14-02) |
+| [v6.0] `Info.plist` físico parcial (`ExtractorApp/Info.plist`) + `INFOPLIST_FILE`, combinado con `GENERATE_INFOPLIST_FILE = YES` | Bug confirmado de Xcode 26.6: no sintetiza ninguna clave `INFOPLIST_KEY_*` personalizada (`SUFeedURL`/`SUPublicEDKey`/`NSHumanReadableCopyright`) — verificado con DerivedData borrado por completo, no era caché. El merge `GENERATE_INFOPLIST_FILE` + `INFOPLIST_FILE` es el mecanismo oficial de Apple para este caso; evita esperar a que Apple arregle el bug | ✓ Good (encontrado fuera de fase, 2026-08-21) |
 
 ## Evolution
 

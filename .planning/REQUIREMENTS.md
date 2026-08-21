@@ -162,7 +162,7 @@ Orden fijado por el usuario: historial → flags → canales → bundle JS → p
 ### POLISH — Pulido técnico (Phase 18)
 
 - [ ] **POLISH-01**: `_bump_version` en `scripts/release-macos.sh` acota el `sed` a los bloques del target `ExtractorApp` únicamente.
-- [ ] **POLISH-02**: Investigado y documentado el bug del buscador de paquetes de Xcode 26.6; Sparkle migrado a paquete remoto si se confirma resuelto.
+- [ ] **POLISH-02**: Investigado y documentado el bug del buscador de paquetes de Xcode 26.6; Sparkle migrado a paquete remoto si se confirma resuelto. Relacionado: confirmado un segundo bug de Xcode 26.6 — `GENERATE_INFOPLIST_FILE` no sintetiza claves `INFOPLIST_KEY_*` personalizadas (ver STATE.md, Blockers/Concerns) — mitigado con `Info.plist` físico parcial, sin depender de que Apple lo arregle.
 
 ## Out of Scope (v6.0)
 
