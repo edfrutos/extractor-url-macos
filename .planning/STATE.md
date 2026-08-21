@@ -4,13 +4,13 @@ milestone: v6.0
 milestone_name: Historial y Distribución Completa
 status: executing
 last_updated: "2026-08-21T00:00:00.000Z"
-last_activity: 2026-08-21 -- Fase 14 (historial y cola) completa: 14-02 (vista SwiftUI) verificada en checkpoint humano real (Build Succeeded, historial visible, reabrir funciona)
+last_activity: 2026-08-21 -- Fase 15 (flag manual --js/--no-js) completa: js_mode en core.py, flags mutuamente excluyentes en extractor_url.py, 51/51 tests, pylint 10/10, mypy limpio
 progress:
   total_phases: 5
-  completed_phases: 1
-  total_plans: 2
-  completed_plans: 2
-  percent: 20
+  completed_phases: 2
+  total_plans: 3
+  completed_plans: 3
+  percent: 40
 ---
 
 # Project State
@@ -20,19 +20,19 @@ progress:
 See: .planning/PROJECT.md (updated 2026-08-21)
 
 **Core value:** Convertir páginas web en Markdown útil y limpio de forma fiable, repetible y sin depender de servicios externos.
-**Current focus:** Fase 14 completa (Python + SwiftUI, HIST-01/02/03 validados). Siguiente: Fase 15 (flag manual `--js`/`--no-js`).
+**Current focus:** Fases 14 y 15 completas. Siguiente: Fase 16 (canales beta de Sparkle).
 
 ## Current Position
 
-Phase: 14 — Historial y cola de extracciones (Complete)
-Plan: 14-01 (Python) + 14-02 (Swift) completos
-Status: Complete — HIST-01/HIST-02/HIST-03 validados
-Last activity: 2026-08-21 — 14-02: `Models/HistoryEntry.swift` (Codable + `loadAll()`, lee `~/.cache/extractor-url/history.jsonl`), `ViewModels/HistoryViewModel.swift`, `Views/HistoryView.swift` (lista + reabrir), `ContentView.swift` (botón historial + `.sheet`). De paso, corregida una condición de carrera real en `PythonBridge.IOCollector.result()` (leía `outData`/`errData` sin el `NSLock` que las protege). Checkpoint humano en Xcode verificado: Build Succeeded, historial visible con entradas reales, reabrir repuebla campos y reextrae. Commit `7fa4095` pusheado a `origin/main`.
+Phase: 15 — Flag manual `--js`/`--no-js` (Complete)
+Plan: 15-01 completo
+Status: Complete — FLAG-01/FLAG-02 validados
+Last activity: 2026-08-21 — `core.py`: `_fetch_raw()`/`_fetch_soup()`/`extract_formatted_content()`/`extract_html_structure_to_markdown()` ganan `js_mode: str = "auto"` ("auto"/"force"/"off"); `js_mode != "auto"` salta la lectura de caché (no la escritura) para que los flags tengan efecto real sobre una URL ya cacheada. `extractor_url.py`: `--js`/`--no-js` como grupo mutuamente excluyente de `argparse`, `_resolve_js_mode()`, propagado a `main()`/`_run_batch()`/`_lookup_title()`. 11 tests nuevos (6 `test_flag_js.py` + 5 en `test_cli.py`). Verificado: pytest 51/51, pylint 10.00/10, mypy limpio, smoke test manual de la CLI real.
 
 ```
-v6.0 Progress: [==        ] 20% — Fase 14 completa, resto sin empezar
+v6.0 Progress: [====      ] 40% — Fases 14-15 completas, resto sin empezar
 Phase 14: [==========] Complete (14-01 Python + 14-02 Swift)
-Phase 15: [          ] 0/? planes
+Phase 15: [==========] Complete (15-01)
 Phase 16: [          ] 0/? planes
 Phase 17: [          ] 0/? planes (fase grande — ver aviso de alcance en ROADMAP.md)
 Phase 18: [          ] 0/? planes
@@ -54,11 +54,14 @@ Decisiones relevantes para v6.0:
 - [v6.0]: `--batch` exige `--json` explícitamente — falla con `sys.exit(2)` si no, mismo principio que "selector CSS inválido falla explícito" de v1.0.
 - [v6.0]: `HistoryEntry.loadAll()` (Swift) es una implementación independiente de `load_history()` (Python), mismo formato/orden — la app SwiftUI solo LEE `history.jsonl` del disco, nunca escribe ni invoca Python para el historial.
 - [v6.0]: "Reabrir" una entrada de historial reutiliza `ExtractionViewModel.extract()` tal cual (asigna `urlString`/`outputType`/`selectorCSS` y llama) — no reimplementa el flujo de extracción ni añade un modo especial al bridge.
+- [v6.0]: `js_mode` ("auto"/"force"/"off") sustituye la línea única `if _looks_insufficient(...)` por una decisión de 3 vías en `_fetch_raw()` — sin tocar la heurística en sí, que sigue siendo el comportamiento exacto de v4.0 cuando `js_mode="auto"`.
+- [v6.0]: `js_mode != "auto"` salta solo la LECTURA de caché en `_fetch_raw()`, no la escritura — sin esto, `--js`/`--no-js` no tendrían efecto sobre una URL ya cacheada de una ejecución anterior (hallazgo del research, no una decisión explícita del usuario).
+- [v6.0]: `--js`/`--no-js` como `argparse.add_mutually_exclusive_group()` en vez de validación manual — falla nativo con `SystemExit(2)` si se pasan ambos, mismo principio de "fallar explícito" ya establecido en v1.0.
 
 ### Pending Todos
 
-- Fase 15 (flag manual `--js`/`--no-js`): research completa (`15-RESEARCH.md`), falta el plan de implementación (`15-01-PLAN.md`).
-- Recomendado no bloqueante: repetir `pytest tests/`/`pylint`/`mypy` de 14-01 en el `.venv` real del Mac.
+- Avanzar a la Fase 16 (canales beta de Sparkle) — necesitará research corta + plan.
+- Recomendado no bloqueante: repetir `pytest tests/`/`pylint`/`mypy` de 14-01/15-01 en el `.venv` real del Mac.
 
 ### Blockers/Concerns
 
@@ -77,5 +80,5 @@ Decisiones relevantes para v6.0:
 ## Session Continuity
 
 Last session: 2026-08-21T00:00:00Z
-Stopped at: Fase 14 completa (14-01 Python + 14-02 Swift), checkpoint humano verificado, commit `7fa4095` pusheado a `origin/main`. Pendiente: iniciar Fase 15 (flag manual `--js`/`--no-js`).
-Resume file: .planning/phases/14-historial-cola/14-02-SUMMARY.md
+Stopped at: Fases 14 y 15 completas. Fase 15 (`--js`/`--no-js`) implementada, verificada (pytest 51/51, pylint 10/10, mypy limpio) y lista para commitear. Pendiente: iniciar Fase 16 (canales beta de Sparkle).
+Resume file: .planning/phases/15-flag-manual-js/15-01-SUMMARY.md

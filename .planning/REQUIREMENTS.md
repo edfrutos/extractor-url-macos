@@ -113,7 +113,7 @@
 | UPDATE-01…03 | v5.0 | ✅ Complete | Phase 12 |
 | UPDATE-04…06 | v5.0 | ✅ Complete | Phase 13 |
 | HIST-01…03 | v6.0 | ✅ Complete | Phase 14 (14-01, 14-02) |
-| FLAG-01…02 | v6.0 | ⬜ Pending | Phase 15 |
+| FLAG-01…02 | v6.0 | ✅ Complete | Phase 15 (15-01) |
 | CHANNEL-01…02 | v6.0 | ⬜ Pending | Phase 16 |
 | BUNDLEJS-01…02 | v6.0 | ⬜ Pending | Phase 17 |
 | POLISH-01…02 | v6.0 | ⬜ Pending | Phase 18 |
@@ -144,10 +144,10 @@ Orden fijado por el usuario: historial → flags → canales → bundle JS → p
 - [x] **HIST-02**: La app SwiftUI muestra el historial y permite reabrir una extracción previa sin repetirla. — Phase 14 (14-02), `HistoryEntry`/`HistoryViewModel`/`HistoryView`, checkpoint humano en Xcode verificado
 - [x] **HIST-03**: El usuario puede encolar varias URLs (CLI y/o app) y procesarlas secuencialmente sin intervención por cada una. — Phase 14 (14-01), `--batch` NDJSON en la CLI
 
-### FLAG — Control manual del fallback JS (Phase 15)
+### FLAG — Control manual del fallback JS (Phase 15) ✅ Complete
 
-- [ ] **FLAG-01**: `--js` fuerza el fallback Playwright sin depender de `_looks_insufficient()`.
-- [ ] **FLAG-02**: `--no-js` desactiva el fallback Playwright aunque la heurística lo activaría.
+- [x] **FLAG-01**: `--js` fuerza el fallback Playwright sin depender de `_looks_insufficient()`. — Phase 15 (15-01), `js_mode="force"`
+- [x] **FLAG-02**: `--no-js` desactiva el fallback Playwright aunque la heurística lo activaría. — Phase 15 (15-01), `js_mode="off"`
 
 ### CHANNEL — Canales beta de Sparkle (Phase 16)
 

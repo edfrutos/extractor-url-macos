@@ -378,7 +378,7 @@ toque el turno, no asumir que será tan rápida como las fases 14-16.
 ### Checklist v6.0
 
 - [x] **Phase 14: Historial y cola de extracciones** - Persistencia de extracciones previas + procesamiento de varias URLs en cola. (completed 2026-08-21)
-- [ ] **Phase 15: Flag manual `--js`/`--no-js`** - Control explícito del fallback Playwright junto a la heurística automática de v4.0.
+- [x] **Phase 15: Flag manual `--js`/`--no-js`** - Control explícito del fallback Playwright junto a la heurística automática de v4.0. (completed 2026-08-21)
 - [ ] **Phase 16: Canales beta de Sparkle** - Publicar y recibir actualizaciones en un canal `beta` opcional.
 - [ ] **Phase 17: Playwright/Chromium embebido en el bundle** - El fallback JS funciona en la app SwiftUI sin depender de una instalación externa de Playwright.
 - [ ] **Phase 18: Pulido técnico** - Acotar `_bump_version`, investigar el bug del buscador de paquetes de Xcode 26.6.
@@ -415,7 +415,10 @@ Plans:
   3. Sin pasar ninguno de los dos flags, el comportamiento es exactamente el de v4.0 (heurística automática, sin cambios).
   4. Tests cubren los 2 flags sin depender de un browser real, siguiendo el mismo patrón de mocking que `tests/test_js_fallback.py`.
 
-**Plans**: por definir (research/planning pendiente)
+**Plans**: 1 plan — Wave 1: 15-01-PLAN.md
+
+Plans:
+- [x] 15-01-PLAN.md — js_mode ("auto"/"force"/"off") en core.py + --js/--no-js en extractor_url.py, 51/51 tests, pylint 10/10, mypy limpio (completed 2026-08-21)
 
 **UI hint**: no
 
@@ -472,7 +475,7 @@ Plans:
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 14. Historial y cola de extracciones | 2/2 | Complete | 2026-08-21 |
-| 15. Flag manual `--js`/`--no-js` | 0/? | Planning | — |
+| 15. Flag manual `--js`/`--no-js` | 1/1 | Complete | 2026-08-21 |
 | 16. Canales beta de Sparkle | 0/? | Planning | — |
 | 17. Playwright/Chromium embebido en el bundle | 0/? | Planning | — |
 | 18. Pulido técnico | 0/? | Planning | — |
