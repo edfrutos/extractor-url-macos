@@ -114,7 +114,7 @@
 | UPDATE-04…06 | v5.0 | ✅ Complete | Phase 13 |
 | HIST-01…03 | v6.0 | ✅ Complete | Phase 14 (14-01, 14-02) |
 | FLAG-01…02 | v6.0 | ✅ Complete | Phase 15 (15-01) |
-| CHANNEL-01…02 | v6.0 | ⬜ Pending | Phase 16 |
+| CHANNEL-01…02 | v6.0 | ✅ Validated | Phase 16 |
 | BUNDLEJS-01…02 | v6.0 | ⬜ Pending | Phase 17 |
 | POLISH-01…02 | v6.0 | ⬜ Pending | Phase 18 |
 
@@ -151,8 +151,8 @@ Orden fijado por el usuario: historial → flags → canales → bundle JS → p
 
 ### CHANNEL — Canales beta de Sparkle (Phase 16)
 
-- [ ] **CHANNEL-01**: `scripts/release-macos.sh` soporta publicar en el canal `beta` (`sparkle:channel`) sin afectar al canal por defecto.
-- [ ] **CHANNEL-02**: La app puede optar al canal beta vía `SPUUpdaterDelegate.allowedChannelsForUpdater`.
+- [x] **CHANNEL-01**: `scripts/release-macos.sh` soporta publicar en el canal `beta` (`sparkle:channel`) sin afectar al canal por defecto.
+- [x] **CHANNEL-02**: La app puede optar al canal beta vía `SPUUpdaterDelegate.allowedChannelsForUpdater`.
 
 ### BUNDLEJS — Playwright embebido en el bundle (Phase 17)
 

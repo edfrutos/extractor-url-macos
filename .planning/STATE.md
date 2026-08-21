@@ -4,13 +4,13 @@ milestone: v6.0
 milestone_name: Historial y Distribución Completa
 status: executing
 last_updated: "2026-08-21T00:00:00.000Z"
-last_activity: 2026-08-21 -- Fase 15 (flag manual --js/--no-js) completa: js_mode en core.py, flags mutuamente excluyentes en extractor_url.py, 51/51 tests, pylint 10/10, mypy limpio
+last_activity: 2026-08-21 -- Fase 16 (canales beta de Sparkle) completa: canal opcional en scripts/release-macos.sh + ExtractorUpdaterDelegate/toggle de opt-in en la app, checkpoint humano en Xcode verificado (Build Succeeded, toggle persistente)
 progress:
   total_phases: 5
-  completed_phases: 2
-  total_plans: 3
-  completed_plans: 3
-  percent: 40
+  completed_phases: 3
+  total_plans: 4
+  completed_plans: 4
+  percent: 60
 ---
 
 # Project State
@@ -20,20 +20,20 @@ progress:
 See: .planning/PROJECT.md (updated 2026-08-21)
 
 **Core value:** Convertir páginas web en Markdown útil y limpio de forma fiable, repetible y sin depender de servicios externos.
-**Current focus:** Fases 14 y 15 completas. Siguiente: Fase 16 (canales beta de Sparkle).
+**Current focus:** Fases 14, 15 y 16 completas. Siguiente: Fase 17 (Playwright/Chromium embebido — fase grande).
 
 ## Current Position
 
-Phase: 15 — Flag manual `--js`/`--no-js` (Complete)
-Plan: 15-01 completo
-Status: Complete — FLAG-01/FLAG-02 validados
-Last activity: 2026-08-21 — `core.py`: `_fetch_raw()`/`_fetch_soup()`/`extract_formatted_content()`/`extract_html_structure_to_markdown()` ganan `js_mode: str = "auto"` ("auto"/"force"/"off"); `js_mode != "auto"` salta la lectura de caché (no la escritura) para que los flags tengan efecto real sobre una URL ya cacheada. `extractor_url.py`: `--js`/`--no-js` como grupo mutuamente excluyente de `argparse`, `_resolve_js_mode()`, propagado a `main()`/`_run_batch()`/`_lookup_title()`. 11 tests nuevos (6 `test_flag_js.py` + 5 en `test_cli.py`). Verificado: pytest 51/51, pylint 10.00/10, mypy limpio, smoke test manual de la CLI real.
+Phase: 16 — Canales beta de Sparkle (Complete)
+Plan: 16-01 completo
+Status: Complete — CHANNEL-01/CHANNEL-02 validados (checkpoint humano en Xcode)
+Last activity: 2026-08-21 — `scripts/release-macos.sh`: `CHANNEL="${2:-}"` como 2º argumento opcional, `channel_args=(--channel "${CHANNEL}")` solo si no vacío en `_archive_and_generate_appcast()`, `--prerelease` + sufijo de título/notas en `_publish_release()`; sin canal, comportamiento idéntico al de antes de la fase. `RELEASING.md` documenta el uso y el pitfall de `MARKETING_VERSION` distinto para beta. `ExtractorAppApp.swift`: `ExtractorUpdaterDelegate: NSObject, SPUUpdaterDelegate` con `allowedChannels(for:)` leyendo `betaChannelOptIn` de `UserDefaults`. `SettingsViewModel`/`SettingsView`: toggle "Recibir actualizaciones beta" vía `@AppStorage`. Añadido de paso `scripts/setup-sparkle-local.sh` (utilidad para preparar Sparkle como paquete SPM local, mitigando el bug de red del buscador de paquetes de Xcode 26.6). Checkpoint humano en Xcode verificado: Build Succeeded sin necesitar Fix-it de nombre (`allowedChannels(for:)` aceptado tal cual), toggle persistente tras reabrir Preferencias.
 
 ```
-v6.0 Progress: [====      ] 40% — Fases 14-15 completas, resto sin empezar
+v6.0 Progress: [======    ] 60% — Fases 14-16 completas, resto sin empezar
 Phase 14: [==========] Complete (14-01 Python + 14-02 Swift)
 Phase 15: [==========] Complete (15-01)
-Phase 16: [          ] 0/? planes
+Phase 16: [==========] Complete (16-01)
 Phase 17: [          ] 0/? planes (fase grande — ver aviso de alcance en ROADMAP.md)
 Phase 18: [          ] 0/? planes
 ```
@@ -57,10 +57,13 @@ Decisiones relevantes para v6.0:
 - [v6.0]: `js_mode` ("auto"/"force"/"off") sustituye la línea única `if _looks_insufficient(...)` por una decisión de 3 vías en `_fetch_raw()` — sin tocar la heurística en sí, que sigue siendo el comportamiento exacto de v4.0 cuando `js_mode="auto"`.
 - [v6.0]: `js_mode != "auto"` salta solo la LECTURA de caché en `_fetch_raw()`, no la escritura — sin esto, `--js`/`--no-js` no tendrían efecto sobre una URL ya cacheada de una ejecución anterior (hallazgo del research, no una decisión explícita del usuario).
 - [v6.0]: `--js`/`--no-js` como `argparse.add_mutually_exclusive_group()` en vez de validación manual — falla nativo con `SystemExit(2)` si se pasan ambos, mismo principio de "fallar explícito" ya establecido en v1.0.
+- [v6.0]: `scripts/setup-sparkle-local.sh` añadido fuera del plan original de la Fase 16, como utilidad para mitigar el bug de red del buscador de paquetes SPM de Xcode 26.6 (ya documentado en 12-01-SUMMARY.md) — descarga y verifica por checksum el `.xcframework` de Sparkle y parchea `Package.swift` para referenciarlo por path local.
+- [v6.0]: `allowedChannels(for:)` (no `allowedChannelsForUpdater`) fue el nombre correcto de la API de `SPUUpdaterDelegate` — confirmado en Xcode real (Build Succeeded sin Fix-it), cierra la nota de confianza media del research de la Fase 16.
 
 ### Pending Todos
 
-- Avanzar a la Fase 16 (canales beta de Sparkle) — necesitará research corta + plan.
+- Avanzar a la Fase 17 (Playwright/Chromium embebido en el bundle) — fase grande, necesitará research corta + plan; comparable en alcance a la Fase 8 de v3.0.
+- Decidir si commitear `scripts/setup-sparkle-local.sh` (añadido durante el checkpoint de la Fase 16, no estaba en el plan original).
 - Recomendado no bloqueante: repetir `pytest tests/`/`pylint`/`mypy` de 14-01/15-01 en el `.venv` real del Mac.
 
 ### Blockers/Concerns
@@ -80,5 +83,5 @@ Decisiones relevantes para v6.0:
 ## Session Continuity
 
 Last session: 2026-08-21T00:00:00Z
-Stopped at: Fases 14 y 15 completas. Fase 15 (`--js`/`--no-js`) implementada, verificada (pytest 51/51, pylint 10/10, mypy limpio) y lista para commitear. Pendiente: iniciar Fase 16 (canales beta de Sparkle).
-Resume file: .planning/phases/15-flag-manual-js/15-01-SUMMARY.md
+Stopped at: Fases 14, 15 y 16 completas. Fase 16 (canales beta de Sparkle) verificada con checkpoint humano real en Xcode (Build Succeeded, toggle persistente). Pendiente: decidir sobre `scripts/setup-sparkle-local.sh` (commitear o no) y arrancar Fase 17 (Playwright/Chromium embebido — fase grande).
+Resume file: .planning/phases/16-canales-sparkle/16-01-SUMMARY.md

@@ -379,7 +379,7 @@ toque el turno, no asumir que será tan rápida como las fases 14-16.
 
 - [x] **Phase 14: Historial y cola de extracciones** - Persistencia de extracciones previas + procesamiento de varias URLs en cola. (completed 2026-08-21)
 - [x] **Phase 15: Flag manual `--js`/`--no-js`** - Control explícito del fallback Playwright junto a la heurística automática de v4.0. (completed 2026-08-21)
-- [ ] **Phase 16: Canales beta de Sparkle** - Publicar y recibir actualizaciones en un canal `beta` opcional.
+- [x] **Phase 16: Canales beta de Sparkle** - Publicar y recibir actualizaciones en un canal `beta` opcional. (completed 2026-08-21)
 - [ ] **Phase 17: Playwright/Chromium embebido en el bundle** - El fallback JS funciona en la app SwiftUI sin depender de una instalación externa de Playwright.
 - [ ] **Phase 18: Pulido técnico** - Acotar `_bump_version`, investigar el bug del buscador de paquetes de Xcode 26.6.
 
@@ -433,7 +433,10 @@ Plans:
   2. La app, si el usuario opta al canal beta, ve y puede instalar versiones marcadas como `beta` vía `SPUUpdaterDelegate.allowedChannelsForUpdater`.
   3. Un usuario que NO ha optado al canal beta nunca ve ni recibe una versión beta — el canal por defecto sigue funcionando exactamente igual que en v5.0.
 
-**Plans**: por definir (research/planning pendiente)
+**Plans**: 1 plan — Wave 1: 16-01-PLAN.md
+
+Plans:
+- [x] 16-01-PLAN.md — canal opcional en scripts/release-macos.sh + ExtractorUpdaterDelegate/toggle en la app, checkpoint humano en Xcode verificado (completed 2026-08-21)
 
 **UI hint**: yes
 
@@ -476,6 +479,6 @@ Plans:
 |-------|----------------|--------|-----------|
 | 14. Historial y cola de extracciones | 2/2 | Complete | 2026-08-21 |
 | 15. Flag manual `--js`/`--no-js` | 1/1 | Complete | 2026-08-21 |
-| 16. Canales beta de Sparkle | 0/? | Planning | — |
+| 16. Canales beta de Sparkle | 1/1 | Complete | 2026-08-21 |
 | 17. Playwright/Chromium embebido en el bundle | 0/? | Planning | — |
 | 18. Pulido técnico | 0/? | Planning | — |
