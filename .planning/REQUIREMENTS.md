@@ -115,7 +115,7 @@
 | HIST-01…03 | v6.0 | ✅ Complete | Phase 14 (14-01, 14-02) |
 | FLAG-01…02 | v6.0 | ✅ Complete | Phase 15 (15-01) |
 | CHANNEL-01…02 | v6.0 | ✅ Validated | Phase 16 |
-| BUNDLEJS-01…02 | v6.0 | ⬜ Pending | Phase 17 |
+| BUNDLEJS-01…02 | v6.0 | ✅ Validated | Phase 17 |
 | POLISH-01…02 | v6.0 | ⬜ Pending | Phase 18 |
 
 ## Validated (v5.0 — Sparkle en la app)
@@ -156,8 +156,8 @@ Orden fijado por el usuario: historial → flags → canales → bundle JS → p
 
 ### BUNDLEJS — Playwright embebido en el bundle (Phase 17)
 
-- [ ] **BUNDLEJS-01**: El pipeline de bundling (Fase 8) vendoriza Playwright + Chromium dentro del `.app`, firmados y notarizables (Developer ID + hardened runtime en todos los binarios internos de Chromium).
-- [ ] **BUNDLEJS-02**: El fallback JS del motor Python funciona en la app SwiftUI sin que el usuario instale Playwright por separado.
+- [x] **BUNDLEJS-01**: El pipeline de bundling (Fase 8) vendoriza Playwright + Chromium dentro del `.app`, firmados con Developer ID/hardened runtime (Helpers Renderer/GPU con `allow-jit`, verificado con `codesign --verify --deep --strict`) — notarización real con Chromium embebido no ejecutada aún (deferida al próximo release real, no es bloqueante).
+- [x] **BUNDLEJS-02**: El fallback JS del motor Python funciona en la app SwiftUI sin que el usuario instale Playwright por separado — verificado extrayendo una SPA real (`quotes.toscrape.com/js/`) desde la app.
 
 ### POLISH — Pulido técnico (Phase 18)
 

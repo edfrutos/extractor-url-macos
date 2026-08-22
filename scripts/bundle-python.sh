@@ -131,6 +131,18 @@ echo "Instalando deps vendorizadas..."
   "markdownify==1.2.2" \
   "trafilatura==2.1.0"
 
+# playwright se instala en una llamada SEPARADA, sin --platform
+# macosx_13_0_universal2: su wheel no es universal2, y el Chromium que
+# vendoriza scripts/bundle-playwright.sh tampoco lo es (decisión de alcance
+# de la Fase 17 — un solo árbol, la arquitectura nativa del Mac de build).
+# Forzar universal2 aquí sería inconsistente sin aportar nada.
+echo "Instalando playwright (arquitectura nativa)..."
+"${BUNDLED_PYTHON}" -m pip install \
+  --target "${VENDORED_LIB}" \
+  --only-binary :all: \
+  --quiet \
+  "playwright==1.62.0"
+
 # ── Codesigning bottom-up (BUNDLE-01) ────────────────────────────────────────
 # Orden obligatorio: .so → .dylib → python3.13 → (Xcode firma el .app)
 # EXPANDED_CODE_SIGN_IDENTITY: "-" en builds locales, Developer ID en release/archive.

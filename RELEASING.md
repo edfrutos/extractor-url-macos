@@ -115,6 +115,39 @@ verdad", el segundo `gh release create "v${VERSION}"` fallaría por tag
 duplicado (el preflight ya lo detecta explícito) — evita la confusión
 usando un sufijo `-beta.N` mientras pruebas.
 
+## 3.5. Chromium embebido (fallback JS)
+
+Desde la Fase 17, cada build incluye Chromium vendorizado (vía Playwright)
+para el fallback JS de SPAs sin hidratar — el usuario ya no necesita
+`pip install playwright` + `playwright install chromium` a mano.
+
+**Alcance: una sola arquitectura, la nativa del Mac de build** (normalmente
+arm64 en Apple Silicon), no arm64+x64. Decisión de alcance explícita — ver
+`.planning/phases/17-playwright-chromium-embebido/17-RESEARCH.md`. En un Mac
+de la arquitectura NO nativa, el fallback JS embebido no está disponible y
+la extracción degrada a HTML estático, exactamente igual que cuando
+Playwright no está instalado — no es un error, es el comportamiento
+esperado.
+
+**Tamaño real medido:** 886MB para el `.app` completo (build Debug local sin
+archivar/sin strip, DerivedData, arquitectura nativa arm64) — sensiblemente
+por encima de la estimación inicial de ~250-350MB adicionales, que asumía
+un snapshot de Chromium más ligero. Playwright 1.62.0 distribuye "Chrome for
+Testing" (`Google Chrome for Testing.app`), un build más pesado que incluye
+locales de decenas de idiomas y helpers duplicados. No es un límite duro del
+proyecto, pero sí una cifra a tener muy presente al planificar la subida a
+notarización/GitHub Releases. La cifra de un build Release/archivado real
+(con strip y sin artefactos de Debug) queda pendiente de medir en el
+próximo release real — normalmente algo menor, pero del mismo orden de
+magnitud.
+
+**Notarización más lenta de lo habitual:** con Chromium embebido, `xcrun
+notarytool submit --wait` puede tardar sensiblemente más que los ~1-3
+minutos habituales del bundle solo con Python (Apple procesa apps grandes
+más despacio del lado del servidor). No hay mitigación de código — deja
+margen de tiempo al publicar el primer release con esta fase, en vez de
+hacerlo en el último momento.
+
 ## 4. Verificación post-release
 
 ```bash

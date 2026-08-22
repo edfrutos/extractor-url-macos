@@ -380,7 +380,7 @@ toque el turno, no asumir que será tan rápida como las fases 14-16.
 - [x] **Phase 14: Historial y cola de extracciones** - Persistencia de extracciones previas + procesamiento de varias URLs en cola. (completed 2026-08-21)
 - [x] **Phase 15: Flag manual `--js`/`--no-js`** - Control explícito del fallback Playwright junto a la heurística automática de v4.0. (completed 2026-08-21)
 - [x] **Phase 16: Canales beta de Sparkle** - Publicar y recibir actualizaciones en un canal `beta` opcional. (completed 2026-08-21)
-- [ ] **Phase 17: Playwright/Chromium embebido en el bundle** - El fallback JS funciona en la app SwiftUI sin depender de una instalación externa de Playwright.
+- [x] **Phase 17: Playwright/Chromium embebido en el bundle** - El fallback JS funciona en la app SwiftUI sin depender de una instalación externa de Playwright. (completed 2026-08-22)
 - [ ] **Phase 18: Pulido técnico** - Acotar `_bump_version`, investigar el bug del buscador de paquetes de Xcode 26.6.
 
 ### Phase 14: Historial y cola de extracciones
@@ -452,7 +452,18 @@ Plans:
   3. Una extracción de una SPA real desde la app SwiftUI (sin Playwright instalado en el sistema del usuario) activa el fallback JS embebido y devuelve contenido correcto.
   4. El incremento de tamaño del bundle (~300MB+) queda documentado y aceptado explícitamente — no es un límite duro del proyecto pero sí una decisión consciente a registrar.
 
-**Plans**: por definir (research/planning pendiente — fase grande, ver aviso de alcance en el Overview)
+**Decisión de alcance (post-research, 17-RESEARCH.md)**: se vendoriza Chromium
+para una sola arquitectura — la nativa del Mac de build (normalmente arm64),
+no arm64+x64. Reduce el tamaño real a ~250-350MB (cerca de la cifra de
+referencia) y elimina la dependencia de Rosetta 2 en el Mac de build.
+Trade-off aceptado: en la arquitectura no nativa, el fallback JS embebido no
+está disponible — degrada a HTML estático (mismo comportamiento que
+Playwright no instalado, ya cubierto por `_fetch_via_playwright()` desde la
+Fase 11).
+
+**Plans**: 1 plan — Wave 1: 17-01-PLAN.md (research completa en `.planning/phases/17-playwright-chromium-embebido/17-RESEARCH.md`)
+
+**Estado**: Completa — verificado en checkpoint humano (Mac real): `verify-bundle.sh` 19 OK/0 FAIL (BUNDLEJS-01/02), extracción real de una SPA (`quotes.toscrape.com/js/`) desde la app sin Playwright de sistema. Tamaño real medido: 886MB (`.app` Debug local, arm64 nativo) — más alto que la estimación inicial de ~250-350MB, documentado en `RELEASING.md` 3.5. Dos bugs reales encontrados y corregidos durante el checkpoint (no visibles desde el sandbox de planificación): nombre del bundle de Chromium cambiado (Playwright 1.62.0 distribuye "Chrome for Testing", no "Chromium.app" clásico) y un doble-firmado que borraba `allow-jit` de los Helpers Renderer/GPU — ver `17-01-SUMMARY.md`. Notarización real con Chromium embebido (Paso 6 del checkpoint) queda deferida al próximo release real, no ejecutada aquí para no gastar cuota.
 
 **UI hint**: no
 

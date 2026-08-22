@@ -67,10 +67,11 @@ Convertir páginas web en Markdown útil y limpio de forma fiable, repetible y s
 - ✓ CHANNEL-01: `scripts/release-macos.sh` soporta publicar en un canal `beta` (`sparkle:channel`) sin afectar al canal por defecto. — Validated in Phase 16 (16-01)
 - ✓ CHANNEL-02: La app puede optar (vía `SPUUpdaterDelegate.allowedChannels(for:)`) a recibir actualizaciones del canal beta. — Validated in Phase 16 (16-01), checkpoint humano en Xcode
 
+- ✓ BUNDLEJS-01: El pipeline de bundling (Fase 8) vendoriza Playwright + Chromium dentro del `.app`, firmados con Developer ID/hardened runtime (Helpers Renderer/GPU con `allow-jit`). — Validated in Phase 17 (17-01), checkpoint humano en Xcode; notarización real con Chromium embebido deferida al próximo release real
+- ✓ BUNDLEJS-02: El fallback JS del motor Python funciona en la app SwiftUI sin que el usuario instale Playwright por separado. — Validated in Phase 17 (17-01), extracción real de `quotes.toscrape.com/js/` desde la app
+
 ### Active (v6.0)
 
-- [ ] BUNDLEJS-01: El pipeline de bundling (Fase 8) vendoriza Playwright + Chromium dentro del `.app`, firmados y notarizables (Developer ID + hardened runtime en todos los binarios internos de Chromium).
-- [ ] BUNDLEJS-02: El fallback JS del motor Python funciona en la app SwiftUI sin que el usuario instale Playwright por separado.
 - [ ] POLISH-01: `_bump_version` en `scripts/release-macos.sh` acota el `sed` a los bloques del target `ExtractorApp` únicamente (no toca `ExtractorAppTests`).
 - [ ] POLISH-02: Investigado y documentado el bug del buscador de paquetes de Xcode 26.6; Sparkle migrado a paquete remoto si se confirma resuelto.
 
@@ -155,6 +156,8 @@ Milestone v6.0 (Historial y Distribución Completa) en marcha: Fase 14 (historia
 | [v6.0] `js_mode != "auto"` salta la LECTURA de caché en `_fetch_raw()`, no la escritura | Sin esto, `--js`/`--no-js` no tendrían ningún efecto sobre una URL ya cacheada de una ejecución anterior — hallazgo del research (15-RESEARCH.md), no una decisión explícita del usuario, pero necesaria para que FLAG-01/02 cumplan lo que prometen | ✓ Good (Phase 15-01) |
 | [v6.0] `--js`/`--no-js` vía `argparse.add_mutually_exclusive_group()`, sin validación manual | Falla nativo con `SystemExit(2)` si se pasan ambos — mismo principio de "fallar explícito" de v1.0, sin código propio que pueda tener bugs | ✓ Good (Phase 15-01) |
 | [v6.0] `Info.plist` físico parcial (`ExtractorApp/Info.plist`) + `INFOPLIST_FILE`, combinado con `GENERATE_INFOPLIST_FILE = YES` | Bug confirmado de Xcode 26.6: no sintetiza ninguna clave `INFOPLIST_KEY_*` personalizada (`SUFeedURL`/`SUPublicEDKey`/`NSHumanReadableCopyright`) — verificado con DerivedData borrado por completo, no era caché. El merge `GENERATE_INFOPLIST_FILE` + `INFOPLIST_FILE` es el mecanismo oficial de Apple para este caso; evita esperar a que Apple arregle el bug | ✓ Good (encontrado fuera de fase, 2026-08-21) |
+| [v6.0] `.app`/`.framework` de Chromium descubiertos por patrón (`find -name "*.app"`), no hardcodeados | Playwright 1.62.0 distribuye "Chrome for Testing" (`Google Chrome for Testing.app`), no el `Chromium.app` clásico asumido por el research/plan — encontrado como fallo real de build en el checkpoint humano de Fase 17. Descubrir por patrón evita que otro cambio de naming aguas arriba vuelva a romper el bundling | ✓ Good (Phase 17-01, checkpoint humano) |
+| [v6.0] Una sola llamada `codesign` por Helper .app de Chromium (bundle completo, no ejecutable+bundle por separado) | Firmar el ejecutable interno con `--entitlements` y luego el `.app` contenedor por separado resella el ejecutable sin entitlements la segunda vez, borrando `allow-jit` — bug real detectado por `verify-bundle.sh` (BUNDLEJS-01) en el checkpoint de Fase 17, invisible en local porque un build ad-hoc sin hardened runtime no fuerza la restricción de JIT | ✓ Good (Phase 17-01, checkpoint humano) |
 
 ## Evolution
 

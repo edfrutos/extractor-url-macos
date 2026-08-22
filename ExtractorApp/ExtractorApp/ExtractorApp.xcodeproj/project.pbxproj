@@ -115,6 +115,7 @@
 				6938562C2FDFF13E008D32EB /* CopyFiles */,
 				694A97192FDAB1D900884317 /* Resources */,
 				693856312FDFF3E6008D32EB /* Bundle Python Runtime */,
+				C51F43FDD6135E95AF9108CD /* Bundle Playwright Chromium */,
 			);
 			buildRules = (
 			);
@@ -225,6 +226,25 @@
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/bash;
 			shellScript = "set -euo pipefail\n\"${PROJECT_DIR}/../../scripts/bundle-python.sh\"\n\n";
+		};
+		C51F43FDD6135E95AF9108CD /* Bundle Playwright Chromium */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"$(PROJECT_DIR)/scripts/bundle-playwright.sh\n",
+			);
+			name = "Bundle Playwright Chromium";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/bash;
+			shellScript = "set -euo pipefail\n\"${PROJECT_DIR}/../../scripts/bundle-playwright.sh\"\n\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 

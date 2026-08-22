@@ -61,6 +61,10 @@ final class PythonBridge {
                 let existing = env["PYTHONPATH"] ?? ""
                 env["PYTHONPATH"] = existing.isEmpty ? libPath : libPath + ":" + existing
             }
+            // Fase 17: Chromium vendorizado dentro de playwright/driver/package/
+            // .local-browsers/ — debe coincidir con el valor usado en build time
+            // por bundle-playwright.sh, o Playwright no encuentra los binarios.
+            env["PLAYWRIGHT_BROWSERS_PATH"] = "0"
             process.currentDirectoryURL = URL(fileURLWithPath: scriptFile)
                 .deletingLastPathComponent()
         case .userDefaults:

@@ -133,6 +133,72 @@ if failed:
   fi
 fi
 
+# ── BUNDLEJS-01/02: Chromium vendorizado (Fase 17) ────────────────────────────
+echo ""
+echo "=== BUNDLEJS-01: Chromium vendorizado (arquitectura nativa) ==="
+LOCAL_BROWSERS="${VENDORED_LIB}/playwright/driver/package/.local-browsers"
+
+if [[ -d "${LOCAL_BROWSERS}" ]]; then
+  CHROMIUM_COUNT=$(find "${LOCAL_BROWSERS}" -maxdepth 1 -type d -name "chromium-*" | wc -l | tr -d ' ')
+  if [[ "${CHROMIUM_COUNT}" -eq 1 ]]; then
+    ok "un único árbol chromium-* presente (alcance: arquitectura nativa)"
+  else
+    fail "se esperaba exactamente 1 árbol chromium-*, encontrados: ${CHROMIUM_COUNT}"
+  fi
+
+  CHROMIUM_DIR=$(find "${LOCAL_BROWSERS}" -maxdepth 1 -type d -name "chromium-*" | head -1)
+  # El nombre del .app no está pinneado: Playwright distribuye "Chrome for
+  # Testing" (bundle "Google Chrome for Testing.app"), no "Chromium.app" —
+  # se descubre por patrón, igual que en bundle-playwright.sh.
+  CHROMIUM_APP=$(find "${CHROMIUM_DIR}" -maxdepth 3 -name "*.app" -type d 2>/dev/null | head -1)
+
+  if [[ -n "${CHROMIUM_APP}" ]]; then
+    ok ".app de Chromium encontrado en ${CHROMIUM_APP}"
+
+    if codesign --verify --deep --strict "${CHROMIUM_APP}" 2>/dev/null; then
+      ok "$(basename "${CHROMIUM_APP}") tiene firma de código válida (--deep --strict)"
+    else
+      fail "$(basename "${CHROMIUM_APP}") NO tiene firma de código válida"
+    fi
+
+    CHROMIUM_FRAMEWORK=$(find "${CHROMIUM_APP}/Contents/Frameworks" -maxdepth 1 -name "*.framework" -type d 2>/dev/null | head -1)
+    RENDERER_HELPER=$(find "${CHROMIUM_FRAMEWORK}/Versions/Current/Helpers" \
+      -maxdepth 1 -name "*(Renderer)*.app" 2>/dev/null | head -1)
+    if [[ -n "${RENDERER_HELPER}" ]]; then
+      if codesign -d --entitlements - "${RENDERER_HELPER}" 2>/dev/null | grep -q "allow-jit"; then
+        ok "Helper (Renderer) tiene com.apple.security.cs.allow-jit"
+      else
+        fail "Helper (Renderer) NO tiene com.apple.security.cs.allow-jit"
+      fi
+    else
+      fail "No se encontró ningún Helper (Renderer).app dentro de $(basename "${CHROMIUM_FRAMEWORK}")/Versions/Current/Helpers"
+    fi
+
+    echo ""
+    echo "=== BUNDLEJS-02: Fallback JS embebido funciona end-to-end ==="
+    RENDER_TEST=$(PLAYWRIGHT_BROWSERS_PATH=0 PYTHONPATH="${VENDORED_LIB}" "${PYTHON}" -c "
+from playwright.sync_api import sync_playwright
+with sync_playwright() as p:
+    b = p.chromium.launch()
+    page = b.new_page()
+    page.goto('https://example.com')
+    assert 'Example Domain' in page.content()
+    b.close()
+print('OK')
+" 2>&1) || true
+    if echo "${RENDER_TEST}" | grep -q "^OK$"; then
+      ok "Chromium embebido renderiza example.com correctamente"
+    else
+      fail "Chromium embebido no pudo renderizar example.com"
+      echo "  Output: ${RENDER_TEST:0:300}" >&2
+    fi
+  else
+    fail "ningún .app de Chromium encontrado dentro de ${CHROMIUM_DIR}"
+  fi
+else
+  fail "directorio .local-browsers NO encontrado en ${LOCAL_BROWSERS} — ¿bundle-playwright.sh no se ejecutó?"
+fi
+
 # ── Resumen ───────────────────────────────────────────────────────────────────
 echo ""
 echo "═══════════════════════════════════════════════════"

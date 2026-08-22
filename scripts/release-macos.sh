@@ -191,6 +191,80 @@ _resign_bundled_python() {
 	codesign --force --deep --timestamp --options runtime --sign "${identity}" "${app_path}"
 }
 
+# ── Re-firmar el Chromium embebido con Hardened Runtime (Fase 17) ──────────
+# Mismo motivo y mismo orden bottom-up que _resign_bundled_python: el
+# firmado del export de Xcode no aplica --options runtime a binarios sueltos
+# en Resources/. Se firma de dentro hacia fuera: Helpers (Renderer/GPU con
+# allow-jit) -> crashpad_handler -> Framework -> .app raíz -> re-sellado
+# final del .app completo. Usa la MISMA identidad ya extraída por
+# _resign_bundled_python (no vuelve a extraerla).
+#
+# Alcance: un solo árbol Chromium (arquitectura nativa del Mac de build,
+# ver 17-RESEARCH.md) — si el bundle no incluye Chromium (build sin la Run
+# Script Phase "Bundle Playwright Chromium", o Fase 17 aún no implementada
+# en este checkout), no hay nada que re-firmar y la función no falla.
+_resign_bundled_chromium() {
+	local app_path="${CACHE_DIR}/export/${SCHEME}.app"
+	local local_browsers="${app_path}/Contents/Resources/python/lib/python-packages/playwright/driver/package/.local-browsers"
+
+	if [[ ! -d "${local_browsers}" ]]; then
+		echo "Aviso: ${local_browsers} no existe — nada que re-firmar (¿Chromium no vendorizado en este build?)." >&2
+		return 0
+	fi
+
+	local identity
+	identity="$(codesign -dv --verbose=4 "${app_path}" 2>&1 | sed -n 's/^Authority=//p' | head -1)"
+	if [[ -z "${identity}" ]]; then
+		echo "Error: no se pudo determinar la identidad de firma Developer ID del .app exportado." >&2
+		exit 1
+	fi
+
+	local chromium_dir
+	chromium_dir="$(find "${local_browsers}" -maxdepth 1 -type d -name "chromium-*" | head -1)"
+	# El nombre del .app no está pinneado: Playwright distribuye "Chrome for
+	# Testing" (bundle "Google Chrome for Testing.app"), no "Chromium.app" —
+	# se descubre por patrón, igual que en bundle-playwright.sh.
+	local chromium_app
+	chromium_app="$(find "${chromium_dir}" -maxdepth 3 -name "*.app" -type d 2>/dev/null | head -1)"
+	if [[ -z "${chromium_app}" ]]; then
+		echo "Error: ${local_browsers} existe pero no se encontró ningún .app dentro." >&2
+		exit 1
+	fi
+
+	echo "Re-firmando Chromium embebido con hardened runtime (identidad: ${identity})…"
+
+	local framework
+	framework="$(find "${chromium_app}/Contents/Frameworks" -maxdepth 1 -name "*.framework" -type d 2>/dev/null | head -1)"
+	local helpers_dir="${framework}/Versions/Current/Helpers"
+	local renderer_entitlements="${PROJECT_DIR}/scripts/chromium-helper-jit.entitlements"
+
+	# Una sola llamada codesign por Helper .app (firma el ejecutable interno
+	# Y sella el bundle a la vez) — firmar el ejecutable y luego el .app por
+	# separado resella el ejecutable sin entitlements la segunda vez,
+	# borrando el allow-jit recién aplicado.
+	if [[ -d "${helpers_dir}" ]]; then
+		find "${helpers_dir}" -maxdepth 1 -name "*.app" | while IFS= read -r helper; do
+			if [[ "${helper}" == *"(Renderer)"* || "${helper}" == *"(GPU)"* ]]; then
+				codesign --force --timestamp --options runtime \
+					--entitlements "${renderer_entitlements}" --sign "${identity}" "${helper}"
+			else
+				codesign --force --timestamp --options runtime --sign "${identity}" "${helper}"
+			fi
+		done
+
+		if [[ -f "${helpers_dir}/chrome_crashpad_handler" ]]; then
+			codesign --force --timestamp --options runtime --sign "${identity}" \
+				"${helpers_dir}/chrome_crashpad_handler"
+		fi
+	fi
+
+	[[ -d "${framework}" ]] && codesign --force --timestamp --options runtime --sign "${identity}" "${framework}"
+	codesign --force --timestamp --options runtime --sign "${identity}" "${chromium_app}"
+
+	echo "Re-sellando el .app completo tras modificar contenido firmado…"
+	codesign --force --deep --timestamp --options runtime --sign "${identity}" "${app_path}"
+}
+
 # ── Empaquetado (ditto, nunca zip/unzip genéricos — Pitfall 1) ─────────────
 _package() {
 	local zip_path="$1"
@@ -303,6 +377,7 @@ _preflight_checks
 _bump_version
 _build_and_export
 _resign_bundled_python
+_resign_bundled_chromium
 _notarize_and_staple
 _archive_and_generate_appcast
 _publish_release
