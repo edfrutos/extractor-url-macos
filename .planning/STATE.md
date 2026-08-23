@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v7.0
 milestone_name: (nombre por definir)
 status: executing
-last_updated: "2026-08-23T02:00:00.000Z"
-last_activity: 2026-08-23 -- Fase 19 (flags de filtrado CLI) completa: --no-images/--no-links en core.py (_strip_images/_strip_links) y --clipboard en extractor_url.py (pbcopy vía subprocess.run, aditivo). 67/67 tests, pylint 10.00/10, mypy limpio -- todo verificado en el sandbox sin necesitar Mac.
+last_updated: "2026-08-23T03:00:00.000Z"
+last_activity: 2026-08-23 -- Fase 20 (rollouts por fases de Sparkle) completa: ROLLOUT_INTERVAL_SECONDS (env var) -> --phased-rollout-interval en generate_appcast, mismo patrón que --channel de la Fase 16. Flag confirmado inspeccionando el binario real. Mecánica documentada en RELEASING.md 3.6.
 progress:
   total_phases: 4
-  completed_phases: 1
-  total_plans: 1
-  completed_plans: 1
-  percent: 25
+  completed_phases: 2
+  total_plans: 2
+  completed_plans: 2
+  percent: 50
 ---
 
 # Project State
@@ -20,19 +20,19 @@ progress:
 See: .planning/PROJECT.md (updated 2026-08-23)
 
 **Core value:** Convertir páginas web en Markdown útil y limpio de forma fiable, repetible y sin depender de servicios externos.
-**Current focus:** v6.0 completo y cerrado (Fases 14-18). v7.0 en marcha: Fase 19 (flags de filtrado CLI) completa. Siguiente: Fase 20 (rollouts por fases de Sparkle) — sin research/plan todavía.
+**Current focus:** v6.0 completo y cerrado (Fases 14-18). v7.0 en marcha: Fases 19-20 completas. Siguiente: Fase 21 (auto-actualización del runtime Python embebido) — necesita research previa, sin plan todavía.
 
 ## Current Position
 
-Phase: 19 — Flags de filtrado CLI (Complete)
-Plan: 19-01 completo
-Status: Complete — CONTENT-01/CONTENT-02/CLIP-01 validados en el sandbox (lógica Python pura, sin checkpoint humano necesario)
-Last activity: 2026-08-23 — Implementados `--no-images`/`--no-links`/`--clipboard` directamente en conversación (sin research/plan formales previos — fase pequeña, patrones ya establecidos por la Fase 15, ejecutada con el visto bueno explícito del usuario). `core.py`: `_strip_images()`/`_strip_links()` mutan el `soup` in situ (`decompose`/`unwrap`), aplicados en `_format_soup_content()` (texto/HTML/soup_object) y en `extract_html_structure_to_markdown()` (selector + fallback vía mutación del soup, camino trafilatura vía sus propios kwargs `include_images`/`include_links`). `extractor_url.py`: `--no-images`/`--no-links` propagados en `main()`/`_run_batch()`; `--clipboard` vía nuevo `_copy_to_clipboard()` (`subprocess.run(["pbcopy"], ...)`, falla explícito con `sys.exit(1)` si `pbcopy` no existe o falla), aditivo sobre `--json`/`-o`/stdout — no reemplaza ninguna salida existente. De paso, `_build_parser()` extraída de `main()` (bajaba a 53 sentencias, límite pylint 50) — pylint vuelve a 10.00/10. 16 tests nuevos (`tests/test_content_filters.py` + 6 en `tests/test_cli.py`), `pytest tests/` 67/67, `mypy` limpio. `--clipboard` no se pudo probar contra un `pbcopy` real (sandbox Linux) — verificado con `subprocess.run` mockeado; recomendado no bloqueante probarlo en un Mac real. `19-01-SUMMARY.md` escrito. ROADMAP.md/PROJECT.md/REQUIREMENTS.md/MILESTONES.md actualizados. Nada de esto está commiteado todavía (ni tampoco la definición de v7.0 de la sesión anterior).
+Phase: 20 — Rollouts por fases de Sparkle (Complete)
+Plan: 20-01 completo
+Status: Complete — ROLLOUT-01/ROLLOUT-02 validados en el sandbox (script bash, sin checkpoint humano necesario)
+Last activity: 2026-08-23 — Implementado `ROLLOUT_INTERVAL_SECONDS` directamente en conversación (sin research doc separado — se verificó el flag real de `generate_appcast` inspeccionando el binario Mach-O ya presente en `.build-cache/sparkle-tools/bin/generate_appcast`, extrayendo sus strings ASCII con Python ya que `strings` no está instalado en este sandbox, en vez de asumir el nombre del flag de memoria). Confirmado: `--phased-rollout-interval <segundos>` es el flag real; Sparkle hardcodea 7 grupos, duración total = intervalo × 7, no aplica a comprobación manual de actualizaciones ni a updates críticos (confirmado también contra la documentación oficial de Sparkle vía WebFetch). `scripts/release-macos.sh`: `ROLLOUT_INTERVAL_SECONDS="${ROLLOUT_INTERVAL_SECONDS:-}"` (variable de entorno, no 3er posicional, para no reordenar `<version> [canal]`), validación de entero positivo en `_preflight_checks()`, `rollout_args=()` en `_archive_and_generate_appcast()` mismo patrón que `channel_args`. `RELEASING.md` nueva sección 3.6 documentando la mecánica, la limitación de comprobación manual, y la forma práctica de abortar un rollout (editar `appcast.xml` a mano, ya es un archivo revisado manualmente desde la Fase 13). `bash -n`/`shellcheck` limpios; lógica de construcción de argumentos probada aislada (4 combinaciones canal/rollout) y validación de entero probada con casos límite. No se pudo probar contra un `generate_appcast` real en ejecución (necesita Xcode/notarización). `20-01-SUMMARY.md` escrito. ROADMAP.md/PROJECT.md/REQUIREMENTS.md/MILESTONES.md actualizados. Nada de esto está commiteado todavía (la Fase 19 sí — commit `8fbc9cc`).
 
 ```
-v7.0 Progress: [==        ] 25% — Fase 19 completa, resto sin empezar.
+v7.0 Progress: [=====     ] 50% — Fases 19-20 completas, resto sin empezar.
 Phase 19: [==========] Complete (19-01, verificado en sandbox sin Mac)
-Phase 20: [          ] 0/? planes (rollouts por fases de Sparkle)
+Phase 20: [==========] Complete (20-01, verificado en sandbox sin Mac/Xcode)
 Phase 21: [          ] 0/? planes (auto-actualización runtime Python -- necesita research previa)
 Phase 22: [          ] 0/? planes (notarización distribución pública vía web, no App Store)
 ```
@@ -70,12 +70,16 @@ Decisiones relevantes para v6.0:
 - [v7.0]: Fase 19 ejecutada directamente en conversación, sin research/plan formales previos — fase pequeña, sin dependencias nuevas, patrones ya establecidos (mismo estilo que `--js`/`--no-js` de la Fase 15). Decisión implícita al no bloquear en pedir research cuando el usuario dijo "Fase 19" — documentado igualmente con `19-01-SUMMARY.md` tras la implementación.
 - [v7.0]: `--clipboard` vía `subprocess.run(["pbcopy"], ...)`, no una dependencia pip nueva — el proyecto es macOS-only, `pbcopy` ya está en cualquier Mac, evita tocar el runtime bundleado (Fase 8) solo para esto.
 - [v7.0]: `--clipboard` es aditivo (copia sin reemplazar `--json`/`-o`/stdout) — interpretación más segura de "combinable sin romper contratos previos" del Success Criterion 4.
+- [v7.0]: `ROLLOUT_INTERVAL_SECONDS` vía variable de entorno, no un 3er argumento posicional en `release-macos.sh` — evita reordenar `<version> [canal]` ya establecido en la Fase 16; se compone limpiamente con cualquier combinación.
+- [v7.0]: Flag `--phased-rollout-interval` de `generate_appcast` confirmado inspeccionando el binario real (extracción de strings con Python) en vez de asumirlo — el binario ya estaba en `.build-cache/sparkle-tools/` desde la Fase 12.
+- [v7.0]: Aborto de un rollout en marcha = editar `appcast.xml` a mano (quitar `sparkle:phasedRolloutInterval`), no un comando nuevo — reutiliza el flujo de revisión manual del appcast ya establecido en la Fase 13, Sparkle no documenta un mecanismo oficial de aborto.
 
 ### Pending Todos
 
-- Commitear los cambios de definición de v7.0 y de la Fase 19 (ROADMAP.md/PROJECT.md/REQUIREMENTS.md/MILESTONES.md/STATE.md + `core.py`/`extractor_url.py`/tests) — nada está commiteado todavía.
-- Iniciar research/plan de la Fase 20 (rollouts por fases de Sparkle).
-- Recomendado no bloqueante: probar `python extractor_url.py <url> --clipboard` en un Mac real (sandbox Linux no tiene `pbcopy`, solo verificado con mocks).
+- Commitear los cambios de la Fase 20 (ROADMAP.md/PROJECT.md/REQUIREMENTS.md/MILESTONES.md/STATE.md + `scripts/release-macos.sh`/`RELEASING.md`) — nada está commiteado todavía.
+- Iniciar research/plan de la Fase 21 (auto-actualización del runtime Python embebido) — marcada explícitamente como necesitando research previa (mecanismo de actualización sin romper la firma del `.app`).
+- Recomendado no bloqueante: probar `python extractor_url.py <url> --clipboard` en un Mac real (sandbox Linux no tiene `pbcopy`, solo verificado con mocks) — Fase 19.
+- Recomendado no bloqueante: en el próximo release real con `ROLLOUT_INTERVAL_SECONDS` puesto, confirmar en el `appcast.xml` resultante que `<sparkle:phasedRolloutInterval>` aparece con el valor esperado — Fase 20.
 - Decidir si commitear `scripts/setup-sparkle-local.sh` (añadido durante el checkpoint de la Fase 16, no estaba en el plan original) — sigue pendiente, no bloqueante.
 - Medir el tamaño real de un build Release/archivado (con strip) en el próximo release real — la cifra de 886MB (Fase 17) es de un build Debug local, probablemente algo menor en Release.
 - Ejecutar notarización real con Chromium embebido (Paso 6 del checkpoint de la Fase 17, deferido) en el próximo release real — verificar tiempos y que `_resign_bundled_chromium()` funciona end-to-end con Developer ID real.
@@ -100,6 +104,6 @@ Los 4 ítems que antes estaban aquí como "v7+" (notarización distribución pú
 
 ## Session Continuity
 
-Last session: 2026-08-23T02:00:00Z
-Stopped at: **Fase 19 completa** (código + tests + docs), nada commiteado todavía. Secuencia de esta sesión: (1) commit de la Fase 18/cierre de v6.0 (`f74f6dd`); (2) usuario pidió definir v7.0 — alcance (las 4 áreas de Deferred Items), orden (flags CLI → rollouts → runtime → notarización), y aclaración de "notarización pública" = web, no App Store — documentado en ROADMAP.md/PROJECT.md/REQUIREMENTS.md/MILESTONES.md; (3) commit de la definición de v7.0 (`d26f264`); (4) usuario dijo "Fase 19" — implementada directamente sin research/plan previos: `_strip_images`/`_strip_links` en `core.py`, `--no-images`/`--no-links`/`--clipboard` en `extractor_url.py`, `_build_parser()` extraída para mantener pylint 10/10, 16 tests nuevos; verificado `pytest`/`pylint`/`mypy` en un venv temporal (`/tmp/ext-venv`, el `.venv` del repo estaba vacío) — 67/67 tests, 10.00/10, limpio. `19-01-SUMMARY.md` escrito. ROADMAP.md/PROJECT.md/REQUIREMENTS.md/MILESTONES.md actualizados marcando Fase 19 completa. Nada de esto está commiteado todavía. Próximo paso natural: preguntar al usuario si quiere commitear, y si quiere iniciar la Fase 20.
-Resume file: ninguno — Fase 19 completa, pendiente commit y decidir si se sigue con la Fase 20
+Last session: 2026-08-23T03:00:00Z
+Stopped at: **Fase 20 completa** (código + docs), nada commiteado todavía. Secuencia de esta sesión: (1) commit de la Fase 18/cierre de v6.0 (`f74f6dd`); (2) definición de v7.0 (alcance, orden, aclaración App Store vs. web), commit `d26f264`; (3) Fase 19 (flags de filtrado CLI) implementada y verificada, commit `8fbc9cc`; (4) usuario dijo "seguimos" — Fase 20 (rollouts por fases de Sparkle) implementada directamente: confirmado el flag real de `generate_appcast` inspeccionando el binario ya presente en el repo (`.build-cache/sparkle-tools/`) antes de codificar, `ROLLOUT_INTERVAL_SECONDS` añadido a `release-macos.sh`, mecánica documentada en `RELEASING.md` 3.6. `bash -n`/`shellcheck` limpios, lógica de argumentos probada aislada. `20-01-SUMMARY.md` escrito. ROADMAP.md/PROJECT.md/REQUIREMENTS.md/MILESTONES.md actualizados marcando Fase 20 completa. Nada de esto está commiteado todavía. Próximo paso natural: preguntar al usuario si quiere commitear, y si quiere iniciar la Fase 21 (necesita research previa).
+Resume file: ninguno — Fase 20 completa, pendiente commit y decidir si se sigue con la Fase 21 (research)

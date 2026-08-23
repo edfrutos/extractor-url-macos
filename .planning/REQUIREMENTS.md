@@ -118,7 +118,7 @@
 | BUNDLEJS-01…02 | v6.0 | ✅ Validated | Phase 17 |
 | POLISH-01…02 | v6.0 | ✅ Complete | Phase 18 |
 | CONTENT-01…02, CLIP-01 | v7.0 | ✅ Complete | Phase 19 |
-| ROLLOUT-01…02 | v7.0 | ⬜ Pending | Phase 20 |
+| ROLLOUT-01…02 | v7.0 | ✅ Complete | Phase 20 |
 | PYRUNTIME-01…02 | v7.0 | ⬜ Pending | Phase 21 |
 | PUBLISH-01…02 | v7.0 | ⬜ Pending | Phase 22 |
 
@@ -174,10 +174,10 @@ Orden fijado por el usuario: historial → flags → canales → bundle JS → p
 - [x] **CONTENT-02**: `--no-links` elimina/aplana los enlaces del contenido extraído (deja el texto, sin `href`) — mismos caminos verificados que CONTENT-01.
 - [x] **CLIP-01**: `--clipboard` copia el resultado extraído al portapapeles del sistema (`pbcopy`), aditivo sobre `--json`/`-o`/stdout — verificado con `subprocess.run` mockeado (sin Mac real disponible en este sandbox).
 
-### ROLLOUT — Rollouts por fases de Sparkle (Phase 20)
+### ROLLOUT — Rollouts por fases de Sparkle (Phase 20) ✅ Complete
 
-- [ ] **ROLLOUT-01**: `scripts/release-macos.sh` soporta un `sparkle:phasedRolloutInterval` opcional al publicar, sin afectar releases sin ese flag.
-- [ ] **ROLLOUT-02**: El comportamiento e implicaciones de un rollout por fases quedan documentados en `RELEASING.md`.
+- [x] **ROLLOUT-01**: `scripts/release-macos.sh` soporta un `sparkle:phasedRolloutInterval` opcional al publicar (vía `ROLLOUT_INTERVAL_SECONDS`), sin afectar releases sin esa variable — verificado con `shellcheck` y prueba aislada de las 4 combinaciones canal/rollout.
+- [x] **ROLLOUT-02**: El comportamiento e implicaciones de un rollout por fases (7 grupos hardcodeados, duración = intervalo × 7, no aplica a comprobación manual/updates críticos, aborto manual editando `appcast.xml`) quedan documentados en `RELEASING.md` 3.6.
 
 ### PYRUNTIME — Auto-actualización del runtime Python embebido (Phase 21)
 

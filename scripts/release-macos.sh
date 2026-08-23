@@ -21,6 +21,15 @@
 # visible para apps cuyo SPUUpdaterDelegate haya optado a ese canal — los
 # releases estables ya publicados nunca se re-etiquetan (ver 16-RESEARCH.md).
 #
+# Rollout por fases (Fase 20, opcional, vía variable de entorno — no un
+# argumento posicional, para no reordenar <version> [canal]):
+#   ROLLOUT_INTERVAL_SECONDS=86400 scripts/release-macos.sh 1.2
+# Sparkle reparte el update en 7 grupos hardcodeados; el intervalo dado es
+# el tiempo entre grupo y grupo, así que la duración total del rollout es
+# ROLLOUT_INTERVAL_SECONDS × 7. Ver RELEASING.md 3.6 para el detalle
+# completo (incluida la limitación de "Buscar actualizaciones..." manual,
+# que siempre ve la versión más reciente sin pasar por el rollout).
+#
 # Tras terminar, el script deja appcast.xml actualizado en la raíz del
 # repo e imprime el `git add/commit/push` exacto a ejecutar — no lo hace
 # automáticamente (acción visible sobre un repo compartido).
@@ -43,9 +52,18 @@ ARCHIVE_DIR="${CACHE_DIR}/archive"
 VERSION="${1:?Uso: scripts/release-macos.sh <version, ej. 1.1> [canal, ej. beta]}"
 CHANNEL="${2:-}"
 
+# Rollout por fases (Fase 20) — opcional, vía variable de entorno (no un
+# 3er argumento posicional, para no romper `<version> [canal]` ya
+# establecido). Ej: ROLLOUT_INTERVAL_SECONDS=86400 scripts/release-macos.sh 1.2
+ROLLOUT_INTERVAL_SECONDS="${ROLLOUT_INTERVAL_SECONDS:-}"
+
 # ── Validaciones previas ───────────────────────────────────────────────────
 # Fallan pronto y explícito — nunca a medio pipeline con secretos a medias.
 _preflight_checks() {
+	if [[ -n "${ROLLOUT_INTERVAL_SECONDS}" ]] && ! [[ "${ROLLOUT_INTERVAL_SECONDS}" =~ ^[0-9]+$ ]]; then
+		echo "Error: ROLLOUT_INTERVAL_SECONDS debe ser un entero positivo de segundos (recibido: '${ROLLOUT_INTERVAL_SECONDS}')." >&2
+		exit 1
+	fi
 	if grep -q 'PENDIENTE-FASE-13' "${PBXPROJ}"; then
 		echo "Error: INFOPLIST_KEY_SUPublicEDKey sigue siendo el placeholder." >&2
 		echo "Ejecuta '${SPARKLE_TOOLS_DIR}/bin/generate_keys' y sustituye la clave" >&2
@@ -333,10 +351,11 @@ _archive_and_generate_appcast() {
 	mkdir -p "${ARCHIVE_DIR}"
 	cp "${zip_path}" "${ARCHIVE_DIR}/"
 
-	# --channel solo etiqueta el item NUEVO que se añade en esta ejecución
-	# (generate_appcast compara contra el appcast.xml existente y solo
-	# aplica --channel cuando crea un item que no existía — los releases
-	# estables ya publicados nunca se re-etiquetan, ver 16-RESEARCH.md).
+	# --channel y --phased-rollout-interval solo etiquetan el item NUEVO que
+	# se añade en esta ejecución (generate_appcast compara contra el
+	# appcast.xml existente y solo los aplica cuando crea un item que no
+	# existía — los releases ya publicados nunca se re-etiquetan, ver
+	# 16-RESEARCH.md para --channel; mismo mecanismo para el rollout).
 	local channel_args=()
 	if [[ -n "${CHANNEL}" ]]; then
 		channel_args=(--channel "${CHANNEL}")
@@ -345,9 +364,16 @@ _archive_and_generate_appcast() {
 		echo "Generando appcast.xml (canal por defecto/estable, incluye histórico completo en ${ARCHIVE_DIR})…"
 	fi
 
+	local rollout_args=()
+	if [[ -n "${ROLLOUT_INTERVAL_SECONDS}" ]]; then
+		rollout_args=(--phased-rollout-interval "${ROLLOUT_INTERVAL_SECONDS}")
+		echo "Rollout por fases activado: ${ROLLOUT_INTERVAL_SECONDS}s/grupo × 7 grupos (Sparkle los hardcodea) — ver RELEASING.md 3.6."
+	fi
+
 	"${SPARKLE_TOOLS_DIR}/bin/generate_appcast" \
 		--download-url-prefix "https://github.com/${GITHUB_REPO}/releases/download/v${VERSION}/" \
 		"${channel_args[@]}" \
+		"${rollout_args[@]}" \
 		-o "${ARCHIVE_DIR}/appcast.xml" \
 		"${ARCHIVE_DIR}"
 

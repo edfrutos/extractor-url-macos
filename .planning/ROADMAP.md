@@ -526,7 +526,7 @@ confirmar todavía). La Fase 22 (notarización pública) es explícitamente
 ### Checklist v7.0
 
 - [x] **Phase 19: Flags de filtrado CLI** - `--no-images`/`--no-links`/`--clipboard` en el motor Python. (completed 2026-08-23)
-- [ ] **Phase 20: Rollouts por fases de Sparkle** - Publicar actualizaciones progresivamente en vez de a todos los usuarios a la vez.
+- [x] **Phase 20: Rollouts por fases de Sparkle** - Publicar actualizaciones progresivamente en vez de a todos los usuarios a la vez. (completed 2026-08-23)
 - [ ] **Phase 21: Auto-actualización del runtime Python embebido** - Actualizar el runtime sin re-publicar toda la app.
 - [ ] **Phase 22: Notarización para distribución pública** - El `.app` notarizado se puede descargar y ejecutar sin avisos de Gatekeeper, vía web (no App Store).
 
@@ -558,7 +558,9 @@ confirmar todavía). La Fase 22 (notarización pública) es explícitamente
   1. `scripts/release-macos.sh` soporta especificar un `sparkle:phasedRolloutInterval` opcional al publicar un release, sin afectar releases que no lo especifiquen.
   2. El comportamiento y las implicaciones de un rollout por fases (cómo reparte Sparkle el despliegue, cómo monitorizarlo o abortarlo) quedan documentados en `RELEASING.md`.
 
-**Plans**: por definir (research/planning pendiente)
+**Plans**: 1 plan — Wave 1: 20-01 (ejecutada directamente en conversación, ver `20-01-SUMMARY.md`)
+
+**Estado**: Completa. `ROLLOUT_INTERVAL_SECONDS` (variable de entorno, no posicional — no reordena `<version> [canal]`) → `--phased-rollout-interval` en `generate_appcast`, mismo patrón que `--channel` de la Fase 16. Flag confirmado inspeccionando directamente el binario real de `generate_appcast` ya presente en `.build-cache/sparkle-tools/` (sin adivinar). Mecánica de Sparkle documentada en `RELEASING.md` 3.6: 7 grupos hardcodeados, duración total = intervalo × 7, no aplica a comprobación manual ni updates críticos, sin mecanismo oficial de aborto — se documenta la alternativa práctica (editar `appcast.xml` a mano). Verificado en el sandbox: `bash -n`/`shellcheck` limpios, lógica de construcción de argumentos probada de forma aislada (4 combinaciones). No se pudo probar contra un `generate_appcast` real en ejecución (necesita Xcode/notarización, fuera de este sandbox) — recomendado confirmar en el próximo release real con la variable puesta.
 
 **UI hint**: no
 
@@ -605,6 +607,6 @@ proyecto. Decisión explícita del usuario al definir v7.0.
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 19. Flags de filtrado CLI | 1/1 | Complete | 2026-08-23 |
-| 20. Rollouts por fases de Sparkle | 0/? | Planning | — |
+| 20. Rollouts por fases de Sparkle | 1/1 | Complete | 2026-08-23 |
 | 21. Auto-actualización del runtime Python embebido | 0/? | Planning | — |
 | 22. Notarización para distribución pública | 0/? | Planning | — |

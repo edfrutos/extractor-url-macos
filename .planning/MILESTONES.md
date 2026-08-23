@@ -104,10 +104,11 @@
 
 **Shipped hasta ahora:**
 - Fase 19 (flags de filtrado CLI): `--no-images`/`--no-links` en `core.py` vía `_strip_images`/`_strip_links` (mutación in situ del soup, aplicada en texto/HTML/Markdown); `--clipboard` en `extractor_url.py` vía `pbcopy`/`subprocess.run`, aditivo sobre `--json`/`-o`/stdout. 67/67 tests, pylint 10.00/10, mypy limpio.
+- Fase 20 (rollouts por fases de Sparkle): `ROLLOUT_INTERVAL_SECONDS` (env var) → `--phased-rollout-interval` en `generate_appcast`, mismo patrón que `--channel`. Mecánica de Sparkle (7 grupos hardcodeados, duración = intervalo × 7, no aplica a comprobación manual/updates críticos) documentada en `RELEASING.md`.
 
 **Fases:**
 - Fase 19 — Flags de filtrado CLI (`--no-images`/`--no-links`/`--clipboard`) ✅ Complete
-- Fase 20 — Rollouts por fases de Sparkle
+- Fase 20 — Rollouts por fases de Sparkle ✅ Complete
 - Fase 21 — Auto-actualización del runtime Python embebido (necesita research previa)
 - Fase 22 — Notarización para distribución pública vía web (explícitamente no App Store)
 

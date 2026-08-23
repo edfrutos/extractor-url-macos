@@ -148,6 +148,49 @@ más despacio del lado del servidor). No hay mitigación de código — deja
 margen de tiempo al publicar el primer release con esta fase, en vez de
 hacerlo en el último momento.
 
+## 3.6. Rollout por fases (opcional)
+
+Desde la Fase 20, `scripts/release-macos.sh` acepta un rollout progresivo
+en vez de publicar la actualización a todos los usuarios de golpe — vía
+la variable de entorno `ROLLOUT_INTERVAL_SECONDS` (no un argumento
+posicional, para no reordenar `<version> [canal]` ya establecido):
+
+```bash
+ROLLOUT_INTERVAL_SECONDS=86400 scripts/release-macos.sh 1.2
+```
+
+**Cómo lo reparte Sparkle:** `generate_appcast` recibe
+`--phased-rollout-interval <segundos>`, que etiqueta **solo el item
+nuevo** de esta ejecución con `<sparkle:phasedRolloutInterval>` —
+igual que `--channel`, los releases ya publicados nunca se re-etiquetan.
+Sparkle **hardcodea 7 grupos** de usuarios (identificados por un
+`SUUpdateGroupIdentifier` aleatorio guardado en las preferencias de cada
+instalación) y libera la actualización a un grupo nuevo cada
+`ROLLOUT_INTERVAL_SECONDS` a partir de la fecha de publicación del item
+(`pubDate`, que `generate_appcast` siempre incluye). **La duración total
+del rollout es `ROLLOUT_INTERVAL_SECONDS × 7`** — con el ejemplo de
+arriba (86400s = 1 día), el rollout completo tarda 7 días.
+
+**Limitación importante — no confundir con un bug:** el rollout por fases
+**no aplica** a comprobaciones manuales ("Buscar actualizaciones…" desde
+el menú) ni a updates marcados como críticos — un usuario que pulse
+"Buscar actualizaciones…" verá y podrá instalar la versión más reciente
+de inmediato, salte el grupo que salte. Solo la comprobación automática
+en segundo plano respeta el rollout. Si pruebas un release con rollout en
+tu propio Mac usando el menú manual, verás la versión nueva al momento —
+eso es el comportamiento esperado de Sparkle, no un fallo del pipeline.
+
+**Monitorización/aborto:** Sparkle no expone un mecanismo oficial para
+monitorizar el progreso de un rollout ni para abortarlo a mitad de
+camino. Como este proyecto ya deja `appcast.xml` como un archivo del repo
+para revisar y commitear a mano (decisión de la Fase 13), la forma
+práctica de "abortar" un rollout en marcha es editar `appcast.xml`
+directamente: quita el elemento `<sparkle:phasedRolloutInterval>` del
+item en cuestión (deja el resto del item intacto) y commitea/pushea —
+en el siguiente check automático de cualquier instalación, la
+actualización deja de estar restringida por grupo y pasa a estar
+disponible para todos de inmediato, igual que un release sin rollout.
+
 ## 4. Verificación post-release
 
 ```bash
