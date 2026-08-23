@@ -76,9 +76,16 @@
 
 ---
 
-## v6.0 — Historial y Distribución Completa 🔄 (en definición)
+## v6.0 — Historial y Distribución Completa ✓ (2026-08-23)
 
 **Goal:** Cerrar el backlog explícito de v4.0/v5.0 — historial/cola de extracciones, control manual del fallback JS, canales beta de Sparkle, Playwright embebido en el `.app` bundle, y pulido técnico menor. Orden fijado por el usuario: historial → flags → canales → bundle JS → pulido.
+
+**Shipped:**
+- Historial local en JSON Lines (`~/.cache/extractor-url/history.jsonl`) + `--batch` para colas de URLs, con vista de historial en la app SwiftUI que reabre/reextrae entradas previas
+- `--js`/`--no-js` como flags CLI explícitos (`argparse.add_mutually_exclusive_group()`), sin cambiar el comportamiento por defecto de la heurística automática
+- Canales beta de Sparkle: `scripts/release-macos.sh` publica en canal `beta` opcional; toggle de opt-in en Preferencias (`SPUUpdaterDelegate.allowedChannels(for:)`)
+- Chromium vendorizado (vía Playwright) dentro del `.app` bundle, firmado con Developer ID + hardened runtime — fallback JS funciona sin que el usuario instale nada por separado (886MB de incremento real, arquitectura nativa)
+- `_bump_version` acotada al target `ExtractorApp` (no toca `ExtractorAppTests`); bug del buscador de paquetes de Xcode 26.6 investigado y documentado (sin causa raíz confirmada, workaround del paquete local sigue en producción)
 
 **Fases:**
 - Fase 14 — Historial y cola de extracciones
@@ -87,4 +94,4 @@
 - Fase 17 — Playwright/Chromium embebido en el bundle (la más grande — comparable a la Fase 8 completa de v3.0)
 - Fase 18 — Pulido técnico (`_bump_version`, bug del buscador de Xcode 26.6)
 
-**Phases:** 5 (14→18) | **Requirements:** HIST-01→03, FLAG-01→02, CHANNEL-01→02, BUNDLEJS-01→02, POLISH-01→02
+**Phases:** 5 (14→18) | **Requirements:** HIST-01→03, FLAG-01→02, CHANNEL-01→02, BUNDLEJS-01→02, POLISH-01→02 (todos validados)

@@ -112,10 +112,39 @@ _bump_version() {
 
 	echo "Actualizando versión: MARKETING_VERSION=${VERSION}, CURRENT_PROJECT_VERSION=${next_build}"
 
-	sed -i '' \
-		-e "s/MARKETING_VERSION = [0-9.]*;/MARKETING_VERSION = ${VERSION};/g" \
-		-e "s/CURRENT_PROJECT_VERSION = [0-9]*;/CURRENT_PROJECT_VERSION = ${next_build};/g" \
-		"${PBXPROJ}"
+	# Solo los bloques XCBuildConfiguration del target ExtractorApp — un
+	# sed global sobre todo el archivo también bumpea ExtractorAppTests,
+	# que comparte los mismos valores de MARKETING_VERSION/
+	# CURRENT_PROJECT_VERSION por coincidencia. Cada bloque se identifica
+	# por su PRODUCT_BUNDLE_IDENTIFIER exacto (no por UUID, frágil ante
+	# reordenamientos de Xcode).
+	local tmp
+	tmp="$(mktemp)"
+	awk -v version="${VERSION}" -v build="${next_build}" '
+		BEGIN { in_block = 0; block = "" }
+		/^\t\t[0-9A-Fa-f]+ \/\* (Debug|Release) \*\/ = \{$/ {
+			in_block = 1
+			block = $0 "\n"
+			next
+		}
+		in_block && /^\t\t\};$/ {
+			block = block $0 "\n"
+			if (block ~ /PRODUCT_BUNDLE_IDENTIFIER = com\.edefrutos\.ExtractorApp;/) {
+				gsub(/MARKETING_VERSION = [0-9.]*;/, "MARKETING_VERSION = " version ";", block)
+				gsub(/CURRENT_PROJECT_VERSION = [0-9]*;/, "CURRENT_PROJECT_VERSION = " build ";", block)
+			}
+			printf "%s", block
+			in_block = 0
+			block = ""
+			next
+		}
+		in_block {
+			block = block $0 "\n"
+			next
+		}
+		{ print }
+	' "${PBXPROJ}" >"${tmp}"
+	mv "${tmp}" "${PBXPROJ}"
 }
 
 # ── Build + export (Developer ID) ───────────────────────────────────────────

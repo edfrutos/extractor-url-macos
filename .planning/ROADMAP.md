@@ -381,7 +381,7 @@ toque el turno, no asumir que será tan rápida como las fases 14-16.
 - [x] **Phase 15: Flag manual `--js`/`--no-js`** - Control explícito del fallback Playwright junto a la heurística automática de v4.0. (completed 2026-08-21)
 - [x] **Phase 16: Canales beta de Sparkle** - Publicar y recibir actualizaciones en un canal `beta` opcional. (completed 2026-08-21)
 - [x] **Phase 17: Playwright/Chromium embebido en el bundle** - El fallback JS funciona en la app SwiftUI sin depender de una instalación externa de Playwright. (completed 2026-08-22)
-- [ ] **Phase 18: Pulido técnico** - Acotar `_bump_version`, investigar el bug del buscador de paquetes de Xcode 26.6.
+- [x] **Phase 18: Pulido técnico** - Acotar `_bump_version`, investigar el bug del buscador de paquetes de Xcode 26.6. (completed 2026-08-23)
 
 ### Phase 14: Historial y cola de extracciones
 
@@ -478,7 +478,9 @@ Fase 11).
   2. Investigado el bug de búsqueda de paquetes de Xcode 26.6 (raíz del workaround de paquete local de la Fase 12) — documentado si se identifica la causa, o confirmado que sigue sin resolverse.
   3. Si el bug de Xcode se confirma resuelto (nueva versión de Xcode, fix identificado), Sparkle se migra de paquete local a referencia remota real con versión pinneada.
 
-**Plans**: por definir (research/planning pendiente)
+**Plans**: 1 plan — Wave 1: 18-01 (research + fix, ver `18-RESEARCH.md`/`18-01-SUMMARY.md`)
+
+**Estado**: Completa. POLISH-01 corregido y verificado en el sandbox (transformación de texto pura, `_bump_version` acotada al target `ExtractorApp` vía `awk`, `ExtractorAppTests` intacto). POLISH-02 investigado por búsqueda web sin causa raíz confirmada — documentado como "investigado, sigue sin resolverse"; el usuario decidió explícitamente no invertir tiempo en probarlo en su Mac real ahora, así que el Success Criterion 3 (migrar a paquete remoto) queda sin cumplir por decisión explícita, no por fallo técnico — el paquete local sigue siendo el mecanismo de producción, ya verificado.
 
 **UI hint**: no
 
@@ -491,5 +493,5 @@ Fase 11).
 | 14. Historial y cola de extracciones | 2/2 | Complete | 2026-08-21 |
 | 15. Flag manual `--js`/`--no-js` | 1/1 | Complete | 2026-08-21 |
 | 16. Canales beta de Sparkle | 1/1 | Complete | 2026-08-21 |
-| 17. Playwright/Chromium embebido en el bundle | 0/? | Planning | — |
-| 18. Pulido técnico | 0/? | Planning | — |
+| 17. Playwright/Chromium embebido en el bundle | 1/1 | Complete | 2026-08-22 |
+| 18. Pulido técnico | 1/1 | Complete | 2026-08-23 |

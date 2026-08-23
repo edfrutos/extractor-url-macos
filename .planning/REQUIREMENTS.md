@@ -116,7 +116,7 @@
 | FLAG-01…02 | v6.0 | ✅ Complete | Phase 15 (15-01) |
 | CHANNEL-01…02 | v6.0 | ✅ Validated | Phase 16 |
 | BUNDLEJS-01…02 | v6.0 | ✅ Validated | Phase 17 |
-| POLISH-01…02 | v6.0 | ⬜ Pending | Phase 18 |
+| POLISH-01…02 | v6.0 | ✅ Complete | Phase 18 |
 
 ## Validated (v5.0 — Sparkle en la app)
 
@@ -161,8 +161,8 @@ Orden fijado por el usuario: historial → flags → canales → bundle JS → p
 
 ### POLISH — Pulido técnico (Phase 18)
 
-- [ ] **POLISH-01**: `_bump_version` en `scripts/release-macos.sh` acota el `sed` a los bloques del target `ExtractorApp` únicamente.
-- [ ] **POLISH-02**: Investigado y documentado el bug del buscador de paquetes de Xcode 26.6; Sparkle migrado a paquete remoto si se confirma resuelto. Relacionado: confirmado un segundo bug de Xcode 26.6 — `GENERATE_INFOPLIST_FILE` no sintetiza claves `INFOPLIST_KEY_*` personalizadas (ver STATE.md, Blockers/Concerns) — mitigado con `Info.plist` físico parcial, sin depender de que Apple lo arregle.
+- [x] **POLISH-01**: `_bump_version` en `scripts/release-macos.sh` acota el `sed`/`awk` a los bloques del target `ExtractorApp` únicamente — verificado contra una copia del `.pbxproj` real, `ExtractorAppTests` queda intacto.
+- [x] **POLISH-02**: Investigado el bug del buscador de paquetes de Xcode 26.6 (búsqueda web, sin causa raíz confirmada) — documentado en `18-RESEARCH.md` como "sigue sin resolverse". Sparkle NO se migró a paquete remoto — decisión explícita del usuario de no invertir tiempo en probarlo ahora; el paquete local sigue siendo el mecanismo de producción. Relacionado: confirmado un segundo bug de Xcode 26.6 — `GENERATE_INFOPLIST_FILE` no sintetiza claves `INFOPLIST_KEY_*` personalizadas (ver STATE.md, Blockers/Concerns) — mitigado con `Info.plist` físico parcial, sin depender de que Apple lo arregle.
 
 ## Out of Scope (v6.0)
 

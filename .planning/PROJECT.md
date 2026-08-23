@@ -70,10 +70,12 @@ Convertir páginas web en Markdown útil y limpio de forma fiable, repetible y s
 - ✓ BUNDLEJS-01: El pipeline de bundling (Fase 8) vendoriza Playwright + Chromium dentro del `.app`, firmados con Developer ID/hardened runtime (Helpers Renderer/GPU con `allow-jit`). — Validated in Phase 17 (17-01), checkpoint humano en Xcode; notarización real con Chromium embebido deferida al próximo release real
 - ✓ BUNDLEJS-02: El fallback JS del motor Python funciona en la app SwiftUI sin que el usuario instale Playwright por separado. — Validated in Phase 17 (17-01), extracción real de `quotes.toscrape.com/js/` desde la app
 
+- ✓ POLISH-01: `_bump_version` en `scripts/release-macos.sh` acota el `sed`/`awk` a los bloques del target `ExtractorApp` únicamente (no toca `ExtractorAppTests`). — Validated in Phase 18 (18-01), verificado contra copia del `.pbxproj` real
+- ✓ POLISH-02: Investigado el bug del buscador de paquetes de Xcode 26.6 — sin causa raíz confirmada, sigue documentado como no resuelto. Sparkle NO migrado a paquete remoto (decisión explícita del usuario de no invertir tiempo probándolo ahora). — Validated in Phase 18 (18-01), ver `18-RESEARCH.md`
+
 ### Active (v6.0)
 
-- [ ] POLISH-01: `_bump_version` en `scripts/release-macos.sh` acota el `sed` a los bloques del target `ExtractorApp` únicamente (no toca `ExtractorAppTests`).
-- [ ] POLISH-02: Investigado y documentado el bug del buscador de paquetes de Xcode 26.6; Sparkle migrado a paquete remoto si se confirma resuelto.
+Ninguno — v6.0 completo (Fases 14-18).
 
 ### Out of Scope
 
@@ -158,6 +160,8 @@ Milestone v6.0 (Historial y Distribución Completa) en marcha: Fase 14 (historia
 | [v6.0] `Info.plist` físico parcial (`ExtractorApp/Info.plist`) + `INFOPLIST_FILE`, combinado con `GENERATE_INFOPLIST_FILE = YES` | Bug confirmado de Xcode 26.6: no sintetiza ninguna clave `INFOPLIST_KEY_*` personalizada (`SUFeedURL`/`SUPublicEDKey`/`NSHumanReadableCopyright`) — verificado con DerivedData borrado por completo, no era caché. El merge `GENERATE_INFOPLIST_FILE` + `INFOPLIST_FILE` es el mecanismo oficial de Apple para este caso; evita esperar a que Apple arregle el bug | ✓ Good (encontrado fuera de fase, 2026-08-21) |
 | [v6.0] `.app`/`.framework` de Chromium descubiertos por patrón (`find -name "*.app"`), no hardcodeados | Playwright 1.62.0 distribuye "Chrome for Testing" (`Google Chrome for Testing.app`), no el `Chromium.app` clásico asumido por el research/plan — encontrado como fallo real de build en el checkpoint humano de Fase 17. Descubrir por patrón evita que otro cambio de naming aguas arriba vuelva a romper el bundling | ✓ Good (Phase 17-01, checkpoint humano) |
 | [v6.0] Una sola llamada `codesign` por Helper .app de Chromium (bundle completo, no ejecutable+bundle por separado) | Firmar el ejecutable interno con `--entitlements` y luego el `.app` contenedor por separado resella el ejecutable sin entitlements la segunda vez, borrando `allow-jit` — bug real detectado por `verify-bundle.sh` (BUNDLEJS-01) en el checkpoint de Fase 17, invisible en local porque un build ad-hoc sin hardened runtime no fuerza la restricción de JIT | ✓ Good (Phase 17-01, checkpoint humano) |
+| [v6.0] `_bump_version` identifica bloques `XCBuildConfiguration` por `PRODUCT_BUNDLE_IDENTIFIER` exacto (no por posición/UUID) | Un `sed` global sobre todo el `.pbxproj` bumpeaba también `ExtractorAppTests`, que comparte los mismos valores de versión por coincidencia — el identificador de bundle es la única ancla estable e inequívoca entre ambos targets | ✓ Good (Phase 18-01, verificado contra copia del `.pbxproj` real) |
+| [v6.0] POLISH-02 cerrado sin migrar Sparkle a paquete remoto | El bug de búsqueda de paquetes de Xcode 26.6 no tiene causa raíz confirmada tras investigación por búsqueda web; el usuario decidió explícitamente no invertir tiempo probando el fix candidato en su Mac real ahora — el paquete local ya es un mecanismo de producción funcional y verificado (Fases 12/16) | ✓ Good (Phase 18-01, decisión explícita del usuario) |
 
 ## Evolution
 
