@@ -273,6 +273,18 @@ def _clean_soup(soup: BeautifulSoup, base_url: str) -> BeautifulSoup:
     return soup
 
 
+def _strip_images(soup: Union[Tag, BeautifulSoup]) -> None:
+    """Elimina in situ todas las etiquetas <img> del árbol (--no-images)."""
+    for img_tag in soup.find_all("img"):
+        img_tag.decompose()
+
+
+def _strip_links(soup: Union[Tag, BeautifulSoup]) -> None:
+    """Aplana in situ los enlaces: conserva el texto, quita la etiqueta <a> (--no-links)."""
+    for a_tag in soup.find_all("a"):
+        a_tag.unwrap()
+
+
 def _main_content(soup: BeautifulSoup) -> Union[Tag, BeautifulSoup]:
     """Localiza el elemento de contenido principal del documento."""
     for selector in _MAIN_SELECTORS:
@@ -341,8 +353,15 @@ def _format_soup_content(
     soup: BeautifulSoup,
     return_type: str,
     selector: Optional[str],
+    no_images: bool = False,
+    no_links: bool = False,
 ) -> Optional[Union[str, BeautifulSoup]]:
     """Formatea un documento parseado según el tipo de retorno solicitado."""
+    if no_images:
+        _strip_images(soup)
+    if no_links:
+        _strip_links(soup)
+
     if return_type == "soup_object":
         return soup
 
@@ -379,26 +398,31 @@ def extract_formatted_content(  # pylint: disable=too-many-arguments,too-many-po
     timeout: int = 15,
     use_cache: bool = True,
     js_mode: str = "auto",
+    no_images: bool = False,
+    no_links: bool = False,
 ) -> Optional[Union[str, BeautifulSoup]]:
     """Extrae contenido formateado de una página web."""
     if return_type == "markdown_structure":
         return extract_html_structure_to_markdown(
-            url, selector=selector, timeout=timeout, use_cache=use_cache, js_mode=js_mode
+            url, selector=selector, timeout=timeout, use_cache=use_cache, js_mode=js_mode,
+            no_images=no_images, no_links=no_links,
         )
 
     soup = _fetch_soup(url, timeout=timeout, use_cache=use_cache, js_mode=js_mode)
     if soup is None:
         return None
 
-    return _format_soup_content(soup, return_type, selector)
+    return _format_soup_content(soup, return_type, selector, no_images, no_links)
 
 
-def extract_html_structure_to_markdown(
+def extract_html_structure_to_markdown(  # pylint: disable=too-many-arguments,too-many-positional-arguments
     url: str,
     selector: Optional[str] = None,
     timeout: int = 15,
     use_cache: bool = True,
     js_mode: str = "auto",
+    no_images: bool = False,
+    no_links: bool = False,
 ) -> Optional[str]:
     """Convierte el contenido principal de una URL a Markdown fiel."""
     raw = _fetch_raw(url, timeout=timeout, use_cache=use_cache, js_mode=js_mode)
@@ -413,6 +437,10 @@ def extract_html_structure_to_markdown(
         soup = BeautifulSoup(html_text, "html.parser")
 
     soup = _clean_soup(soup, final_url)
+    if no_images:
+        _strip_images(soup)
+    if no_links:
+        _strip_links(soup)
 
     if selector:
         content = _apply_selector(soup, selector)
@@ -430,8 +458,8 @@ def extract_html_structure_to_markdown(
         html_text,
         url=final_url,
         output_format="markdown",
-        include_images=True,
-        include_links=True,
+        include_images=not no_images,
+        include_links=not no_links,
         favor_recall=True,
         no_fallback=False,
     )

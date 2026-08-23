@@ -117,7 +117,7 @@
 | CHANNEL-01…02 | v6.0 | ✅ Validated | Phase 16 |
 | BUNDLEJS-01…02 | v6.0 | ✅ Validated | Phase 17 |
 | POLISH-01…02 | v6.0 | ✅ Complete | Phase 18 |
-| CONTENT-01…02, CLIP-01 | v7.0 | ⬜ Pending | Phase 19 |
+| CONTENT-01…02, CLIP-01 | v7.0 | ✅ Complete | Phase 19 |
 | ROLLOUT-01…02 | v7.0 | ⬜ Pending | Phase 20 |
 | PYRUNTIME-01…02 | v7.0 | ⬜ Pending | Phase 21 |
 | PUBLISH-01…02 | v7.0 | ⬜ Pending | Phase 22 |
@@ -168,11 +168,11 @@ Orden fijado por el usuario: historial → flags → canales → bundle JS → p
 - [x] **POLISH-01**: `_bump_version` en `scripts/release-macos.sh` acota el `sed`/`awk` a los bloques del target `ExtractorApp` únicamente — verificado contra una copia del `.pbxproj` real, `ExtractorAppTests` queda intacto.
 - [x] **POLISH-02**: Investigado el bug del buscador de paquetes de Xcode 26.6 (búsqueda web, sin causa raíz confirmada) — documentado en `18-RESEARCH.md` como "sigue sin resolverse". Sparkle NO se migró a paquete remoto — decisión explícita del usuario de no invertir tiempo en probarlo ahora; el paquete local sigue siendo el mecanismo de producción. Relacionado: confirmado un segundo bug de Xcode 26.6 — `GENERATE_INFOPLIST_FILE` no sintetiza claves `INFOPLIST_KEY_*` personalizadas (ver STATE.md, Blockers/Concerns) — mitigado con `Info.plist` físico parcial, sin depender de que Apple lo arregle.
 
-### CONTENT/CLIP — Flags de filtrado CLI (Phase 19)
+### CONTENT/CLIP — Flags de filtrado CLI (Phase 19) ✅ Complete
 
-- [ ] **CONTENT-01**: `--no-images` elimina las imágenes del contenido extraído en todos los formatos soportados.
-- [ ] **CONTENT-02**: `--no-links` elimina/aplana los enlaces del contenido extraído (deja el texto, sin `href`).
-- [ ] **CLIP-01**: `--clipboard` copia el resultado extraído al portapapeles del sistema.
+- [x] **CONTENT-01**: `--no-images` elimina las imágenes del contenido extraído en todos los formatos soportados — verificado en `html_string` y `markdown` (los tres caminos: trafilatura, selector, fallback).
+- [x] **CONTENT-02**: `--no-links` elimina/aplana los enlaces del contenido extraído (deja el texto, sin `href`) — mismos caminos verificados que CONTENT-01.
+- [x] **CLIP-01**: `--clipboard` copia el resultado extraído al portapapeles del sistema (`pbcopy`), aditivo sobre `--json`/`-o`/stdout — verificado con `subprocess.run` mockeado (sin Mac real disponible en este sandbox).
 
 ### ROLLOUT — Rollouts por fases de Sparkle (Phase 20)
 

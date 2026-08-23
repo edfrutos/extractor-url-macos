@@ -450,3 +450,177 @@ def test_batch_propaga_js_mode_a_todas_las_urls(
     extractor_url.main()
 
     assert captured_js_modes == ["force", "force"]
+
+
+# ---------------------------------------------------------------------------
+# --no-images / --no-links / --clipboard (Fase 19)
+# ---------------------------------------------------------------------------
+
+
+def test_no_images_y_no_links_propagan_a_extract_formatted_content(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    """--no-images/--no-links propagan como kwargs booleanos, independientes entre sí."""
+    _use_tmp_history(monkeypatch, tmp_path)
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "extractor_url.py", "https://example.com", "--json", "--no-cache",
+            "--no-images", "--no-links",
+        ],
+    )
+    captured_kwargs: dict[str, object] = {}
+
+    def _fake_extract(*_args: object, **kwargs: object) -> str:
+        captured_kwargs.update(kwargs)
+        return "contenido"
+
+    monkeypatch.setattr(extractor_url, "extract_formatted_content", _fake_extract)
+
+    with pytest.raises(SystemExit, match="0"):
+        extractor_url.main()
+
+    assert captured_kwargs["no_images"] is True
+    assert captured_kwargs["no_links"] is True
+
+
+def test_sin_flags_content_no_images_ni_no_links_son_false(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    """Sin --no-images ni --no-links, ambos son False (comportamiento sin cambios)."""
+    _use_tmp_history(monkeypatch, tmp_path)
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        ["extractor_url.py", "https://example.com", "--json", "--no-cache"],
+    )
+    captured_kwargs: dict[str, object] = {}
+
+    def _fake_extract(*_args: object, **kwargs: object) -> str:
+        captured_kwargs.update(kwargs)
+        return "contenido"
+
+    monkeypatch.setattr(extractor_url, "extract_formatted_content", _fake_extract)
+
+    with pytest.raises(SystemExit, match="0"):
+        extractor_url.main()
+
+    assert captured_kwargs["no_images"] is False
+    assert captured_kwargs["no_links"] is False
+
+
+def test_batch_propaga_no_images_no_links_a_todas_las_urls(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    """--batch aplica el mismo no_images/no_links a todas las URLs."""
+    _use_tmp_history(monkeypatch, tmp_path)
+    batch_file = tmp_path / "urls.txt"
+    batch_file.write_text("https://a.com\nhttps://b.com\n", encoding="utf-8")
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "extractor_url.py", "--batch", str(batch_file), "--json", "--no-cache",
+            "--no-images",
+        ],
+    )
+    captured: list[tuple[object, object]] = []
+
+    def _fake_extract(*_args: object, **kwargs: object) -> str:
+        captured.append((kwargs.get("no_images"), kwargs.get("no_links")))
+        return "contenido"
+
+    monkeypatch.setattr(extractor_url, "extract_formatted_content", _fake_extract)
+
+    extractor_url.main()
+
+    assert captured == [(True, False), (True, False)]
+
+
+def test_clipboard_flag_invoca_pbcopy_con_el_resultado(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    """--clipboard copia el resultado extraído vía pbcopy, sin alterar la salida normal."""
+    _use_tmp_history(monkeypatch, tmp_path)
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        ["extractor_url.py", "https://example.com", "--no-cache", "--clipboard"],
+    )
+    monkeypatch.setattr(
+        extractor_url, "extract_formatted_content", lambda *_a, **_kw: "contenido extraído"
+    )
+    captured_run: dict[str, object] = {}
+
+    def _fake_run(*args: object, **kwargs: object) -> None:
+        captured_run["args"] = args
+        captured_run.update(kwargs)
+
+    monkeypatch.setattr(extractor_url.subprocess, "run", _fake_run)
+
+    extractor_url.main()
+
+    assert captured_run["args"] == (["pbcopy"],)
+    assert captured_run["input"] == "contenido extraído".encode("utf-8")
+    assert captured_run["check"] is True
+
+
+def test_clipboard_sin_pbcopy_falla_explicito(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+    tmp_path: Path,
+) -> None:
+    """Sin pbcopy disponible (no macOS), --clipboard falla explícito con exit 1."""
+    _use_tmp_history(monkeypatch, tmp_path)
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        ["extractor_url.py", "https://example.com", "--no-cache", "--clipboard"],
+    )
+    monkeypatch.setattr(
+        extractor_url, "extract_formatted_content", lambda *_a, **_kw: "contenido"
+    )
+
+    def _fake_run(*_args: object, **_kwargs: object) -> None:
+        raise FileNotFoundError("pbcopy")
+
+    monkeypatch.setattr(extractor_url.subprocess, "run", _fake_run)
+
+    with pytest.raises(SystemExit, match="1"):
+        extractor_url.main()
+
+    assert "pbcopy" in capsys.readouterr().err
+
+
+def test_clipboard_no_interfiere_con_salida_json(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+    tmp_path: Path,
+) -> None:
+    """--clipboard es aditivo: la salida --json sigue intacta (Success Criterion 4)."""
+    _use_tmp_history(monkeypatch, tmp_path)
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        ["extractor_url.py", "https://example.com", "--json", "--no-cache", "--clipboard"],
+    )
+    monkeypatch.setattr(
+        extractor_url, "extract_formatted_content", lambda *_a, **_kw: "contenido"
+    )
+    monkeypatch.setattr(
+        extractor_url, "_fetch_raw", lambda *_a, **_kw: ("<html></html>", "https://example.com")
+    )
+    monkeypatch.setattr(extractor_url, "_extract_title", lambda *_a, **_kw: None)
+    monkeypatch.setattr(extractor_url.subprocess, "run", lambda *_a, **_kw: None)
+
+    with pytest.raises(SystemExit, match="0"):
+        extractor_url.main()
+
+    output = json.loads(capsys.readouterr().out)
+    assert output["status"] == "success"
+    assert output["content"] == "contenido"

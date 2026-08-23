@@ -98,12 +98,15 @@
 
 ---
 
-## v7.0 — (nombre por definir) 🔄 (en definición)
+## v7.0 — (nombre por definir) 🔄 (en marcha)
 
 **Goal:** Cerrar el backlog diferido restante de v6.0 — flags de filtrado CLI, rollouts por fases de Sparkle, auto-actualización del runtime Python embebido, y notarización para distribución pública vía web (no App Store). Orden fijado por el usuario: flags CLI → rollouts Sparkle → auto-actualización runtime → notarización pública.
 
+**Shipped hasta ahora:**
+- Fase 19 (flags de filtrado CLI): `--no-images`/`--no-links` en `core.py` vía `_strip_images`/`_strip_links` (mutación in situ del soup, aplicada en texto/HTML/Markdown); `--clipboard` en `extractor_url.py` vía `pbcopy`/`subprocess.run`, aditivo sobre `--json`/`-o`/stdout. 67/67 tests, pylint 10.00/10, mypy limpio.
+
 **Fases:**
-- Fase 19 — Flags de filtrado CLI (`--no-images`/`--no-links`/`--clipboard`)
+- Fase 19 — Flags de filtrado CLI (`--no-images`/`--no-links`/`--clipboard`) ✅ Complete
 - Fase 20 — Rollouts por fases de Sparkle
 - Fase 21 — Auto-actualización del runtime Python embebido (necesita research previa)
 - Fase 22 — Notarización para distribución pública vía web (explícitamente no App Store)

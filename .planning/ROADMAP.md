@@ -525,7 +525,7 @@ confirmar todavía). La Fase 22 (notarización pública) es explícitamente
 
 ### Checklist v7.0
 
-- [ ] **Phase 19: Flags de filtrado CLI** - `--no-images`/`--no-links`/`--clipboard` en el motor Python.
+- [x] **Phase 19: Flags de filtrado CLI** - `--no-images`/`--no-links`/`--clipboard` en el motor Python. (completed 2026-08-23)
 - [ ] **Phase 20: Rollouts por fases de Sparkle** - Publicar actualizaciones progresivamente en vez de a todos los usuarios a la vez.
 - [ ] **Phase 21: Auto-actualización del runtime Python embebido** - Actualizar el runtime sin re-publicar toda la app.
 - [ ] **Phase 22: Notarización para distribución pública** - El `.app` notarizado se puede descargar y ejecutar sin avisos de Gatekeeper, vía web (no App Store).
@@ -542,7 +542,9 @@ confirmar todavía). La Fase 22 (notarización pública) es explícitamente
   3. `--clipboard` copia el resultado extraído al portapapeles del sistema — comportamiento CLI-only, sin acoplarse a la GUI SwiftUI.
   4. Los tres flags son independientes y combinables entre sí y con `--js`/`--no-js`/`--batch` existentes, sin romper ningún contrato previo.
 
-**Plans**: por definir (research/planning pendiente)
+**Plans**: 1 plan — Wave 1: 19-01 (ejecutada directamente en conversación, ver `19-01-SUMMARY.md`)
+
+**Estado**: Completa. Verificado en el sandbox (lógica Python pura, sin necesitar Mac): `pytest tests/` 67/67, `pylint` 10.00/10, `mypy` limpio. `--clipboard` verificado con `subprocess.run` mockeado (sin `pbcopy` real disponible en este sandbox Linux) — recomendado no bloqueante: confirmar en un Mac real.
 
 **UI hint**: no
 
@@ -602,7 +604,7 @@ proyecto. Decisión explícita del usuario al definir v7.0.
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 19. Flags de filtrado CLI | 0/? | Planning | — |
+| 19. Flags de filtrado CLI | 1/1 | Complete | 2026-08-23 |
 | 20. Rollouts por fases de Sparkle | 0/? | Planning | — |
 | 21. Auto-actualización del runtime Python embebido | 0/? | Planning | — |
 | 22. Notarización para distribución pública | 0/? | Planning | — |

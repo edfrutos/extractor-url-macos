@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v7.0
 milestone_name: (nombre por definir)
-status: planning
-last_updated: "2026-08-23T01:00:00.000Z"
-last_activity: 2026-08-23 -- v7.0 definido: alcance = las 4 áreas restantes de Deferred Items de v6.0 (flags CLI, rollouts Sparkle, auto-actualización runtime, notarización distribución pública vía web), orden confirmado por el usuario (Fases 19-22). Sin research/plan todavía en ninguna fase.
+status: executing
+last_updated: "2026-08-23T02:00:00.000Z"
+last_activity: 2026-08-23 -- Fase 19 (flags de filtrado CLI) completa: --no-images/--no-links en core.py (_strip_images/_strip_links) y --clipboard en extractor_url.py (pbcopy vía subprocess.run, aditivo). 67/67 tests, pylint 10.00/10, mypy limpio -- todo verificado en el sandbox sin necesitar Mac.
 progress:
   total_phases: 4
-  completed_phases: 0
-  total_plans: 0
-  completed_plans: 0
-  percent: 0
+  completed_phases: 1
+  total_plans: 1
+  completed_plans: 1
+  percent: 25
 ---
 
 # Project State
@@ -20,18 +20,18 @@ progress:
 See: .planning/PROJECT.md (updated 2026-08-23)
 
 **Core value:** Convertir páginas web en Markdown útil y limpio de forma fiable, repetible y sin depender de servicios externos.
-**Current focus:** v6.0 completo y cerrado (Fases 14-18). v7.0 recién definido (alcance y orden confirmados) — ninguna fase tiene research/plan todavía. Siguiente paso natural: research/plan de la Fase 19 (flags de filtrado CLI, la más pequeña).
+**Current focus:** v6.0 completo y cerrado (Fases 14-18). v7.0 en marcha: Fase 19 (flags de filtrado CLI) completa. Siguiente: Fase 20 (rollouts por fases de Sparkle) — sin research/plan todavía.
 
 ## Current Position
 
-Phase: 19 — Flags de filtrado CLI (Not started)
-Plan: ninguno todavía
-Status: Planning — v7.0 recién definido, sin research ni plan en ninguna fase
-Last activity: 2026-08-23 — Definido el alcance de v7.0 con el usuario: preguntado qué priorizar de `Deferred Items` de v6.0, eligió las 4 áreas completas (flags CLI, rollouts Sparkle, auto-actualización runtime, notarización distribución pública). Propuesto un orden de menor a mayor complejidad/incertidumbre (flags CLI → rollouts Sparkle → auto-actualización runtime → notarización pública), confirmado por el usuario. Aclarado con una segunda pregunta que "notarización distribución pública" significa web pública (GitHub Releases o similar), explícitamente NO Mac App Store — mantiene el Out of Scope de App Store del proyecto sin cambios. Documentado en ROADMAP.md (nueva sección `## v7.0`, 4 fases con Goal/Depends on/Requirements/Success Criteria), PROJECT.md (Active requirements + Key Decisions + Current Milestone actualizado), REQUIREMENTS.md (nuevas secciones CONTENT/CLIP, ROLLOUT, PYRUNTIME, PUBLISH + Out of Scope v7.0), MILESTONES.md (nueva entrada v7.0 🔄 en definición). Nada de esto está commiteado todavía. Ninguna fase de v7.0 tiene research ni plan — el trabajo real (código) no ha empezado.
+Phase: 19 — Flags de filtrado CLI (Complete)
+Plan: 19-01 completo
+Status: Complete — CONTENT-01/CONTENT-02/CLIP-01 validados en el sandbox (lógica Python pura, sin checkpoint humano necesario)
+Last activity: 2026-08-23 — Implementados `--no-images`/`--no-links`/`--clipboard` directamente en conversación (sin research/plan formales previos — fase pequeña, patrones ya establecidos por la Fase 15, ejecutada con el visto bueno explícito del usuario). `core.py`: `_strip_images()`/`_strip_links()` mutan el `soup` in situ (`decompose`/`unwrap`), aplicados en `_format_soup_content()` (texto/HTML/soup_object) y en `extract_html_structure_to_markdown()` (selector + fallback vía mutación del soup, camino trafilatura vía sus propios kwargs `include_images`/`include_links`). `extractor_url.py`: `--no-images`/`--no-links` propagados en `main()`/`_run_batch()`; `--clipboard` vía nuevo `_copy_to_clipboard()` (`subprocess.run(["pbcopy"], ...)`, falla explícito con `sys.exit(1)` si `pbcopy` no existe o falla), aditivo sobre `--json`/`-o`/stdout — no reemplaza ninguna salida existente. De paso, `_build_parser()` extraída de `main()` (bajaba a 53 sentencias, límite pylint 50) — pylint vuelve a 10.00/10. 16 tests nuevos (`tests/test_content_filters.py` + 6 en `tests/test_cli.py`), `pytest tests/` 67/67, `mypy` limpio. `--clipboard` no se pudo probar contra un `pbcopy` real (sandbox Linux) — verificado con `subprocess.run` mockeado; recomendado no bloqueante probarlo en un Mac real. `19-01-SUMMARY.md` escrito. ROADMAP.md/PROJECT.md/REQUIREMENTS.md/MILESTONES.md actualizados. Nada de esto está commiteado todavía (ni tampoco la definición de v7.0 de la sesión anterior).
 
 ```
-v7.0 Progress: [          ] 0% — Alcance y orden definidos, ninguna fase iniciada.
-Phase 19: [          ] 0/? planes (flags CLI --no-images/--no-links/--clipboard)
+v7.0 Progress: [==        ] 25% — Fase 19 completa, resto sin empezar.
+Phase 19: [==========] Complete (19-01, verificado en sandbox sin Mac)
 Phase 20: [          ] 0/? planes (rollouts por fases de Sparkle)
 Phase 21: [          ] 0/? planes (auto-actualización runtime Python -- necesita research previa)
 Phase 22: [          ] 0/? planes (notarización distribución pública vía web, no App Store)
@@ -67,11 +67,15 @@ Decisiones relevantes para v6.0:
 - [v7.0]: Alcance = las 4 áreas restantes de `Deferred Items` de v6.0 — flags CLI, rollouts Sparkle, auto-actualización runtime, notarización distribución pública. El usuario eligió explícitamente las 4 al preguntársele qué priorizar (no un subconjunto).
 - [v7.0]: Orden de fases 19→22 propuesto por Claude de menor a mayor complejidad/incertidumbre (ninguna fase depende de una posterior) y confirmado explícitamente por el usuario, mismo patrón que v6.0.
 - [v7.0]: "Notarización distribución pública" = web pública (GitHub Releases o similar), explícitamente NO Mac App Store — el App Store implicaría revisar App Sandbox (hoy OFF), Apple Review, App Store Connect; mucho más grande y contradice el Out of Scope ya establecido. Confirmado con una pregunta directa al usuario.
+- [v7.0]: Fase 19 ejecutada directamente en conversación, sin research/plan formales previos — fase pequeña, sin dependencias nuevas, patrones ya establecidos (mismo estilo que `--js`/`--no-js` de la Fase 15). Decisión implícita al no bloquear en pedir research cuando el usuario dijo "Fase 19" — documentado igualmente con `19-01-SUMMARY.md` tras la implementación.
+- [v7.0]: `--clipboard` vía `subprocess.run(["pbcopy"], ...)`, no una dependencia pip nueva — el proyecto es macOS-only, `pbcopy` ya está en cualquier Mac, evita tocar el runtime bundleado (Fase 8) solo para esto.
+- [v7.0]: `--clipboard` es aditivo (copia sin reemplazar `--json`/`-o`/stdout) — interpretación más segura de "combinable sin romper contratos previos" del Success Criterion 4.
 
 ### Pending Todos
 
-- Commitear los cambios de definición de v7.0 (ROADMAP.md/PROJECT.md/REQUIREMENTS.md/MILESTONES.md/STATE.md) — nada está commiteado todavía.
-- Iniciar research/plan de la Fase 19 (flags de filtrado CLI) — la más pequeña, sin dependencias nuevas, buen punto de partida.
+- Commitear los cambios de definición de v7.0 y de la Fase 19 (ROADMAP.md/PROJECT.md/REQUIREMENTS.md/MILESTONES.md/STATE.md + `core.py`/`extractor_url.py`/tests) — nada está commiteado todavía.
+- Iniciar research/plan de la Fase 20 (rollouts por fases de Sparkle).
+- Recomendado no bloqueante: probar `python extractor_url.py <url> --clipboard` en un Mac real (sandbox Linux no tiene `pbcopy`, solo verificado con mocks).
 - Decidir si commitear `scripts/setup-sparkle-local.sh` (añadido durante el checkpoint de la Fase 16, no estaba en el plan original) — sigue pendiente, no bloqueante.
 - Medir el tamaño real de un build Release/archivado (con strip) en el próximo release real — la cifra de 886MB (Fase 17) es de un build Debug local, probablemente algo menor en Release.
 - Ejecutar notarización real con Chromium embebido (Paso 6 del checkpoint de la Fase 17, deferido) en el próximo release real — verificar tiempos y que `_resign_bundled_chromium()` funciona end-to-end con Developer ID real.
@@ -96,6 +100,6 @@ Los 4 ítems que antes estaban aquí como "v7+" (notarización distribución pú
 
 ## Session Continuity
 
-Last session: 2026-08-23T01:00:00Z
-Stopped at: **v7.0 definido** (alcance y orden de fases confirmados con el usuario), pero **sin research ni plan en ninguna fase todavía** — no hay trabajo de código de v7.0 empezado. Secuencia de esta sesión: (1) commit de la Fase 18/cierre de v6.0 (`f74f6dd`); (2) usuario pidió definir v7.0; (3) intentado `gsd-progress` pero el motor de workflows GSD (`~/.claude/get-shit-done/`) no está instalado en este sandbox — solo los wrappers de skill; (4) definido manualmente: pregunta de alcance (el usuario eligió las 4 áreas de Deferred Items completas), pregunta de orden (confirmó el propuesto por Claude), pregunta de aclaración sobre "notarización pública" (confirmó web, no App Store); (5) documentado en ROADMAP.md/PROJECT.md/REQUIREMENTS.md/MILESTONES.md/STATE.md. Nada de esto está commiteado todavía. Próximo paso natural: preguntar al usuario si quiere commitear esta definición, y si quiere iniciar research/plan de la Fase 19.
-Resume file: ninguno — v7.0 definido, pendiente iniciar Fase 19
+Last session: 2026-08-23T02:00:00Z
+Stopped at: **Fase 19 completa** (código + tests + docs), nada commiteado todavía. Secuencia de esta sesión: (1) commit de la Fase 18/cierre de v6.0 (`f74f6dd`); (2) usuario pidió definir v7.0 — alcance (las 4 áreas de Deferred Items), orden (flags CLI → rollouts → runtime → notarización), y aclaración de "notarización pública" = web, no App Store — documentado en ROADMAP.md/PROJECT.md/REQUIREMENTS.md/MILESTONES.md; (3) commit de la definición de v7.0 (`d26f264`); (4) usuario dijo "Fase 19" — implementada directamente sin research/plan previos: `_strip_images`/`_strip_links` en `core.py`, `--no-images`/`--no-links`/`--clipboard` en `extractor_url.py`, `_build_parser()` extraída para mantener pylint 10/10, 16 tests nuevos; verificado `pytest`/`pylint`/`mypy` en un venv temporal (`/tmp/ext-venv`, el `.venv` del repo estaba vacío) — 67/67 tests, 10.00/10, limpio. `19-01-SUMMARY.md` escrito. ROADMAP.md/PROJECT.md/REQUIREMENTS.md/MILESTONES.md actualizados marcando Fase 19 completa. Nada de esto está commiteado todavía. Próximo paso natural: preguntar al usuario si quiere commitear, y si quiere iniciar la Fase 20.
+Resume file: ninguno — Fase 19 completa, pendiente commit y decidir si se sigue con la Fase 20

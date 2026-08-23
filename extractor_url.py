@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import subprocess
 import sys
 import threading
 import tkinter as tk
@@ -48,6 +49,26 @@ def _resolve_js_mode(args: argparse.Namespace) -> str:
     if args.no_js:
         return "off"
     return "auto"
+
+
+def _copy_to_clipboard(text: str) -> None:
+    """Copia `text` al portapapeles del sistema (macOS, vía `pbcopy`).
+
+    Falla explícito (sys.exit(1)) si `pbcopy` no existe (plataforma no
+    macOS) o si la copia falla — mismo principio de "fallar explícito" ya
+    establecido en el proyecto (selector CSS inválido, --batch sin --json).
+    """
+    try:
+        subprocess.run(["pbcopy"], input=text.encode("utf-8"), check=True)
+    except FileNotFoundError:
+        print(
+            "Error: 'pbcopy' no está disponible — --clipboard requiere macOS.",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+    except subprocess.CalledProcessError as e:
+        print(f"Error al copiar al portapapeles: {e}", file=sys.stderr)
+        sys.exit(1)
 
 
 def _history_entry(  # pylint: disable=too-many-arguments
@@ -273,8 +294,8 @@ def _print_json_output(data: dict[str, Any]) -> None:
     sys.exit(0 if data.get("status") == "success" else 1)
 
 
-def main() -> None:
-    """Punto de entrada CLI."""
+def _build_parser() -> argparse.ArgumentParser:
+    """Construye el parser de argumentos de la CLI."""
     parser = argparse.ArgumentParser(description="Extractor de contenido web")
     parser.add_argument(
         "url",
@@ -328,6 +349,21 @@ def main() -> None:
         ),
     )
     parser.add_argument(
+        "--no-images",
+        action="store_true",
+        help="Elimina las imágenes del contenido extraído",
+    )
+    parser.add_argument(
+        "--no-links",
+        action="store_true",
+        help="Aplana los enlaces del contenido extraído (conserva el texto, sin URL)",
+    )
+    parser.add_argument(
+        "--clipboard",
+        action="store_true",
+        help="Copia el resultado extraído al portapapeles del sistema (macOS, vía pbcopy)",
+    )
+    parser.add_argument(
         "--gui",
         action="store_true",
         help="Abrir interfaz gráfica",
@@ -343,9 +379,12 @@ def main() -> None:
         help="Archivo con una URL por línea; procesa todas secuencialmente (requiere --json)",
     )
     parser.set_defaults(use_cache=True)
+    return parser
 
 
-    args = parser.parse_args()
+def main() -> None:
+    """Punto de entrada CLI."""
+    args = _build_parser().parse_args()
 
     if args.batch:
         if not args.json:
@@ -374,6 +413,8 @@ def main() -> None:
         timeout=args.timeout,
         use_cache=args.use_cache,
         js_mode=js_mode,
+        no_images=args.no_images,
+        no_links=args.no_links,
     )
 
     if result is None:
@@ -392,6 +433,9 @@ def main() -> None:
         sys.exit(1)
 
     result_str = result if isinstance(result, str) else str(result)
+
+    if args.clipboard:
+        _copy_to_clipboard(result_str)
 
     if args.json:
         page_title = _lookup_title(args.url, args.timeout, args.use_cache, js_mode=js_mode)
@@ -462,6 +506,8 @@ def _run_batch(args: argparse.Namespace) -> None:
             timeout=args.timeout,
             use_cache=args.use_cache,
             js_mode=js_mode,
+            no_images=args.no_images,
+            no_links=args.no_links,
         )
 
         if result is None:
@@ -479,6 +525,10 @@ def _run_batch(args: argparse.Namespace) -> None:
             continue
 
         result_str = result if isinstance(result, str) else str(result)
+
+        if args.clipboard:
+            _copy_to_clipboard(result_str)
+
         page_title = _lookup_title(url, args.timeout, args.use_cache, js_mode=js_mode)
 
         record_history_entry(
