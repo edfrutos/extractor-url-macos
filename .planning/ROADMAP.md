@@ -495,3 +495,114 @@ Fase 11).
 | 16. Canales beta de Sparkle | 1/1 | Complete | 2026-08-21 |
 | 17. Playwright/Chromium embebido en el bundle | 1/1 | Complete | 2026-08-22 |
 | 18. Pulido técnico | 1/1 | Complete | 2026-08-23 |
+
+## v7.0 (nombre por definir)
+
+## Overview
+
+Cierra el backlog diferido restante de v6.0. Cuatro temas sin relación
+técnica directa entre sí — flags de filtrado CLI (motor Python, patrón
+idéntico a la Fase 15), rollouts por fases de Sparkle (pipeline de
+release, retoma la Fase 13/16), auto-actualización del runtime Python
+embebido (empaquetado + Sparkle, necesita research previa), y
+notarización para distribución pública vía web (firma/notarización,
+retoma la Fase 13, explícitamente NO Mac App Store). Orden fijado
+explícitamente por el usuario: 19 → 20 → 21 → 22, propuesto por Claude de
+menor a mayor complejidad/incertidumbre — ninguna fase depende de una
+posterior.
+
+**Aviso de alcance**: la Fase 21 (auto-actualización del runtime Python)
+necesita research antes de planificar — el runtime vive dentro del `.app`
+bundle firmado (Fase 8/13), así que cualquier mecanismo de actualización
+tiene que evitar romper la firma de código/notarización del bundle
+principal (candidato a investigar: un runtime actualizado fuera del
+bundle, en `~/Library/Application Support/`, con `PythonBridge` prefiriéndolo
+sobre el bundleado si existe — mismo patrón que ya usa
+`resolvedPaths()` para overrides de `UserDefaults` desde v3.0, pero sin
+confirmar todavía). La Fase 22 (notarización pública) es explícitamente
+**web pública, no Mac App Store** — decisión explícita del usuario, ver
+`PROJECT.md` Key Decisions.
+
+### Checklist v7.0
+
+- [ ] **Phase 19: Flags de filtrado CLI** - `--no-images`/`--no-links`/`--clipboard` en el motor Python.
+- [ ] **Phase 20: Rollouts por fases de Sparkle** - Publicar actualizaciones progresivamente en vez de a todos los usuarios a la vez.
+- [ ] **Phase 21: Auto-actualización del runtime Python embebido** - Actualizar el runtime sin re-publicar toda la app.
+- [ ] **Phase 22: Notarización para distribución pública** - El `.app` notarizado se puede descargar y ejecutar sin avisos de Gatekeeper, vía web (no App Store).
+
+### Phase 19: Flags de filtrado CLI
+
+**Goal**: El usuario puede excluir imágenes/enlaces del contenido extraído y copiar el resultado directamente al portapapeles, sin redirigir manualmente la salida.
+**Depends on**: Nothing nuevo — extiende el motor Python (`core.py`/`extractor_url.py`), mismo patrón que la Fase 15 (flags mutuamente compatibles, sin cambiar el comportamiento por defecto).
+**Requirements**: CONTENT-01, CONTENT-02, CLIP-01
+**Success Criteria** (what must be TRUE):
+
+  1. `--no-images` elimina las imágenes del contenido extraído en todos los formatos soportados (texto/HTML/Markdown, donde aplique).
+  2. `--no-links` elimina o aplana los enlaces del contenido extraído (deja el texto visible, sin `href`).
+  3. `--clipboard` copia el resultado extraído al portapapeles del sistema — comportamiento CLI-only, sin acoplarse a la GUI SwiftUI.
+  4. Los tres flags son independientes y combinables entre sí y con `--js`/`--no-js`/`--batch` existentes, sin romper ningún contrato previo.
+
+**Plans**: por definir (research/planning pendiente)
+
+**UI hint**: no
+
+### Phase 20: Rollouts por fases de Sparkle
+
+**Goal**: Las actualizaciones se pueden publicar con un rollout progresivo (no a todos los usuarios a la vez), reutilizando el pipeline de release existente.
+**Depends on**: Phase 13 (pipeline de release) y Phase 16 (canales beta) — extiende ambos, no un pipeline paralelo nuevo.
+**Requirements**: ROLLOUT-01, ROLLOUT-02
+**Success Criteria** (what must be TRUE):
+
+  1. `scripts/release-macos.sh` soporta especificar un `sparkle:phasedRolloutInterval` opcional al publicar un release, sin afectar releases que no lo especifiquen.
+  2. El comportamiento y las implicaciones de un rollout por fases (cómo reparte Sparkle el despliegue, cómo monitorizarlo o abortarlo) quedan documentados en `RELEASING.md`.
+
+**Plans**: por definir (research/planning pendiente)
+
+**UI hint**: no
+
+### Phase 21: Auto-actualización del runtime Python embebido
+
+**Goal**: El runtime Python embebido (intérprete + dependencias vendorizadas) se puede actualizar sin que el usuario tenga que descargar/reinstalar toda la app de nuevo.
+**Depends on**: Phase 8 (bundling original del runtime) y Phase 12/13 (Sparkle/pipeline) — probablemente reutiliza patrones de ambos, pero necesita research previa sobre cómo actualizar binarios sin romper la firma del `.app`.
+**Requirements**: PYRUNTIME-01, PYRUNTIME-02
+**Success Criteria** (what must be TRUE):
+
+  1. Existe un mecanismo para actualizar el runtime Python (intérprete y/o dependencias) de forma independiente a un release completo de la app, sin romper la firma de código ni la notarización del `.app` bundle.
+  2. Si la actualización del runtime falla o queda corrupta, la app degrada de forma segura — rollback al runtime bundleado original, sin dejar la app inutilizable.
+  3. El usuario no necesita intervención manual para que la actualización se aplique, o si la requiere, es un único paso claro y documentado.
+
+**Plans**: por definir (research corta necesaria antes de planificar — ver Aviso de alcance arriba)
+
+**UI hint**: no
+
+### Phase 22: Notarización para distribución pública
+
+**Goal**: Cualquier usuario (no solo el autor) puede descargar el `.app` notarizado desde una ubicación pública y ejecutarlo sin avisos de Gatekeeper — vía web, sin pasar por el Mac App Store.
+**Depends on**: Phase 13 (firma/notarización ya establecida) — extiende el pipeline existente a un canal de distribución público, además del canal de auto-actualización entre instalaciones del autor que ya existe.
+**Requirements**: PUBLISH-01, PUBLISH-02
+**Success Criteria** (what must be TRUE):
+
+  1. El `.app` notarizado se publica en una ubicación pública y descargable (p.ej. GitHub Releases público) sin requerir configuración especial por parte de quien lo descarga.
+  2. Un usuario en un Mac limpio (sin la cuenta de desarrollador del autor, sin haber compilado nunca el proyecto) puede descargar y abrir el `.app` sin avisos de Gatekeeper de "developer cannot be verified" ni pasos manuales en Preferencias de Seguridad.
+  3. El proceso de publicación pública queda documentado en `RELEASING.md`, diferenciado del proceso de release/appcast existente para las auto-actualizaciones vía Sparkle.
+
+**Decisión de alcance**: distribución vía web pública (GitHub Releases o
+similar), explícitamente NO Mac App Store — el App Store implicaría
+revisar App Sandbox (hoy OFF), Apple Review y metadatos en App Store
+Connect, contradiciendo el "Out of Scope: App Store" ya establecido del
+proyecto. Decisión explícita del usuario al definir v7.0.
+
+**Plans**: por definir (research/planning pendiente)
+
+**UI hint**: no
+
+### Estado v7.0
+
+**Execution Order:** Phases execute in the order fixed by the user: 19 → 20 → 21 → 22
+
+| Phase | Plans Complete | Status | Completed |
+|-------|----------------|--------|-----------|
+| 19. Flags de filtrado CLI | 0/? | Planning | — |
+| 20. Rollouts por fases de Sparkle | 0/? | Planning | — |
+| 21. Auto-actualización del runtime Python embebido | 0/? | Planning | — |
+| 22. Notarización para distribución pública | 0/? | Planning | — |

@@ -1,16 +1,16 @@
 ---
 gsd_state_version: 1.0
-milestone: v6.0
-milestone_name: Historial y Distribución Completa
-status: complete
-last_updated: "2026-08-23T00:00:00.000Z"
-last_activity: 2026-08-23 -- Fase 18 (pulido técnico) completa: POLISH-01 corregido y verificado (`_bump_version` acotada al target ExtractorApp), POLISH-02 investigado sin causa raíz confirmada (documentado como sigue sin resolverse, decisión explícita del usuario de no migrar Sparkle a paquete remoto ahora) -- v6.0 completo (Fases 14-18)
+milestone: v7.0
+milestone_name: (nombre por definir)
+status: planning
+last_updated: "2026-08-23T01:00:00.000Z"
+last_activity: 2026-08-23 -- v7.0 definido: alcance = las 4 áreas restantes de Deferred Items de v6.0 (flags CLI, rollouts Sparkle, auto-actualización runtime, notarización distribución pública vía web), orden confirmado por el usuario (Fases 19-22). Sin research/plan todavía en ninguna fase.
 progress:
-  total_phases: 5
-  completed_phases: 5
-  total_plans: 6
-  completed_plans: 6
-  percent: 100
+  total_phases: 4
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
+  percent: 0
 ---
 
 # Project State
@@ -20,22 +20,21 @@ progress:
 See: .planning/PROJECT.md (updated 2026-08-23)
 
 **Core value:** Convertir páginas web en Markdown útil y limpio de forma fiable, repetible y sin depender de servicios externos.
-**Current focus:** v6.0 completo (Fases 14-18). Sin milestone v7.0 definido todavía — pendiente de decisión del usuario sobre qué priorizar de `Deferred Items` o backlog nuevo.
+**Current focus:** v6.0 completo y cerrado (Fases 14-18). v7.0 recién definido (alcance y orden confirmados) — ninguna fase tiene research/plan todavía. Siguiente paso natural: research/plan de la Fase 19 (flags de filtrado CLI, la más pequeña).
 
 ## Current Position
 
-Phase: 18 — Pulido técnico (Complete)
-Plan: 18-01 completo
-Status: Complete — POLISH-01/POLISH-02 cerrados. **v6.0 completo.**
-Last activity: 2026-08-23 — POLISH-01: `_bump_version()` en `scripts/release-macos.sh` reescrita con un script `awk` que bufferiza cada bloque `XCBuildConfiguration` y solo bumpea `MARKETING_VERSION`/`CURRENT_PROJECT_VERSION` si el bloque contiene `PRODUCT_BUNDLE_IDENTIFIER = com.edefrutos.ExtractorApp;` exacto — verificado ejecutando la función aislada sobre una copia del `.pbxproj` real (`ExtractorApp` bumpeado, `ExtractorAppTests` intacto), sin necesitar Xcode (transformación de texto pura). POLISH-02: investigación por búsqueda web del bug de búsqueda de paquetes de Xcode 26.6 (`18-RESEARCH.md`) — sin causa raíz confirmada, un candidato plausible relacionado (`IDEPackageSupportUseBuiltinSCM`) sin verificar en la máquina real. El usuario decidió explícitamente cerrar sin probarlo en su Mac — el paquete local de Sparkle sigue como mecanismo de producción. `18-01-SUMMARY.md` escrito. ROADMAP.md/PROJECT.md/REQUIREMENTS.md/MILESTONES.md actualizados marcando v6.0 completo. Pendiente: commitear estos cambios.
+Phase: 19 — Flags de filtrado CLI (Not started)
+Plan: ninguno todavía
+Status: Planning — v7.0 recién definido, sin research ni plan en ninguna fase
+Last activity: 2026-08-23 — Definido el alcance de v7.0 con el usuario: preguntado qué priorizar de `Deferred Items` de v6.0, eligió las 4 áreas completas (flags CLI, rollouts Sparkle, auto-actualización runtime, notarización distribución pública). Propuesto un orden de menor a mayor complejidad/incertidumbre (flags CLI → rollouts Sparkle → auto-actualización runtime → notarización pública), confirmado por el usuario. Aclarado con una segunda pregunta que "notarización distribución pública" significa web pública (GitHub Releases o similar), explícitamente NO Mac App Store — mantiene el Out of Scope de App Store del proyecto sin cambios. Documentado en ROADMAP.md (nueva sección `## v7.0`, 4 fases con Goal/Depends on/Requirements/Success Criteria), PROJECT.md (Active requirements + Key Decisions + Current Milestone actualizado), REQUIREMENTS.md (nuevas secciones CONTENT/CLIP, ROLLOUT, PYRUNTIME, PUBLISH + Out of Scope v7.0), MILESTONES.md (nueva entrada v7.0 🔄 en definición). Nada de esto está commiteado todavía. Ninguna fase de v7.0 tiene research ni plan — el trabajo real (código) no ha empezado.
 
 ```
-v6.0 Progress: [==========] 100% — Fases 14-18 completas. MILESTONE COMPLETO.
-Phase 14: [==========] Complete (14-01 Python + 14-02 Swift)
-Phase 15: [==========] Complete (15-01)
-Phase 16: [==========] Complete (16-01)
-Phase 17: [==========] Complete (17-01, checkpoint humano verificado en Mac real)
-Phase 18: [==========] Complete (18-01)
+v7.0 Progress: [          ] 0% — Alcance y orden definidos, ninguna fase iniciada.
+Phase 19: [          ] 0/? planes (flags CLI --no-images/--no-links/--clipboard)
+Phase 20: [          ] 0/? planes (rollouts por fases de Sparkle)
+Phase 21: [          ] 0/? planes (auto-actualización runtime Python -- necesita research previa)
+Phase 22: [          ] 0/? planes (notarización distribución pública vía web, no App Store)
 ```
 
 ## Accumulated Context
@@ -65,11 +64,14 @@ Decisiones relevantes para v6.0:
 - [v6.0]: Codesigning de cada Helper de Chromium en una sola llamada `codesign` sobre el `.app` (no ejecutable + `.app` por separado) — firmar el ejecutable interno con entitlements y luego resellar el `.app` contenedor sin entitlements borra el `allow-jit` recién aplicado. Bug real detectado por `verify-bundle.sh` en el checkpoint de la Fase 17.
 - [v6.0]: `_bump_version` identifica bloques `XCBuildConfiguration` por `PRODUCT_BUNDLE_IDENTIFIER` exacto (no por posición/UUID) — un `sed` global sobre todo el `.pbxproj` bumpeaba también `ExtractorAppTests`, que comparte los mismos valores de versión por coincidencia.
 - [v6.0]: POLISH-02 cerrado sin migrar Sparkle a paquete remoto — el bug de búsqueda de Xcode 26.6 no tiene causa raíz confirmada y el usuario decidió explícitamente no invertir tiempo probando el fix candidato ahora. El paquete local sigue siendo el mecanismo de producción, ya verificado (Fases 12/16).
+- [v7.0]: Alcance = las 4 áreas restantes de `Deferred Items` de v6.0 — flags CLI, rollouts Sparkle, auto-actualización runtime, notarización distribución pública. El usuario eligió explícitamente las 4 al preguntársele qué priorizar (no un subconjunto).
+- [v7.0]: Orden de fases 19→22 propuesto por Claude de menor a mayor complejidad/incertidumbre (ninguna fase depende de una posterior) y confirmado explícitamente por el usuario, mismo patrón que v6.0.
+- [v7.0]: "Notarización distribución pública" = web pública (GitHub Releases o similar), explícitamente NO Mac App Store — el App Store implicaría revisar App Sandbox (hoy OFF), Apple Review, App Store Connect; mucho más grande y contradice el Out of Scope ya establecido. Confirmado con una pregunta directa al usuario.
 
 ### Pending Todos
 
-- Commitear los cambios de la Fase 18 (nada está commiteado todavía).
-- Decidir alcance de v7.0 — revisar `Deferred Items` abajo como punto de partida, o esperar a que el usuario proponga algo nuevo.
+- Commitear los cambios de definición de v7.0 (ROADMAP.md/PROJECT.md/REQUIREMENTS.md/MILESTONES.md/STATE.md) — nada está commiteado todavía.
+- Iniciar research/plan de la Fase 19 (flags de filtrado CLI) — la más pequeña, sin dependencias nuevas, buen punto de partida.
 - Decidir si commitear `scripts/setup-sparkle-local.sh` (añadido durante el checkpoint de la Fase 16, no estaba en el plan original) — sigue pendiente, no bloqueante.
 - Medir el tamaño real de un build Release/archivado (con strip) en el próximo release real — la cifra de 886MB (Fase 17) es de un build Debug local, probablemente algo menor en Release.
 - Ejecutar notarización real con Chromium embebido (Paso 6 del checkpoint de la Fase 17, deferido) en el próximo release real — verificar tiempos y que `_resign_bundled_chromium()` funciona end-to-end con Developer ID real.
@@ -78,23 +80,22 @@ Decisiones relevantes para v6.0:
 
 ### Blockers/Concerns
 
-- Ninguno bloqueante. v6.0 está completo.
+- Ninguno bloqueante. v6.0 está completo, v7.0 recién definido sin trabajo de código empezado.
 - **Bug real de Xcode 26.6 confirmado** (relacionado con `POLISH-02`): `GENERATE_INFOPLIST_FILE = YES` no sintetiza NINGUNA clave `INFOPLIST_KEY_*` personalizada en el `Info.plist` generado (`SUFeedURL`, `SUPublicEDKey`, `NSHumanReadableCopyright` — las 3 ausentes, confirmado con DerivedData borrado por completo, no era caché). Efecto observado: "Buscar actualizaciones…" fallaba con `You must specify the URL of the appcast as the SUFeedURL key...`. Corregido con un `Info.plist` físico parcial (`ExtractorApp/Info.plist`, solo esas 3 claves) + `INFOPLIST_FILE` en build settings, combinado con `GENERATE_INFOPLIST_FILE = YES` (mecanismo de merge documentado por Apple) — verificado en Mac real: las claves aparecen en el `.app` compilado y "Buscar actualizaciones…" funciona sin error.
 - Notarización real con Chromium embebido (Paso 6 del checkpoint de la Fase 17) no se ha ejecutado todavía — deferida al próximo release real para no gastar cuota. El codesigning en sí ya está verificado (`codesign --verify --deep --strict` + `allow-jit` correctos), así que el riesgo residual es bajo, pero la notarización real (`notarytool submit --wait`) con un bundle de ~900MB no se ha probado y podría tardar sensiblemente más de lo habitual (ya documentado en `RELEASING.md` 3.5).
 - El bug de búsqueda de paquetes de Xcode 26.6 (POLISH-02) sigue sin resolverse — el paquete local de Sparkle es un workaround funcional pero no se actualizará solo a nuevas versiones; revisar si el repo se clona en otra máquina sin `.build-cache/Sparkle` presente (necesitará repetir `scripts/setup-sparkle-local.sh`).
 
-## Deferred Items (desde v6.0)
+## Deferred Items
 
 | Category | Item | Status |
 |----------|------|--------|
-| Distribución | Notarización para distribución pública (App Store, web pública) | v7+ |
-| Funcionalidad | Actualización automática del runtime Python bundleado | v7+ |
-| Funcionalidad | Flags `--no-images`, `--no-links`, `--clipboard` | v7+ |
-| Funcionalidad | Rollouts por fases de Sparkle (`sparkle:phasedRolloutInterval`) | v7+ si hay más usuarios |
-| Técnico | Migrar Sparkle a paquete remoto real (POLISH-02) si se resuelve el bug de Xcode 26.6 | v7+ si el usuario quiere reabrirlo |
+| Técnico | Migrar Sparkle a paquete remoto real (POLISH-02) si se resuelve el bug de Xcode 26.6 | v8+ si el usuario quiere reabrirlo — ver `18-RESEARCH.md` |
+| Distribución | Mac App Store | Explícitamente fuera de alcance de v7.0 (ver Decisions) — sin fecha |
+
+Los 4 ítems que antes estaban aquí como "v7+" (notarización distribución pública, auto-actualización runtime, flags CLI, rollouts Sparkle) pasaron a ser el alcance activo de v7.0 — ver Current Position y ROADMAP.md `## v7.0`.
 
 ## Session Continuity
 
-Last session: 2026-08-23T00:00:00Z
-Stopped at: **v6.0 completo** (Fases 14-18). Fase 18 (pulido técnico) cerrada: POLISH-01 corregido y verificado sin necesitar Xcode (transformación de texto pura sobre el `.pbxproj`, probada contra una copia del archivo real). POLISH-02 investigado por búsqueda web sin causa raíz confirmada; el usuario decidió explícitamente cerrar sin probar el fix candidato en su Mac real ahora. `18-RESEARCH.md`/`18-01-SUMMARY.md` escritos. ROADMAP.md/PROJECT.md/REQUIREMENTS.md/MILESTONES.md actualizados marcando v6.0 completo (5/5 fases, 6/6 planes). Nada de la Fase 18 está commiteado todavía. Sin milestone v7.0 definido — próximo paso natural es preguntar al usuario si quiere commitear y qué prioriza a continuación (ver Deferred Items).
-Resume file: ninguno — v6.0 cerrado, pendiente definir v7.0
+Last session: 2026-08-23T01:00:00Z
+Stopped at: **v7.0 definido** (alcance y orden de fases confirmados con el usuario), pero **sin research ni plan en ninguna fase todavía** — no hay trabajo de código de v7.0 empezado. Secuencia de esta sesión: (1) commit de la Fase 18/cierre de v6.0 (`f74f6dd`); (2) usuario pidió definir v7.0; (3) intentado `gsd-progress` pero el motor de workflows GSD (`~/.claude/get-shit-done/`) no está instalado en este sandbox — solo los wrappers de skill; (4) definido manualmente: pregunta de alcance (el usuario eligió las 4 áreas de Deferred Items completas), pregunta de orden (confirmó el propuesto por Claude), pregunta de aclaración sobre "notarización pública" (confirmó web, no App Store); (5) documentado en ROADMAP.md/PROJECT.md/REQUIREMENTS.md/MILESTONES.md/STATE.md. Nada de esto está commiteado todavía. Próximo paso natural: preguntar al usuario si quiere commitear esta definición, y si quiere iniciar research/plan de la Fase 19.
+Resume file: ninguno — v7.0 definido, pendiente iniciar Fase 19

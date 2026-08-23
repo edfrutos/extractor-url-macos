@@ -73,31 +73,38 @@ Convertir páginas web en Markdown útil y limpio de forma fiable, repetible y s
 - ✓ POLISH-01: `_bump_version` en `scripts/release-macos.sh` acota el `sed`/`awk` a los bloques del target `ExtractorApp` únicamente (no toca `ExtractorAppTests`). — Validated in Phase 18 (18-01), verificado contra copia del `.pbxproj` real
 - ✓ POLISH-02: Investigado el bug del buscador de paquetes de Xcode 26.6 — sin causa raíz confirmada, sigue documentado como no resuelto. Sparkle NO migrado a paquete remoto (decisión explícita del usuario de no invertir tiempo probándolo ahora). — Validated in Phase 18 (18-01), ver `18-RESEARCH.md`
 
-### Active (v6.0)
+### Active (v7.0)
 
-Ninguno — v6.0 completo (Fases 14-18).
+- [ ] CONTENT-01: `--no-images` elimina imágenes del contenido extraído en todos los formatos soportados.
+- [ ] CONTENT-02: `--no-links` elimina/aplana enlaces del contenido extraído (deja el texto, sin `href`).
+- [ ] CLIP-01: `--clipboard` copia el resultado extraído al portapapeles del sistema.
+- [ ] ROLLOUT-01: `scripts/release-macos.sh` soporta un `sparkle:phasedRolloutInterval` opcional al publicar, sin afectar releases sin ese flag.
+- [ ] ROLLOUT-02: El comportamiento y las implicaciones de un rollout por fases quedan documentados en `RELEASING.md`.
+- [ ] PYRUNTIME-01: Mecanismo para actualizar el runtime Python embebido (intérprete y/o dependencias) sin re-publicar toda la app, sin romper la firma de código ni la notarización del `.app`.
+- [ ] PYRUNTIME-02: Si la actualización del runtime falla o queda corrupta, la app degrada de forma segura (rollback al runtime bundleado original).
+- [ ] PUBLISH-01: El `.app` notarizado se publica en una ubicación pública y descargable por cualquiera, sin requerir configuración especial del descargador.
+- [ ] PUBLISH-02: Un usuario en un Mac limpio (sin la cuenta de desarrollador del autor) puede descargar y abrir el `.app` sin avisos de Gatekeeper de "developer cannot be verified".
 
 ### Out of Scope
 
-- App Store o distribución comercial — no es el objetivo.
-- Notarización para **distribución pública a terceros** (App Store, web pública) sigue fuera de alcance — la notarización existente es solo para que las actualizaciones vía Sparkle no muestren avisos de Gatekeeper en las propias instalaciones del autor.
-- Rollouts por fases de Sparkle (`sparkle:phasedRolloutInterval`) — v6.0 cubre canales beta/nightly, pero los rollouts progresivos por grupos quedan diferidos a v7+ si hay más usuarios.
+- App Store o distribución comercial — no es el objetivo. La distribución pública de v7.0 es vía web (GitHub Releases o similar), no Mac App Store — decisión explícita del usuario al definir v7.0, mantiene esta línea sin cambios.
 
 ## Context
 
-El proyecto tiene dos capas: el motor Python (`core.py` + `extractor_url.py`) y la app nativa SwiftUI (`ExtractorApp/`). La app lanza el motor vía `Foundation.Process()` con `--json`. v3.0 eliminó la dependencia del usuario de instalar Python y configurar rutas. v4.0 amplió el motor Python para extraer contenido de páginas que requieren JavaScript (SPAs). v5.0 añadió auto-actualización a la app SwiftUI (Sparkle). v6.0 cubre el backlog diferido de v4.0/v5.0: historial y cola de extracciones, control manual del fallback JS, canales beta de Sparkle, Playwright embebido en el bundle, y pulido técnico menor.
+El proyecto tiene dos capas: el motor Python (`core.py` + `extractor_url.py`) y la app nativa SwiftUI (`ExtractorApp/`). La app lanza el motor vía `Foundation.Process()` con `--json`. v3.0 eliminó la dependencia del usuario de instalar Python y configurar rutas. v4.0 amplió el motor Python para extraer contenido de páginas que requieren JavaScript (SPAs). v5.0 añadió auto-actualización a la app SwiftUI (Sparkle). v6.0 cubrió el backlog diferido de v4.0/v5.0: historial y cola de extracciones, control manual del fallback JS, canales beta de Sparkle, Playwright embebido en el bundle, y pulido técnico menor. v7.0 cubre el backlog diferido restante de v6.0: flags de filtrado de contenido CLI, rollouts por fases de Sparkle, auto-actualización del runtime Python embebido, y notarización para distribución pública vía web (no App Store).
 
-## Current Milestone: v6.0 Historial y Distribución Completa
+## Current Milestone: v7.0 (nombre por definir)
 
-**Goal:** Cerrar el backlog explícito de v4.0/v5.0 — historial/cola de extracciones (funcionalidad más pedida), control manual del fallback JS, canales beta de Sparkle, Playwright embebido en el `.app` bundle, y limpieza técnica menor.
+**Goal:** Cerrar el backlog diferido de v6.0 — flags de filtrado CLI (`--no-images`/`--no-links`/`--clipboard`), rollouts por fases de Sparkle, auto-actualización del runtime Python embebido, y notarización para distribución pública vía web.
 
 **Target features:**
 
-- Historial de extracciones persistente + cola de URLs a procesar
-- `--js`/`--no-js` como flags explícitos junto a la heurística automática existente
-- Canal `beta` en el pipeline de release y en la app (opt-in)
-- Playwright + Chromium vendorizados en el `.app` bundle, firmados y notarizables
-- `_bump_version` acotado al target correcto; revisión del bug de búsqueda de paquetes de Xcode 26.6
+- `--no-images`/`--no-links`/`--clipboard` en el motor Python (CLI)
+- `sparkle:phasedRolloutInterval` opcional en el pipeline de release
+- Mecanismo de actualización del runtime Python embebido independiente de un release completo de la app
+- `.app` notarizado publicado en una ubicación pública descargable por cualquiera, sin avisos de Gatekeeper — vía web (GitHub Releases o similar), no Mac App Store
+
+**Orden de fases fijado por el usuario:** flags CLI → rollouts Sparkle → auto-actualización runtime → notarización distribución pública. De menor a mayor complejidad/incertidumbre; ninguna fase posterior es dependencia de una anterior.
 
 ## Current State
 
@@ -106,7 +113,8 @@ Milestone v2.0 (SwiftUI Native App) completado: app macOS nativa, bridge Python 
 Milestone v3.0 (Standalone App) completado y cerrado: Fases 8, 9 y 10 verificadas con `xcodebuild` real (Build Succeeded, 49 tests/3 skipped/0 fallos, checklist visual OK) — ver `.planning/phases/10-ux-zero-config/10-01-SUMMARY.md`.
 Milestone v4.0 (Contenido Dinámico) completado y cerrado: Fase 11 implementa `_looks_insufficient()` + `_fetch_via_playwright()` en `core.py`, integrados en `_fetch_raw()`. Verificado con `pytest tests/` (28/28), `pylint` 10/10 y `mypy` limpio en un venv equivalente al del repo — ver `.planning/phases/11-playwright-fallback/11-01-SUMMARY.md`.
 Milestone v5.0 (Auto-actualización) completado y cerrado: Fase 12 (Sparkle integrado en la app, paquete local por un bug de búsqueda de Xcode 26.6) y Fase 13 (`scripts/release-macos.sh` — build, firma Developer ID, notarización, appcast firmado con EdDSA, publicación en GitHub Releases) verificadas con un release real: `https://github.com/edfrutos/extractor-url-macos/releases/tag/v1.0`, `appcast.xml` publicado y confirmado en vivo — ver `.planning/phases/13-release-pipeline/13-01-SUMMARY.md` para los 4 bugs reales encontrados y corregidos durante el checkpoint (team ID en exportOptions.plist, hardened runtime del Python embebido, orden de bootstrap, firma EdDSA de generate_appcast).
-Milestone v6.0 (Historial y Distribución Completa) en marcha: Fase 14 (historial y cola) completa — 14-01 Python (`record_history_entry()`/`load_history()` en `core.py`, `--batch` NDJSON en `extractor_url.py`, 40 tests/pylint 10/10/mypy limpio) + 14-02 Swift (`HistoryEntry`/`HistoryViewModel`/`HistoryView` + integración `ContentView`, checkpoint humano en Xcode verificado: Build Succeeded, historial visible, reabrir funciona; de paso corregida una condición de carrera real en `PythonBridge.IOCollector.result()`). Fase 15 (flag manual `--js`/`--no-js`) completa — `js_mode` ("auto"/"force"/"off") en `core.py`, flags mutuamente excluyentes en `extractor_url.py`, 51 tests/pylint 10/10/mypy limpio. De paso, corregido un bug real de Xcode 26.6 (`GENERATE_INFOPLIST_FILE` no sintetizaba claves `INFOPLIST_KEY_*` personalizadas, rompiendo Sparkle) con un `Info.plist` físico parcial. Fase 16 (canales beta de Sparkle) completa — canal opcional en `scripts/release-macos.sh` (`--channel`/`--prerelease` condicionales, sin tocar el flujo estable por defecto) + `ExtractorUpdaterDelegate.allowedChannels(for:)` y toggle de opt-in (`betaChannelOptIn`) en la app, checkpoint humano en Xcode verificado (Build Succeeded sin Fix-it, toggle persistente). Fases 17-18 sin empezar. Fase 17 (Playwright/Chromium embebido) es significativamente más grande que el resto — comparable en alcance a la Fase 8 completa de v3.0.
+Milestone v6.0 (Historial y Distribución Completa) completado y cerrado (2026-08-23): Fase 14 (historial y cola), Fase 15 (flag manual `--js`/`--no-js`), Fase 16 (canales beta de Sparkle), Fase 17 (Playwright/Chromium embebido, 886MB medidos, dos bugs reales de Playwright 1.62.0 encontrados y corregidos en el checkpoint) y Fase 18 (`_bump_version` acotado al target correcto, bug de Xcode 26.6 investigado sin causa raíz confirmada) — ver `.planning/phases/18-pulido-tecnico/18-01-SUMMARY.md` y `MILESTONES.md` para el detalle completo.
+Milestone v7.0 en definición: alcance fijado (flags CLI → rollouts Sparkle → auto-actualización runtime → notarización distribución pública vía web), fases 19-22 aún sin research/plan.
 
 ## Constraints
 
@@ -162,6 +170,9 @@ Milestone v6.0 (Historial y Distribución Completa) en marcha: Fase 14 (historia
 | [v6.0] Una sola llamada `codesign` por Helper .app de Chromium (bundle completo, no ejecutable+bundle por separado) | Firmar el ejecutable interno con `--entitlements` y luego el `.app` contenedor por separado resella el ejecutable sin entitlements la segunda vez, borrando `allow-jit` — bug real detectado por `verify-bundle.sh` (BUNDLEJS-01) en el checkpoint de Fase 17, invisible en local porque un build ad-hoc sin hardened runtime no fuerza la restricción de JIT | ✓ Good (Phase 17-01, checkpoint humano) |
 | [v6.0] `_bump_version` identifica bloques `XCBuildConfiguration` por `PRODUCT_BUNDLE_IDENTIFIER` exacto (no por posición/UUID) | Un `sed` global sobre todo el `.pbxproj` bumpeaba también `ExtractorAppTests`, que comparte los mismos valores de versión por coincidencia — el identificador de bundle es la única ancla estable e inequívoca entre ambos targets | ✓ Good (Phase 18-01, verificado contra copia del `.pbxproj` real) |
 | [v6.0] POLISH-02 cerrado sin migrar Sparkle a paquete remoto | El bug de búsqueda de paquetes de Xcode 26.6 no tiene causa raíz confirmada tras investigación por búsqueda web; el usuario decidió explícitamente no invertir tiempo probando el fix candidato en su Mac real ahora — el paquete local ya es un mecanismo de producción funcional y verificado (Fases 12/16) | ✓ Good (Phase 18-01, decisión explícita del usuario) |
+| [v7.0] Alcance = las 4 áreas restantes de `Deferred Items` de v6.0 (flags CLI, rollouts Sparkle, auto-actualización runtime, notarización distribución pública) | El usuario eligió explícitamente las 4 al preguntársele qué priorizar — no un subconjunto | Pending (definido, sin ejecutar) |
+| [v7.0] Orden de fases: flags CLI → rollouts Sparkle → auto-actualización runtime → notarización distribución pública | Propuesto por Claude de menor a mayor complejidad/incertidumbre (ninguna fase depende de una posterior) y confirmado explícitamente por el usuario, igual que el patrón de v6.0 | Pending (definido, sin ejecutar) |
+| [v7.0] "Notarización distribución pública" = web pública (GitHub Releases o similar), no Mac App Store | El App Store implica revisar App Sandbox (hoy OFF), Apple Review, metadatos en App Store Connect — mucho más grande y contradice el "Out of Scope: App Store" ya establecido del proyecto. El usuario confirmó explícitamente la opción web al preguntársele, manteniendo ese Out of Scope sin cambios | Pending (definido, sin ejecutar) |
 
 ## Evolution
 
@@ -171,4 +182,4 @@ Este documento evoluciona en transiciones de fase y límites de milestone.
 **Después de cada milestone:** revisar Core Value, auditar Out of Scope, actualizar Context.
 
 ---
-*Last updated: 2026-08-21 — Fases 14 (Historial y cola), 15 (flag manual --js/--no-js) y 16 (canales beta de Sparkle) completas*
+*Last updated: 2026-08-23 — v6.0 completo (Fases 14-18); v7.0 definido (alcance y orden), fases 19-22 sin research/plan todavía*

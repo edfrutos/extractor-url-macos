@@ -95,3 +95,17 @@
 - Fase 18 — Pulido técnico (`_bump_version`, bug del buscador de Xcode 26.6)
 
 **Phases:** 5 (14→18) | **Requirements:** HIST-01→03, FLAG-01→02, CHANNEL-01→02, BUNDLEJS-01→02, POLISH-01→02 (todos validados)
+
+---
+
+## v7.0 — (nombre por definir) 🔄 (en definición)
+
+**Goal:** Cerrar el backlog diferido restante de v6.0 — flags de filtrado CLI, rollouts por fases de Sparkle, auto-actualización del runtime Python embebido, y notarización para distribución pública vía web (no App Store). Orden fijado por el usuario: flags CLI → rollouts Sparkle → auto-actualización runtime → notarización pública.
+
+**Fases:**
+- Fase 19 — Flags de filtrado CLI (`--no-images`/`--no-links`/`--clipboard`)
+- Fase 20 — Rollouts por fases de Sparkle
+- Fase 21 — Auto-actualización del runtime Python embebido (necesita research previa)
+- Fase 22 — Notarización para distribución pública vía web (explícitamente no App Store)
+
+**Phases:** 4 (19→22) | **Requirements:** CONTENT-01→02, CLIP-01, ROLLOUT-01→02, PYRUNTIME-01→02, PUBLISH-01→02

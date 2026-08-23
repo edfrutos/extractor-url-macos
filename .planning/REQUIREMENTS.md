@@ -117,6 +117,10 @@
 | CHANNEL-01…02 | v6.0 | ✅ Validated | Phase 16 |
 | BUNDLEJS-01…02 | v6.0 | ✅ Validated | Phase 17 |
 | POLISH-01…02 | v6.0 | ✅ Complete | Phase 18 |
+| CONTENT-01…02, CLIP-01 | v7.0 | ⬜ Pending | Phase 19 |
+| ROLLOUT-01…02 | v7.0 | ⬜ Pending | Phase 20 |
+| PYRUNTIME-01…02 | v7.0 | ⬜ Pending | Phase 21 |
+| PUBLISH-01…02 | v7.0 | ⬜ Pending | Phase 22 |
 
 ## Validated (v5.0 — Sparkle en la app)
 
@@ -164,10 +168,35 @@ Orden fijado por el usuario: historial → flags → canales → bundle JS → p
 - [x] **POLISH-01**: `_bump_version` en `scripts/release-macos.sh` acota el `sed`/`awk` a los bloques del target `ExtractorApp` únicamente — verificado contra una copia del `.pbxproj` real, `ExtractorAppTests` queda intacto.
 - [x] **POLISH-02**: Investigado el bug del buscador de paquetes de Xcode 26.6 (búsqueda web, sin causa raíz confirmada) — documentado en `18-RESEARCH.md` como "sigue sin resolverse". Sparkle NO se migró a paquete remoto — decisión explícita del usuario de no invertir tiempo en probarlo ahora; el paquete local sigue siendo el mecanismo de producción. Relacionado: confirmado un segundo bug de Xcode 26.6 — `GENERATE_INFOPLIST_FILE` no sintetiza claves `INFOPLIST_KEY_*` personalizadas (ver STATE.md, Blockers/Concerns) — mitigado con `Info.plist` físico parcial, sin depender de que Apple lo arregle.
 
+### CONTENT/CLIP — Flags de filtrado CLI (Phase 19)
+
+- [ ] **CONTENT-01**: `--no-images` elimina las imágenes del contenido extraído en todos los formatos soportados.
+- [ ] **CONTENT-02**: `--no-links` elimina/aplana los enlaces del contenido extraído (deja el texto, sin `href`).
+- [ ] **CLIP-01**: `--clipboard` copia el resultado extraído al portapapeles del sistema.
+
+### ROLLOUT — Rollouts por fases de Sparkle (Phase 20)
+
+- [ ] **ROLLOUT-01**: `scripts/release-macos.sh` soporta un `sparkle:phasedRolloutInterval` opcional al publicar, sin afectar releases sin ese flag.
+- [ ] **ROLLOUT-02**: El comportamiento e implicaciones de un rollout por fases quedan documentados en `RELEASING.md`.
+
+### PYRUNTIME — Auto-actualización del runtime Python embebido (Phase 21)
+
+- [ ] **PYRUNTIME-01**: Mecanismo para actualizar el runtime Python embebido (intérprete y/o dependencias) sin re-publicar toda la app, sin romper la firma de código ni la notarización del `.app`.
+- [ ] **PYRUNTIME-02**: Si la actualización del runtime falla o queda corrupta, la app degrada de forma segura (rollback al runtime bundleado original).
+
+### PUBLISH — Notarización para distribución pública (Phase 22)
+
+- [ ] **PUBLISH-01**: El `.app` notarizado se publica en una ubicación pública y descargable por cualquiera, sin requerir configuración especial del descargador.
+- [ ] **PUBLISH-02**: Un usuario en un Mac limpio (sin la cuenta de desarrollador del autor) puede descargar y abrir el `.app` sin avisos de Gatekeeper de "developer cannot be verified".
+
 ## Out of Scope (v6.0)
 
-- **App Store / notarización pública**: uso personal, sin distribución a terceros.
-- **Rollouts por fases de Sparkle**: v6.0 cubre canales beta, no `phasedRolloutInterval` — v7+ si hay más usuarios.
+- **App Store / notarización pública**: uso personal, sin distribución a terceros en v6.0 — notarización para distribución pública vía web pasa a estar en alcance en v7.0 (PUBLISH-01/02), Mac App Store sigue fuera de alcance en v7.0 también.
+- **Rollouts por fases de Sparkle**: v6.0 cubre canales beta, no `phasedRolloutInterval` — pasa a estar en alcance en v7.0 (ROLLOUT-01/02).
+
+## Out of Scope (v7.0)
+
+- **Mac App Store**: PUBLISH-01/02 cubren distribución pública vía web (GitHub Releases o similar), explícitamente NO Mac App Store — decisión explícita del usuario al definir v7.0 (implicaría revisar App Sandbox, Apple Review, App Store Connect).
 
 ## Notes
 
