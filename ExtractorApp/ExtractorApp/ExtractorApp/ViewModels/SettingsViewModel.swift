@@ -53,6 +53,18 @@ enum PythonOperatingMode: Equatable {
     case unavailable
 }
 
+// MARK: - Runtime Update State (Fase 21)
+
+/// Estado de la comprobación/aplicación de una actualización de runtime
+/// (dependencias Python puras — ver `RuntimeUpdater`/`21-RESEARCH.md`).
+enum RuntimeUpdateState: Equatable {
+    case idle
+    case checking
+    case upToDate
+    case updated(version: String)
+    case failed(message: String)
+}
+
 // MARK: - SettingsViewModel
 
 @MainActor
@@ -88,6 +100,13 @@ final class SettingsViewModel: ObservableObject {
     // MARK: Operating mode (@Published — badge en SettingsView)
 
     @Published private(set) var operatingMode: PythonOperatingMode = .unavailable
+
+    // MARK: Runtime update (Fase 21 — @Published para reactividad en View)
+
+    @Published private(set) var runtimeUpdateState: RuntimeUpdateState = .idle
+
+    /// Versión de override activa, o nil si se usa el runtime bundleado.
+    var activeRuntimeVersion: String? { RuntimeUpdater.activeVersion() }
 
     /// `true` cuando la app opera con el Python embebido (flujo zero-config por defecto).
     var isBundleMode: Bool {
@@ -160,6 +179,40 @@ final class SettingsViewModel: ObservableObject {
         }
 
         return .valid
+    }
+
+    // MARK: - Runtime Update (Fase 21)
+
+    /// Comprueba el manifiesto remoto y aplica una actualización de
+    /// dependencias puras si hay una disponible. Solo tiene efecto real
+    /// en modo bundle (ver `RuntimeUpdater` — el override se antepone al
+    /// PYTHONPATH del bundle, no aplica en modo override manual).
+    func checkForRuntimeUpdate() {
+        runtimeUpdateState = .checking
+        // Task.detached (no Task {}) — mismo motivo que refreshOperatingMode():
+        // RuntimeUpdater.checkAndApplyUpdate() incluye trabajo síncrono
+        // bloqueante (Process().run()/waitUntilExit() en extract()/
+        // verifyImportable()) que no debe ejecutarse en el MainActor pese
+        // a que la función es async (bug real encontrado en el checkpoint
+        // humano de la Fase 10 con un patrón equivalente).
+        Task.detached { [weak self] in
+            do {
+                let applied = try await RuntimeUpdater.checkAndApplyUpdate()
+                await MainActor.run {
+                    guard let self else { return }
+                    if let applied {
+                        self.runtimeUpdateState = .updated(version: applied)
+                    } else {
+                        self.runtimeUpdateState = .upToDate
+                    }
+                }
+            } catch {
+                await MainActor.run {
+                    guard let self else { return }
+                    self.runtimeUpdateState = .failed(message: error.localizedDescription)
+                }
+            }
+        }
     }
 
     // MARK: - NSOpenPanel File Picker

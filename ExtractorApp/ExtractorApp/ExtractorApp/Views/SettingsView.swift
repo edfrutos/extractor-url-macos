@@ -43,6 +43,20 @@ struct SettingsView: View {
                         .font(.headline)
                 }
 
+                // MARK: Runtime Python (Fase 21: dependencias puras vendorizadas)
+                if vm.isBundleMode {
+                    Section {
+                        RuntimeUpdateRow(
+                            activeVersion: vm.activeRuntimeVersion,
+                            state: vm.runtimeUpdateState,
+                            onCheck: { vm.checkForRuntimeUpdate() }
+                        )
+                    } header: {
+                        Label("Dependencias del motor", systemImage: "shippingbox")
+                            .font(.headline)
+                    }
+                }
+
                 // MARK: Configuracion avanzada (colapsable, opcional)
                 Section {
                     Button {
@@ -481,6 +495,66 @@ private struct OperatingModeRow: View {
         case .bundle:      return .green
         case .override:    return .blue
         case .unavailable: return .orange
+        }
+    }
+}
+
+// MARK: - RuntimeUpdateRow (Fase 21: dependencias puras vendorizadas)
+
+private struct RuntimeUpdateRow: View {
+
+    let activeVersion: String?
+    let state: RuntimeUpdateState
+    let onCheck: () -> Void
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text(statusText)
+                .font(.subheadline)
+            Text("requests, beautifulsoup4, markdownify y trafilatura — el intérprete Python y Chromium se actualizan solo con un release completo de la app.")
+                .font(.caption2)
+                .foregroundStyle(.tertiary)
+
+            HStack(spacing: 8) {
+                Button("Buscar actualización") {
+                    onCheck()
+                }
+                .buttonStyle(.bordered)
+                .controlSize(.small)
+                .disabled(state == .checking)
+
+                if state == .checking {
+                    ProgressView()
+                        .scaleEffect(0.6)
+                        .controlSize(.mini)
+                }
+            }
+
+            if case .failed(let message) = state {
+                Text(message)
+                    .font(.caption2)
+                    .foregroundStyle(.red)
+            }
+        }
+        .padding(.vertical, 4)
+    }
+
+    private var statusText: String {
+        switch state {
+        case .updated(let version):
+            return "Dependencias actualizadas a \(version)."
+        case .upToDate:
+            if let activeVersion {
+                return "Ya al día (versión \(activeVersion))."
+            }
+            return "Ya al día (usando las dependencias incluidas en el bundle)."
+        case .checking:
+            return "Comprobando…"
+        case .idle, .failed:
+            if let activeVersion {
+                return "Dependencias actualizadas a \(activeVersion)."
+            }
+            return "Usando las dependencias incluidas en el bundle."
         }
     }
 }

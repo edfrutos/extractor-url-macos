@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v7.0
 milestone_name: (nombre por definir)
 status: executing
-last_updated: "2026-08-23T03:00:00.000Z"
-last_activity: 2026-08-23 -- Fase 20 (rollouts por fases de Sparkle) completa: ROLLOUT_INTERVAL_SECONDS (env var) -> --phased-rollout-interval en generate_appcast, mismo patrón que --channel de la Fase 16. Flag confirmado inspeccionando el binario real. Mecánica documentada en RELEASING.md 3.6.
+last_updated: "2026-08-23T04:00:00.000Z"
+last_activity: 2026-08-23 -- Fase 21 (auto-actualizacion runtime) implementada tras research: RuntimeUpdater.swift (nuevo) + PythonBridge.swift + SettingsView/ViewModel + scripts/build_runtime_update.py. Alcance acotado a dependencias Python puras (confirmado con el usuario) para evitar la incertidumbre de Gatekeeper con binarios sueltos. Checkpoint humano pendiente (necesita Xcode real).
 progress:
   total_phases: 4
   completed_phases: 2
-  total_plans: 2
+  total_plans: 3
   completed_plans: 2
   percent: 50
 ---
@@ -20,20 +20,20 @@ progress:
 See: .planning/PROJECT.md (updated 2026-08-23)
 
 **Core value:** Convertir páginas web en Markdown útil y limpio de forma fiable, repetible y sin depender de servicios externos.
-**Current focus:** v6.0 completo y cerrado (Fases 14-18). v7.0 en marcha: Fases 19-20 completas. Siguiente: Fase 21 (auto-actualización del runtime Python embebido) — necesita research previa, sin plan todavía.
+**Current focus:** v6.0 completo y cerrado (Fases 14-18). v7.0 en marcha: Fases 19-20 completas y commiteadas. Fase 21 implementada, checkpoint humano pendiente (necesita Xcode real). Siguiente tras el checkpoint: Fase 22 (notarización distribución pública).
 
 ## Current Position
 
-Phase: 20 — Rollouts por fases de Sparkle (Complete)
-Plan: 20-01 completo
-Status: Complete — ROLLOUT-01/ROLLOUT-02 validados en el sandbox (script bash, sin checkpoint humano necesario)
-Last activity: 2026-08-23 — Implementado `ROLLOUT_INTERVAL_SECONDS` directamente en conversación (sin research doc separado — se verificó el flag real de `generate_appcast` inspeccionando el binario Mach-O ya presente en `.build-cache/sparkle-tools/bin/generate_appcast`, extrayendo sus strings ASCII con Python ya que `strings` no está instalado en este sandbox, en vez de asumir el nombre del flag de memoria). Confirmado: `--phased-rollout-interval <segundos>` es el flag real; Sparkle hardcodea 7 grupos, duración total = intervalo × 7, no aplica a comprobación manual de actualizaciones ni a updates críticos (confirmado también contra la documentación oficial de Sparkle vía WebFetch). `scripts/release-macos.sh`: `ROLLOUT_INTERVAL_SECONDS="${ROLLOUT_INTERVAL_SECONDS:-}"` (variable de entorno, no 3er posicional, para no reordenar `<version> [canal]`), validación de entero positivo en `_preflight_checks()`, `rollout_args=()` en `_archive_and_generate_appcast()` mismo patrón que `channel_args`. `RELEASING.md` nueva sección 3.6 documentando la mecánica, la limitación de comprobación manual, y la forma práctica de abortar un rollout (editar `appcast.xml` a mano, ya es un archivo revisado manualmente desde la Fase 13). `bash -n`/`shellcheck` limpios; lógica de construcción de argumentos probada aislada (4 combinaciones canal/rollout) y validación de entero probada con casos límite. No se pudo probar contra un `generate_appcast` real en ejecución (necesita Xcode/notarización). `20-01-SUMMARY.md` escrito. ROADMAP.md/PROJECT.md/REQUIREMENTS.md/MILESTONES.md actualizados. Nada de esto está commiteado todavía (la Fase 19 sí — commit `8fbc9cc`).
+Phase: 21 — Auto-actualización del runtime Python embebido (Implementada, checkpoint humano pendiente)
+Plan: 21-01 implementado (sin research/plan formales por separado — research se hizo inline, ver `21-RESEARCH.md`)
+Status: Código escrito y verificado donde el sandbox lo permite (script Python + lógica pura) — falta el checkpoint humano en Xcode (compilación Swift, red real, y sobre todo confirmar que no aparece ningún aviso de Gatekeeper)
+Last activity: 2026-08-23 — Investigación previa a fondo (sin poder probar en Mac real): binarios sueltos no se pueden staplear, un intérprete descargado y ejecutado probablemente dispara Gatekeeper, pero los archivos `.py` puros que el intérprete YA bundleado/notarizado simplemente `import`ea como datos NO pasan por Gatekeeper en absoluto. Presentado al usuario, quien confirmó explícitamente acotar el alcance de v1 a las dependencias Python puras (`requests`/`beautifulsoup4`/`markdownify`/`trafilatura`), dejando intérprete/`lxml`/Chromium fuera (siguen actualizándose solo con un release completo). Implementado: `scripts/build_runtime_update.py` (nuevo) — pip install limpio + detección automática de paquetes con binarios compilados (`.so`/`.dylib`/`.pyd`, hoy `lxml`/`charset_normalizer`/`regex`) para excluirlos del zip + manifiesto JSON con sha256 — **ejecutado de verdad en el sandbox**, confirmado: zip sin binarios compilados, checksum correcto, manifiesto válido, `pylint`/`mypy` 10/10 limpios. `RuntimeUpdater.swift` (nuevo, Swift): descarga manifiesto+zip, verifica SHA-256, extrae vía `/usr/bin/unzip` directo (no Archive Utility/Finder) a Application Support, y verifica con una importación real contra el intérprete bundleado antes de activar el override — si cualquier paso falla, la versión activa no cambia (PYRUNTIME-02 sin lógica de rollback explícita, gratis por diseño). `PythonBridge.swift`: antepone el override al PYTHONPATH del bundle sin tocar el `.app` firmado. `SettingsViewModel.swift`/`SettingsView.swift`: nueva sección "Dependencias del motor" en Preferencias con botón manual "Buscar actualización" (`Task.detached` con `[weak self]`, mismo patrón que `refreshOperatingMode()` de la Fase 10, para no bloquear MainActor con el `Process()` síncrono). `RuntimeUpdaterTests.swift` (nuevo, 4 tests — decodificación de manifiesto, mensajes de error, sin override por defecto). Confirmado que el proyecto usa `PBXFileSystemSynchronizedRootGroup` (Xcode 16+) — los archivos nuevos no necesitan edición de `project.pbxproj`, a diferencia de la Fase 17. `RELEASING.md` nueva sección 3.7. `21-RESEARCH.md`/`CHECKPOINT-HUMANO.md` escritos. Nada de esto está commiteado todavía.
 
 ```
-v7.0 Progress: [=====     ] 50% — Fases 19-20 completas, resto sin empezar.
-Phase 19: [==========] Complete (19-01, verificado en sandbox sin Mac)
-Phase 20: [==========] Complete (20-01, verificado en sandbox sin Mac/Xcode)
-Phase 21: [          ] 0/? planes (auto-actualización runtime Python -- necesita research previa)
+v7.0 Progress: [=====     ] 50% — Fases 19-20 completas y commiteadas, Fase 21 implementada (checkpoint pendiente).
+Phase 19: [==========] Complete (19-01, commit 8fbc9cc)
+Phase 20: [==========] Complete (20-01, commit 42a3c32)
+Phase 21: [========  ] Implementada, checkpoint humano pendiente (21-01, sin commitear)
 Phase 22: [          ] 0/? planes (notarización distribución pública vía web, no App Store)
 ```
 
@@ -73,11 +73,16 @@ Decisiones relevantes para v6.0:
 - [v7.0]: `ROLLOUT_INTERVAL_SECONDS` vía variable de entorno, no un 3er argumento posicional en `release-macos.sh` — evita reordenar `<version> [canal]` ya establecido en la Fase 16; se compone limpiamente con cualquier combinación.
 - [v7.0]: Flag `--phased-rollout-interval` de `generate_appcast` confirmado inspeccionando el binario real (extracción de strings con Python) en vez de asumirlo — el binario ya estaba en `.build-cache/sparkle-tools/` desde la Fase 12.
 - [v7.0]: Aborto de un rollout en marcha = editar `appcast.xml` a mano (quitar `sparkle:phasedRolloutInterval`), no un comando nuevo — reutiliza el flujo de revisión manual del appcast ya establecido en la Fase 13, Sparkle no documenta un mecanismo oficial de aborto.
+- [v7.0]: Fase 21 v1 acota el alcance a dependencias Python puras (`requests`/`beautifulsoup4`/`markdownify`/`trafilatura`) — nunca el intérprete, `lxml` ni Chromium. Decisión explícita del usuario tras la research (`21-RESEARCH.md`), que encontró que actualizar binarios sueltos en tiempo de ejecución tiene incertidumbre real de Gatekeeper (no se pueden staplear, dependen de verificación online), mientras que archivos `.py` puros nunca pasan por Gatekeeper al ser solo `import`eados como datos.
+- [v7.0]: Mecanismo de override = directorio antepuesto al `PYTHONPATH` del bundle (`~/Library/Application Support/ExtractorApp/python-packages-override/<version>/`), nunca reemplazo de archivos dentro del `.app` firmado — evita romper la firma de código por completo, y da degradación segura (PYRUNTIME-02) casi gratis: si el override no existe o falla la verificación, `PythonBridge` simplemente no lo antepone.
+- [v7.0]: `scripts/build_runtime_update.py` detecta y excluye automáticamente cualquier paquete con binarios compilados (`.so`/`.dylib`/`.pyd`) en vez de mantener una lista fija de nombres a mano — más robusto ante cambios futuros en las dependencias transitivas (hoy excluye `lxml`/`charset_normalizer`/`regex`, verificado ejecutando el script de verdad en el sandbox).
+- [v7.0]: Verificación antes de activar un override = importación real contra el intérprete bundleado (`python -c "import requests, bs4, markdownify, trafilatura"`), no solo el checksum SHA-256 — el checksum solo prueba que la descarga no se corrompió, no que los paquetes funcionan con esta versión concreta del intérprete.
+- [v7.0]: Publicación del paquete de runtime como GitHub Release **separado** del release de la app (`runtime-<version>`, no el mismo tag) — evita mezclar los ciclos de vida de ambos mecanismos de actualización.
 
 ### Pending Todos
 
-- Commitear los cambios de la Fase 20 (ROADMAP.md/PROJECT.md/REQUIREMENTS.md/MILESTONES.md/STATE.md + `scripts/release-macos.sh`/`RELEASING.md`) — nada está commiteado todavía.
-- Iniciar research/plan de la Fase 21 (auto-actualización del runtime Python embebido) — marcada explícitamente como necesitando research previa (mecanismo de actualización sin romper la firma del `.app`).
+- Completar el checkpoint humano de la Fase 21 en Xcode real (ver `CHECKPOINT-HUMANO.md`) — build, tests, y sobre todo confirmar que aplicar una actualización de runtime no dispara ningún aviso de Gatekeeper.
+- Commitear los cambios de la Fase 21 una vez completado el checkpoint (o antes, si el usuario prefiere commitear el código ya escrito primero).
 - Recomendado no bloqueante: probar `python extractor_url.py <url> --clipboard` en un Mac real (sandbox Linux no tiene `pbcopy`, solo verificado con mocks) — Fase 19.
 - Recomendado no bloqueante: en el próximo release real con `ROLLOUT_INTERVAL_SECONDS` puesto, confirmar en el `appcast.xml` resultante que `<sparkle:phasedRolloutInterval>` aparece con el valor esperado — Fase 20.
 - Decidir si commitear `scripts/setup-sparkle-local.sh` (añadido durante el checkpoint de la Fase 16, no estaba en el plan original) — sigue pendiente, no bloqueante.
@@ -88,7 +93,7 @@ Decisiones relevantes para v6.0:
 
 ### Blockers/Concerns
 
-- Ninguno bloqueante. v6.0 está completo, v7.0 recién definido sin trabajo de código empezado.
+- Ninguno bloqueante para continuar, pero la Fase 21 no se puede cerrar sin el checkpoint humano — la pregunta central (¿dispara Gatekeeper algún aviso al aplicar una actualización de runtime?) solo se puede confirmar en un Mac real, no en este sandbox.
 - **Bug real de Xcode 26.6 confirmado** (relacionado con `POLISH-02`): `GENERATE_INFOPLIST_FILE = YES` no sintetiza NINGUNA clave `INFOPLIST_KEY_*` personalizada en el `Info.plist` generado (`SUFeedURL`, `SUPublicEDKey`, `NSHumanReadableCopyright` — las 3 ausentes, confirmado con DerivedData borrado por completo, no era caché). Efecto observado: "Buscar actualizaciones…" fallaba con `You must specify the URL of the appcast as the SUFeedURL key...`. Corregido con un `Info.plist` físico parcial (`ExtractorApp/Info.plist`, solo esas 3 claves) + `INFOPLIST_FILE` en build settings, combinado con `GENERATE_INFOPLIST_FILE = YES` (mecanismo de merge documentado por Apple) — verificado en Mac real: las claves aparecen en el `.app` compilado y "Buscar actualizaciones…" funciona sin error.
 - Notarización real con Chromium embebido (Paso 6 del checkpoint de la Fase 17) no se ha ejecutado todavía — deferida al próximo release real para no gastar cuota. El codesigning en sí ya está verificado (`codesign --verify --deep --strict` + `allow-jit` correctos), así que el riesgo residual es bajo, pero la notarización real (`notarytool submit --wait`) con un bundle de ~900MB no se ha probado y podría tardar sensiblemente más de lo habitual (ya documentado en `RELEASING.md` 3.5).
 - El bug de búsqueda de paquetes de Xcode 26.6 (POLISH-02) sigue sin resolverse — el paquete local de Sparkle es un workaround funcional pero no se actualizará solo a nuevas versiones; revisar si el repo se clona en otra máquina sin `.build-cache/Sparkle` presente (necesitará repetir `scripts/setup-sparkle-local.sh`).
@@ -104,6 +109,6 @@ Los 4 ítems que antes estaban aquí como "v7+" (notarización distribución pú
 
 ## Session Continuity
 
-Last session: 2026-08-23T03:00:00Z
-Stopped at: **Fase 20 completa** (código + docs), nada commiteado todavía. Secuencia de esta sesión: (1) commit de la Fase 18/cierre de v6.0 (`f74f6dd`); (2) definición de v7.0 (alcance, orden, aclaración App Store vs. web), commit `d26f264`; (3) Fase 19 (flags de filtrado CLI) implementada y verificada, commit `8fbc9cc`; (4) usuario dijo "seguimos" — Fase 20 (rollouts por fases de Sparkle) implementada directamente: confirmado el flag real de `generate_appcast` inspeccionando el binario ya presente en el repo (`.build-cache/sparkle-tools/`) antes de codificar, `ROLLOUT_INTERVAL_SECONDS` añadido a `release-macos.sh`, mecánica documentada en `RELEASING.md` 3.6. `bash -n`/`shellcheck` limpios, lógica de argumentos probada aislada. `20-01-SUMMARY.md` escrito. ROADMAP.md/PROJECT.md/REQUIREMENTS.md/MILESTONES.md actualizados marcando Fase 20 completa. Nada de esto está commiteado todavía. Próximo paso natural: preguntar al usuario si quiere commitear, y si quiere iniciar la Fase 21 (necesita research previa).
-Resume file: ninguno — Fase 20 completa, pendiente commit y decidir si se sigue con la Fase 21 (research)
+Last session: 2026-08-23T04:00:00Z
+Stopped at: **Fase 21 implementada, checkpoint humano pendiente**. Secuencia de esta sesión: (1) commit de la Fase 18/cierre de v6.0 (`f74f6dd`); (2) definición de v7.0, commit `d26f264`; (3) Fase 19 implementada y commiteada (`8fbc9cc`); (4) Fase 20 implementada y commiteada (`42a3c32`); (5) usuario dijo "adelante" — Fase 21: research a fondo sobre Gatekeeper/notarización de binarios sueltos (sin poder probar en Mac real, por búsqueda web), presentada al usuario con una pregunta de alcance explícita — confirmó acotar v1 a dependencias Python puras. Implementado `scripts/build_runtime_update.py` (ejecutado y verificado de verdad en el sandbox), `RuntimeUpdater.swift`/`PythonBridge.swift`/`SettingsViewModel.swift`/`SettingsView.swift`/`RuntimeUpdaterTests.swift` (Swift, sin poder compilar en este sandbox Linux — revisado a mano: llaves balanceadas, patrones de concurrencia consistentes con los ya establecidos en `refreshOperatingMode()`). Confirmado que el proyecto usa grupos sincronizados de Xcode 16, así que los archivos Swift nuevos no necesitan tocar `project.pbxproj`. `21-RESEARCH.md`/`CHECKPOINT-HUMANO.md` escritos. ROADMAP.md/STATE.md actualizados (PROJECT.md/REQUIREMENTS.md/MILESTONES.md pendientes de esta misma pasada). Nada de esto está commiteado todavía. Próximo paso natural: preguntar al usuario si quiere commitear ahora (código sin verificar en Xcode) o esperar al checkpoint humano primero.
+Resume file: .planning/phases/21-auto-actualizacion-runtime/CHECKPOINT-HUMANO.md

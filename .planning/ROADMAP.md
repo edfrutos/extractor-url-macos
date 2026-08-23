@@ -575,9 +575,35 @@ confirmar todavía). La Fase 22 (notarización pública) es explícitamente
   2. Si la actualización del runtime falla o queda corrupta, la app degrada de forma segura — rollback al runtime bundleado original, sin dejar la app inutilizable.
   3. El usuario no necesita intervención manual para que la actualización se aplique, o si la requiere, es un único paso claro y documentado.
 
-**Plans**: por definir (research corta necesaria antes de planificar — ver Aviso de alcance arriba)
+**Decisión de alcance (post-research, `21-RESEARCH.md`, confirmada por el
+usuario)**: v1 actualiza SOLO las dependencias Python puras (`requests`,
+`beautifulsoup4`, `markdownify`, `trafilatura`) vía un directorio
+antepuesto al `PYTHONPATH` del bundle — nunca el intérprete, `lxml`
+(extensión compilada) ni Chromium. Esto evita por completo la
+incertidumbre real de Gatekeeper para binarios sueltos descargados en
+tiempo de ejecución (los `.py` puros, a diferencia de ejecutables, no
+disparan ninguna evaluación de Gatekeeper al ser solo `import`eados por
+el intérprete ya confiable y notarizado del bundle).
 
-**UI hint**: no
+**Plans**: 1 plan — Wave 1: 21-01 (implementación directa tras la
+research, ver `21-RESEARCH.md`)
+
+**Estado**: Implementada, **checkpoint humano pendiente** (necesita
+Xcode real — nuevo código Swift + red + comportamiento real de
+Gatekeeper, no verificable en el sandbox). `RuntimeUpdater.swift` (nuevo)
+descarga/verifica SHA-256/extrae a Application Support y verifica que el
+intérprete bundleado puede importar los 4 paquetes antes de activar el
+override; `PythonBridge.swift` lo antepone al `PYTHONPATH` sin tocar el
+`.app` firmado; nueva sección "Dependencias del motor" en Preferencias.
+`scripts/build_runtime_update.py` (nuevo) genera el paquete de
+actualización, excluyendo automáticamente cualquier paquete con binarios
+compilados — **ejecutado y verificado de verdad en el sandbox** (zip sin
+`.so`, checksum correcto, manifiesto JSON válido). `pylint`/`mypy`
+limpios en el script Python. 4 tests Swift nuevos
+(`RuntimeUpdaterTests.swift`). Ver
+`.planning/phases/21-auto-actualizacion-runtime/CHECKPOINT-HUMANO.md`.
+
+**UI hint**: sí — nueva sección en Preferencias ("Dependencias del motor")
 
 ### Phase 22: Notarización para distribución pública
 
@@ -608,5 +634,5 @@ proyecto. Decisión explícita del usuario al definir v7.0.
 |-------|----------------|--------|-----------|
 | 19. Flags de filtrado CLI | 1/1 | Complete | 2026-08-23 |
 | 20. Rollouts por fases de Sparkle | 1/1 | Complete | 2026-08-23 |
-| 21. Auto-actualización del runtime Python embebido | 0/? | Planning | — |
+| 21. Auto-actualización del runtime Python embebido | 1/1 | Implementada, checkpoint humano pendiente | — |
 | 22. Notarización para distribución pública | 0/? | Planning | — |

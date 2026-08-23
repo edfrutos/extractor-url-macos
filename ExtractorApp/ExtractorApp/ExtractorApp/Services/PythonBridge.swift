@@ -58,8 +58,21 @@ final class PythonBridge {
         switch paths.source {
         case .bundle:
             if let libPath = Self.bundledVendoredLibPath() {
+                // Fase 21: si hay una actualización de dependencias puras
+                // activa (requests/beautifulsoup4/markdownify/trafilatura),
+                // se antepone al PYTHONPATH — Python resuelve imports por
+                // orden, así que gana sobre el bundle sin tocar ni un solo
+                // archivo dentro del .app firmado. Si no hay override activo
+                // (o su directorio desapareció), RuntimeUpdater.activeOverridePath()
+                // devuelve nil y el comportamiento es idéntico al de antes
+                // de esta fase.
+                var pythonPathEntries = [libPath]
+                if let overridePath = RuntimeUpdater.activeOverridePath() {
+                    pythonPathEntries.insert(overridePath, at: 0)
+                }
                 let existing = env["PYTHONPATH"] ?? ""
-                env["PYTHONPATH"] = existing.isEmpty ? libPath : libPath + ":" + existing
+                let bundlePath = pythonPathEntries.joined(separator: ":")
+                env["PYTHONPATH"] = existing.isEmpty ? bundlePath : bundlePath + ":" + existing
             }
             // Fase 17: Chromium vendorizado dentro de playwright/driver/package/
             // .local-browsers/ — debe coincidir con el valor usado en build time

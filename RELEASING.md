@@ -191,6 +191,53 @@ en el siguiente check automático de cualquier instalación, la
 actualización deja de estar restringida por grupo y pasa a estar
 disponible para todos de inmediato, igual que un release sin rollout.
 
+## 3.7. Actualización del runtime Python (dependencias puras)
+
+Desde la Fase 21, las dependencias Python **puras** vendorizadas
+(`requests`, `beautifulsoup4`, `markdownify`, `trafilatura`, y sus
+dependencias transitivas puras) se pueden actualizar **sin publicar un
+release completo de la app** — el intérprete, `lxml` (extensión
+compilada) y Chromium/Playwright siguen actualizándose solo con un
+release completo vía Sparkle, sin cambios. Ver
+`.planning/phases/21-auto-actualizacion-runtime/21-RESEARCH.md` para el
+porqué de este alcance (evita por completo la incertidumbre de Gatekeeper
+para binarios sueltos descargados en tiempo de ejecución).
+
+**Generar y publicar una actualización:**
+
+```bash
+python3 scripts/build_runtime_update.py 2026-08-23
+```
+
+Esto instala las 4 dependencias en un directorio limpio, **excluye
+automáticamente cualquier paquete con binarios compilados** (`.so`/
+`.dylib`/`.pyd` — hoy `lxml`, `charset_normalizer` y `regex` caen en este
+filtro; el intérprete los sigue resolviendo desde el bundle firmado sin
+problema, ver el mecanismo de `PYTHONPATH` abajo), lo comprime, y deja:
+
+- `.build-cache/runtime-update/python-packages-<version>.zip` (el
+  paquete a publicar).
+- `runtime-manifest.json` en la raíz del repo, con `version`,
+  `download_url` y `sha256`.
+
+El script **no publica nada automáticamente** — imprime el
+`gh release create` exacto (a un release `runtime-<version>` **separado**
+del release de la app, para no mezclar sus ciclos de vida) y el
+`git add/commit/push` de `runtime-manifest.json`, igual que el appcast:
+revísalos y ejecútalos a mano.
+
+**Cómo lo aplica la app:** desde Preferencias → "Dependencias del motor"
+→ "Buscar actualización" (solo visible en modo bundle). La app descarga
+el zip, **verifica su SHA-256** contra el manifiesto, lo extrae a
+`~/Library/Application Support/ExtractorApp/python-packages-override/<version>/`,
+y **verifica que el intérprete YA bundleado puede importar los 4
+paquetes** desde ahí antes de activarlo — si cualquier paso falla, la
+versión activa no cambia (`RuntimeUpdater`, `PYRUNTIME-02`). El override
+se antepone al `PYTHONPATH` del bundle (`PythonBridge.run()`); nunca se
+toca ni un solo archivo dentro de `Contents/Resources/` del `.app`
+firmado, así que esto no afecta a la firma de código ni a la
+notarización del bundle principal.
+
 ## 4. Verificación post-release
 
 ```bash

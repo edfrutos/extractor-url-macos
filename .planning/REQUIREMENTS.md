@@ -119,7 +119,7 @@
 | POLISH-01…02 | v6.0 | ✅ Complete | Phase 18 |
 | CONTENT-01…02, CLIP-01 | v7.0 | ✅ Complete | Phase 19 |
 | ROLLOUT-01…02 | v7.0 | ✅ Complete | Phase 20 |
-| PYRUNTIME-01…02 | v7.0 | ⬜ Pending | Phase 21 |
+| PYRUNTIME-01…02 | v7.0 | 🔶 Implementado, checkpoint pendiente | Phase 21 |
 | PUBLISH-01…02 | v7.0 | ⬜ Pending | Phase 22 |
 
 ## Validated (v5.0 — Sparkle en la app)
@@ -179,10 +179,12 @@ Orden fijado por el usuario: historial → flags → canales → bundle JS → p
 - [x] **ROLLOUT-01**: `scripts/release-macos.sh` soporta un `sparkle:phasedRolloutInterval` opcional al publicar (vía `ROLLOUT_INTERVAL_SECONDS`), sin afectar releases sin esa variable — verificado con `shellcheck` y prueba aislada de las 4 combinaciones canal/rollout.
 - [x] **ROLLOUT-02**: El comportamiento e implicaciones de un rollout por fases (7 grupos hardcodeados, duración = intervalo × 7, no aplica a comprobación manual/updates críticos, aborto manual editando `appcast.xml`) quedan documentados en `RELEASING.md` 3.6.
 
-### PYRUNTIME — Auto-actualización del runtime Python embebido (Phase 21)
+### PYRUNTIME — Auto-actualización del runtime Python embebido (Phase 21) 🔶 Implementado, checkpoint humano pendiente
 
-- [ ] **PYRUNTIME-01**: Mecanismo para actualizar el runtime Python embebido (intérprete y/o dependencias) sin re-publicar toda la app, sin romper la firma de código ni la notarización del `.app`.
-- [ ] **PYRUNTIME-02**: Si la actualización del runtime falla o queda corrupta, la app degrada de forma segura (rollback al runtime bundleado original).
+**Alcance v1 (decisión explícita del usuario tras `21-RESEARCH.md`)**: solo dependencias Python puras (`requests`/`beautifulsoup4`/`markdownify`/`trafilatura`) — nunca el intérprete, `lxml` ni Chromium, que siguen actualizándose solo con un release completo de la app.
+
+- [x] **PYRUNTIME-01**: Mecanismo para actualizar las dependencias Python puras del runtime embebido sin re-publicar toda la app, sin romper la firma de código ni la notarización del `.app` — implementado vía un directorio antepuesto al `PYTHONPATH` del bundle (nunca se toca el `.app` firmado). Checkpoint humano pendiente para confirmar compilación Swift y ausencia de avisos de Gatekeeper.
+- [x] **PYRUNTIME-02**: Si la actualización del runtime falla o queda corrupta, la app degrada de forma segura — implementado (checksum SHA-256 + verificación de importación real contra el intérprete bundleado antes de activar; si algo falla, la versión activa no cambia). Checkpoint humano pendiente.
 
 ### PUBLISH — Notarización para distribución pública (Phase 22)
 
