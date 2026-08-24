@@ -21,13 +21,26 @@ struct ContentView: View {
                     VStack(spacing: 16) {
                         inputCard
                         optionsCard
-                        resultCard
-                        exportCard
                     }
                     .padding(.horizontal, 24)
                     .padding(.top, 16)
-                    .padding(.bottom, 24)
                 }
+                .fixedSize(horizontal: false, vertical: true)
+
+                // resultCard es el único elemento flexible del layout — ocupa
+                // todo el espacio vertical restante de la ventana (antes vivía
+                // dentro del ScrollView de arriba, cuyo VStack solo se
+                // dimensionaba al alto natural de su contenido: el preview
+                // quedaba fijo en minHeight:240 sin crecer nunca, dejando un
+                // hueco vacío debajo dentro del área con scroll).
+                resultCard
+                    .padding(.horizontal, 24)
+                    .padding(.top, 16)
+                    .frame(maxHeight: .infinity)
+
+                exportCard
+                    .padding(.horizontal, 24)
+                    .padding(.vertical, 16)
             }
         }
         .frame(minWidth: 560, minHeight: 480)
@@ -131,6 +144,7 @@ struct ContentView: View {
                 Text("Formato:")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
+                    .fixedSize()
 
                 Picker("Tipo", selection: $vm.outputType) {
                     Text("Texto").tag("text")
@@ -139,7 +153,7 @@ struct ContentView: View {
                 }
                 .pickerStyle(.segmented)
                 .disabled(vm.isExtracting)
-                .frame(maxWidth: 220)
+                .fixedSize()
 
                 Spacer()
 
@@ -421,6 +435,7 @@ struct ContentView: View {
                 Text("Exportar como")
                     .font(.system(size: 12, weight: .semibold))
                     .foregroundStyle(.secondary)
+                    .fixedSize()
 
                 Picker("", selection: $vm.exportFormat) {
                     Text("Markdown").tag("markdown")
@@ -430,7 +445,7 @@ struct ContentView: View {
                 .pickerStyle(.segmented)
                 .labelsHidden()
                 .disabled(!vm.contentReady)
-                .frame(maxWidth: 200)
+                .fixedSize()
 
                 Spacer()
 
