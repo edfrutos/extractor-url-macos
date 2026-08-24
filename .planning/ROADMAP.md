@@ -527,7 +527,7 @@ confirmar todavía). La Fase 22 (notarización pública) es explícitamente
 
 - [x] **Phase 19: Flags de filtrado CLI** - `--no-images`/`--no-links`/`--clipboard` en el motor Python. (completed 2026-08-23)
 - [x] **Phase 20: Rollouts por fases de Sparkle** - Publicar actualizaciones progresivamente en vez de a todos los usuarios a la vez. (completed 2026-08-23)
-- [ ] **Phase 21: Auto-actualización del runtime Python embebido** - Actualizar el runtime sin re-publicar toda la app.
+- [x] **Phase 21: Auto-actualización del runtime Python embebido** - Actualizar el runtime sin re-publicar toda la app. (completed 2026-08-24)
 - [ ] **Phase 22: Notarización para distribución pública** - El `.app` notarizado se puede descargar y ejecutar sin avisos de Gatekeeper, vía web (no App Store).
 
 ### Phase 19: Flags de filtrado CLI
@@ -588,20 +588,22 @@ el intérprete ya confiable y notarizado del bundle).
 **Plans**: 1 plan — Wave 1: 21-01 (implementación directa tras la
 research, ver `21-RESEARCH.md`)
 
-**Estado**: Implementada, **checkpoint humano pendiente** (necesita
-Xcode real — nuevo código Swift + red + comportamiento real de
-Gatekeeper, no verificable en el sandbox). `RuntimeUpdater.swift` (nuevo)
-descarga/verifica SHA-256/extrae a Application Support y verifica que el
-intérprete bundleado puede importar los 4 paquetes antes de activar el
-override; `PythonBridge.swift` lo antepone al `PYTHONPATH` sin tocar el
-`.app` firmado; nueva sección "Dependencias del motor" en Preferencias.
-`scripts/build_runtime_update.py` (nuevo) genera el paquete de
-actualización, excluyendo automáticamente cualquier paquete con binarios
-compilados — **ejecutado y verificado de verdad en el sandbox** (zip sin
-`.so`, checksum correcto, manifiesto JSON válido). `pylint`/`mypy`
-limpios en el script Python. 4 tests Swift nuevos
-(`RuntimeUpdaterTests.swift`). Ver
-`.planning/phases/21-auto-actualizacion-runtime/CHECKPOINT-HUMANO.md`.
+**Estado**: Completa — verificada en checkpoint humano (Mac real,
+2026-08-24). `RuntimeUpdater.swift` descarga/verifica SHA-256/extrae a
+Application Support y verifica que el intérprete bundleado puede
+importar los 4 paquetes antes de activar el override; `PythonBridge.swift`
+lo antepone al `PYTHONPATH` sin tocar el `.app` firmado; nueva sección
+"Dependencias del motor" en Preferencias. `scripts/build_runtime_update.py`
+ejecutado de verdad tanto en el sandbox como en el Mac real (mismo
+resultado: excluye `lxml`/`charset_normalizer`/`regex`). Publicado un
+release real (`runtime-2026-08-24`) y aplicado desde la app: **"Dependencias
+actualizadas a 2026-08-24" sin ningún aviso de Gatekeeper en ningún
+momento** (confirmado explícitamente por el usuario) — confirma el
+hallazgo central de la research. Degradación segura (PYRUNTIME-02)
+confirmada al borrar el override a mano. Un timeout de red real (no
+relacionado con Gatekeeper) reveló un bug de visibilidad del mensaje de
+error en la UI, corregido en el mismo checkpoint. Ver
+`.planning/phases/21-auto-actualizacion-runtime/21-01-SUMMARY.md`.
 
 **UI hint**: sí — nueva sección en Preferencias ("Dependencias del motor")
 
@@ -634,5 +636,5 @@ proyecto. Decisión explícita del usuario al definir v7.0.
 |-------|----------------|--------|-----------|
 | 19. Flags de filtrado CLI | 1/1 | Complete | 2026-08-23 |
 | 20. Rollouts por fases de Sparkle | 1/1 | Complete | 2026-08-23 |
-| 21. Auto-actualización del runtime Python embebido | 1/1 | Implementada, checkpoint humano pendiente | — |
+| 21. Auto-actualización del runtime Python embebido | 1/1 | Complete | 2026-08-24 |
 | 22. Notarización para distribución pública | 0/? | Planning | — |

@@ -1,9 +1,21 @@
 ---
 phase: 21-auto-actualizacion-runtime
 type: checkpoint-humano
-status: pending
+status: done
 created: "2026-08-23"
+completed: "2026-08-24"
 ---
+
+**COMPLETADO 2026-08-24** — ver `21-01-SUMMARY.md` para el detalle
+completo. Resultado clave: aplicar una actualización de runtime real
+(publicada en `runtime-2026-08-24`) **no disparó ningún aviso de
+Gatekeeper en ningún momento** (confirmado explícitamente por el
+usuario), confirmando el hallazgo central de `21-RESEARCH.md`. Un
+timeout de red genuino en el primer intento (no relacionado con
+Gatekeeper) reveló un bug real de visibilidad del mensaje de error en
+la UI, corregido durante el mismo checkpoint. Degradación segura
+(PYRUNTIME-02) también confirmada. Este archivo queda como referencia
+histórica de los pasos seguidos.
 
 # Checkpoint Humano — Fase 21 (Auto-actualización del runtime Python)
 

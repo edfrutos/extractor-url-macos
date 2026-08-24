@@ -511,6 +511,7 @@ private struct RuntimeUpdateRow: View {
         VStack(alignment: .leading, spacing: 6) {
             Text(statusText)
                 .font(.subheadline)
+                .foregroundStyle(statusColor)
             Text("requests, beautifulsoup4, markdownify y trafilatura — el intérprete Python y Chromium se actualizan solo con un release completo de la app.")
                 .font(.caption2)
                 .foregroundStyle(.tertiary)
@@ -530,15 +531,14 @@ private struct RuntimeUpdateRow: View {
                 }
             }
 
-            if case .failed(let message) = state {
-                Text(message)
-                    .font(.caption2)
-                    .foregroundStyle(.red)
-            }
         }
         .padding(.vertical, 4)
     }
 
+    // Error visible directamente en el texto de estado principal (no solo
+    // en una segunda línea pequeña) — un timeout de red real durante el
+    // checkpoint humano de la Fase 21 pasó casi desapercibido cuando el
+    // fallo solo aparecía en una etiqueta secundaria diminuta.
     private var statusText: String {
         switch state {
         case .updated(let version):
@@ -550,12 +550,19 @@ private struct RuntimeUpdateRow: View {
             return "Ya al día (usando las dependencias incluidas en el bundle)."
         case .checking:
             return "Comprobando…"
-        case .idle, .failed:
+        case .failed(let message):
+            return "Error: \(message)"
+        case .idle:
             if let activeVersion {
                 return "Dependencias actualizadas a \(activeVersion)."
             }
             return "Usando las dependencias incluidas en el bundle."
         }
+    }
+
+    private var statusColor: Color {
+        if case .failed = state { return .red }
+        return .primary
     }
 }
 

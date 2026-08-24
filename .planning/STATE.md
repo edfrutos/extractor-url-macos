@@ -3,37 +3,37 @@ gsd_state_version: 1.0
 milestone: v7.0
 milestone_name: (nombre por definir)
 status: executing
-last_updated: "2026-08-23T04:00:00.000Z"
-last_activity: 2026-08-23 -- Fase 21 (auto-actualizacion runtime) implementada tras research: RuntimeUpdater.swift (nuevo) + PythonBridge.swift + SettingsView/ViewModel + scripts/build_runtime_update.py. Alcance acotado a dependencias Python puras (confirmado con el usuario) para evitar la incertidumbre de Gatekeeper con binarios sueltos. Checkpoint humano pendiente (necesita Xcode real).
+last_updated: "2026-08-24T00:00:00.000Z"
+last_activity: 2026-08-24 -- Fase 21 (auto-actualizacion runtime) completa: verificada en checkpoint humano en Mac real. Publicado un release real de runtime y aplicado desde la app -- SIN ningun aviso de Gatekeeper en ningun momento (confirmado explicitamente por el usuario). Degradacion segura confirmada. Bug real de UI (mensaje de error poco visible) encontrado y corregido en el mismo checkpoint.
 progress:
   total_phases: 4
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 3
-  completed_plans: 2
-  percent: 50
+  completed_plans: 3
+  percent: 75
 ---
 
 # Project State
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-08-23)
+See: .planning/PROJECT.md (updated 2026-08-24)
 
 **Core value:** Convertir páginas web en Markdown útil y limpio de forma fiable, repetible y sin depender de servicios externos.
-**Current focus:** v6.0 completo y cerrado (Fases 14-18). v7.0 en marcha: Fases 19-20 completas y commiteadas. Fase 21 implementada, checkpoint humano pendiente (necesita Xcode real). Siguiente tras el checkpoint: Fase 22 (notarización distribución pública).
+**Current focus:** v6.0 completo y cerrado (Fases 14-18). v7.0 en marcha: Fases 19-21 completas. Falta commitear la Fase 21 (bug de UI corregido + docs) y seguir con la Fase 22 (notarización distribución pública) — la última de v7.0.
 
 ## Current Position
 
-Phase: 21 — Auto-actualización del runtime Python embebido (Implementada, checkpoint humano pendiente)
-Plan: 21-01 implementado (sin research/plan formales por separado — research se hizo inline, ver `21-RESEARCH.md`)
-Status: Código escrito y verificado donde el sandbox lo permite (script Python + lógica pura) — falta el checkpoint humano en Xcode (compilación Swift, red real, y sobre todo confirmar que no aparece ningún aviso de Gatekeeper)
-Last activity: 2026-08-23 — Investigación previa a fondo (sin poder probar en Mac real): binarios sueltos no se pueden staplear, un intérprete descargado y ejecutado probablemente dispara Gatekeeper, pero los archivos `.py` puros que el intérprete YA bundleado/notarizado simplemente `import`ea como datos NO pasan por Gatekeeper en absoluto. Presentado al usuario, quien confirmó explícitamente acotar el alcance de v1 a las dependencias Python puras (`requests`/`beautifulsoup4`/`markdownify`/`trafilatura`), dejando intérprete/`lxml`/Chromium fuera (siguen actualizándose solo con un release completo). Implementado: `scripts/build_runtime_update.py` (nuevo) — pip install limpio + detección automática de paquetes con binarios compilados (`.so`/`.dylib`/`.pyd`, hoy `lxml`/`charset_normalizer`/`regex`) para excluirlos del zip + manifiesto JSON con sha256 — **ejecutado de verdad en el sandbox**, confirmado: zip sin binarios compilados, checksum correcto, manifiesto válido, `pylint`/`mypy` 10/10 limpios. `RuntimeUpdater.swift` (nuevo, Swift): descarga manifiesto+zip, verifica SHA-256, extrae vía `/usr/bin/unzip` directo (no Archive Utility/Finder) a Application Support, y verifica con una importación real contra el intérprete bundleado antes de activar el override — si cualquier paso falla, la versión activa no cambia (PYRUNTIME-02 sin lógica de rollback explícita, gratis por diseño). `PythonBridge.swift`: antepone el override al PYTHONPATH del bundle sin tocar el `.app` firmado. `SettingsViewModel.swift`/`SettingsView.swift`: nueva sección "Dependencias del motor" en Preferencias con botón manual "Buscar actualización" (`Task.detached` con `[weak self]`, mismo patrón que `refreshOperatingMode()` de la Fase 10, para no bloquear MainActor con el `Process()` síncrono). `RuntimeUpdaterTests.swift` (nuevo, 4 tests — decodificación de manifiesto, mensajes de error, sin override por defecto). Confirmado que el proyecto usa `PBXFileSystemSynchronizedRootGroup` (Xcode 16+) — los archivos nuevos no necesitan edición de `project.pbxproj`, a diferencia de la Fase 17. `RELEASING.md` nueva sección 3.7. `21-RESEARCH.md`/`CHECKPOINT-HUMANO.md` escritos. Nada de esto está commiteado todavía.
+Phase: 21 — Auto-actualización del runtime Python embebido (Complete)
+Plan: 21-01 completo (sin research/plan formales por separado — research se hizo inline, ver `21-RESEARCH.md`)
+Status: Complete — PYRUNTIME-01/PYRUNTIME-02 validados en checkpoint humano (Mac real, 2026-08-24)
+Last activity: 2026-08-24 — Checkpoint humano completo paso a paso: Build Succeeded (grupos sincronizados de Xcode 16 recogieron `RuntimeUpdater.swift` sin tocar `project.pbxproj`), 4 tests de `RuntimeUpdaterTests` pasaron, camino "sin actualización disponible" (404 antes de publicar nada) manejado con gracia. Publicado un release real (`runtime-2026-08-24`, generado con `scripts/build_runtime_update.py` — mismo resultado exacto en el Mac real que en el sandbox: excluye `lxml`/`charset_normalizer`/`regex`) y `runtime-manifest.json` commiteado/pusheado desde el Mac del usuario. Primer intento de aplicar la actualización: timeout de red genuino (`NSURLErrorTimedOut`, -1001, ~45s — probablemente propagación de CDN de GitHub tras publicar, no relacionado con Gatekeeper) que reveló un bug real: el estado interno transicionaba correctamente a `.failed` (botón se reactivaba, spinner paraba) pero el mensaje de error solo aparecía en una etiqueta secundaria diminuta (`caption2`) — corregido en `SettingsView.swift` (el mensaje ahora aparece en el texto de estado principal, en rojo). Reintento inmediato: **"Dependencias actualizadas a 2026-08-24."** — confirmado explícitamente por el usuario: **ningún aviso de Gatekeeper en ningún momento** de todo el proceso. Confirma el hallazgo central de `21-RESEARCH.md`. Extracción funcional con el override activo confirmada. Degradación segura (PYRUNTIME-02) confirmada borrando `~/Library/Application Support/ExtractorApp/python-packages-override/` a mano — la extracción siguió funcionando cayendo al bundle automáticamente. `21-01-SUMMARY.md` escrito, `CHECKPOINT-HUMANO.md` marcado como completado. ROADMAP.md/PROJECT.md/REQUIREMENTS.md/MILESTONES.md actualizados marcando PYRUNTIME-01/02 validados. Nada de esto está commiteado todavía (incluido el fix del bug de UI).
 
 ```
-v7.0 Progress: [=====     ] 50% — Fases 19-20 completas y commiteadas, Fase 21 implementada (checkpoint pendiente).
+v7.0 Progress: [=======   ] 75% — Fases 19-21 completas, Fase 22 sin empezar.
 Phase 19: [==========] Complete (19-01, commit 8fbc9cc)
 Phase 20: [==========] Complete (20-01, commit 42a3c32)
-Phase 21: [========  ] Implementada, checkpoint humano pendiente (21-01, sin commitear)
+Phase 21: [==========] Complete (21-01, verificado en checkpoint humano — sin avisos de Gatekeeper, sin commitear todavía)
 Phase 22: [          ] 0/? planes (notarización distribución pública vía web, no App Store)
 ```
 
@@ -78,11 +78,12 @@ Decisiones relevantes para v6.0:
 - [v7.0]: `scripts/build_runtime_update.py` detecta y excluye automáticamente cualquier paquete con binarios compilados (`.so`/`.dylib`/`.pyd`) en vez de mantener una lista fija de nombres a mano — más robusto ante cambios futuros en las dependencias transitivas (hoy excluye `lxml`/`charset_normalizer`/`regex`, verificado ejecutando el script de verdad en el sandbox).
 - [v7.0]: Verificación antes de activar un override = importación real contra el intérprete bundleado (`python -c "import requests, bs4, markdownify, trafilatura"`), no solo el checksum SHA-256 — el checksum solo prueba que la descarga no se corrompió, no que los paquetes funcionan con esta versión concreta del intérprete.
 - [v7.0]: Publicación del paquete de runtime como GitHub Release **separado** del release de la app (`runtime-<version>`, no el mismo tag) — evita mezclar los ciclos de vida de ambos mecanismos de actualización.
+- [v7.0]: Confirmado en checkpoint humano real — actualizar dependencias Python puras vía override de `PYTHONPATH` **no dispara ningún aviso de Gatekeeper**, ni siquiera tras un timeout de red real a mitad del proceso. Valida el hallazgo central de `21-RESEARCH.md` con un caso real, no solo búsqueda web.
+- [v7.0]: Mensaje de error de `.failed(message:)` movido al texto de estado principal (antes solo en una etiqueta secundaria diminuta) — bug real de UI encontrado en el checkpoint humano cuando un timeout de red genuino pasó casi desapercibido.
 
 ### Pending Todos
 
-- Completar el checkpoint humano de la Fase 21 en Xcode real (ver `CHECKPOINT-HUMANO.md`) — build, tests, y sobre todo confirmar que aplicar una actualización de runtime no dispara ningún aviso de Gatekeeper.
-- Commitear los cambios de la Fase 21 una vez completado el checkpoint (o antes, si el usuario prefiere commitear el código ya escrito primero).
+- Commitear los cambios de la Fase 21 (código + fix del bug de UI + docs) — nada de esto está commiteado todavía.
 - Recomendado no bloqueante: probar `python extractor_url.py <url> --clipboard` en un Mac real (sandbox Linux no tiene `pbcopy`, solo verificado con mocks) — Fase 19.
 - Recomendado no bloqueante: en el próximo release real con `ROLLOUT_INTERVAL_SECONDS` puesto, confirmar en el `appcast.xml` resultante que `<sparkle:phasedRolloutInterval>` aparece con el valor esperado — Fase 20.
 - Decidir si commitear `scripts/setup-sparkle-local.sh` (añadido durante el checkpoint de la Fase 16, no estaba en el plan original) — sigue pendiente, no bloqueante.
@@ -93,7 +94,8 @@ Decisiones relevantes para v6.0:
 
 ### Blockers/Concerns
 
-- Ninguno bloqueante para continuar, pero la Fase 21 no se puede cerrar sin el checkpoint humano — la pregunta central (¿dispara Gatekeeper algún aviso al aplicar una actualización de runtime?) solo se puede confirmar en un Mac real, no en este sandbox.
+- Ninguno bloqueante. Fase 21 completa y verificada en Mac real.
+- **Bug nuevo sospechado de Xcode 27.0 beta GOLD** (encontrado tras el checkpoint de la Fase 21, el usuario había actualizado Xcode durante la sesión): `ExtractorApp/Info.plist` apareció con una clave `CFBundleIdentifier` corrupta — su valor no era un bundle identifier sino un mensaje de log interno de Sparkle (`/Users/runner/work/Sparkle/Sparkle/Sparkle/SPUStandardUserDriver.m:731 [Internal] Thread running at User-interactive quality-of-service class waiting on a lower QoS thread...`). No se identificó el mecanismo exacto (¿un build/index de Xcode 27 escribiendo salida de log en el sitio equivocado?). Revertido sin commitear (`git checkout -- Info.plist`) — no bloqueante porque no llegó a commitearse, pero **vigilar si reaparece** en futuros builds con Xcode 27 beta; si se repite, documentar como bug confirmado (mismo patrón que los bugs de Xcode 26.6 ya registrados en este proyecto) antes de considerar downgrade o workaround.
 - **Bug real de Xcode 26.6 confirmado** (relacionado con `POLISH-02`): `GENERATE_INFOPLIST_FILE = YES` no sintetiza NINGUNA clave `INFOPLIST_KEY_*` personalizada en el `Info.plist` generado (`SUFeedURL`, `SUPublicEDKey`, `NSHumanReadableCopyright` — las 3 ausentes, confirmado con DerivedData borrado por completo, no era caché). Efecto observado: "Buscar actualizaciones…" fallaba con `You must specify the URL of the appcast as the SUFeedURL key...`. Corregido con un `Info.plist` físico parcial (`ExtractorApp/Info.plist`, solo esas 3 claves) + `INFOPLIST_FILE` en build settings, combinado con `GENERATE_INFOPLIST_FILE = YES` (mecanismo de merge documentado por Apple) — verificado en Mac real: las claves aparecen en el `.app` compilado y "Buscar actualizaciones…" funciona sin error.
 - Notarización real con Chromium embebido (Paso 6 del checkpoint de la Fase 17) no se ha ejecutado todavía — deferida al próximo release real para no gastar cuota. El codesigning en sí ya está verificado (`codesign --verify --deep --strict` + `allow-jit` correctos), así que el riesgo residual es bajo, pero la notarización real (`notarytool submit --wait`) con un bundle de ~900MB no se ha probado y podría tardar sensiblemente más de lo habitual (ya documentado en `RELEASING.md` 3.5).
 - El bug de búsqueda de paquetes de Xcode 26.6 (POLISH-02) sigue sin resolverse — el paquete local de Sparkle es un workaround funcional pero no se actualizará solo a nuevas versiones; revisar si el repo se clona en otra máquina sin `.build-cache/Sparkle` presente (necesitará repetir `scripts/setup-sparkle-local.sh`).
@@ -109,6 +111,6 @@ Los 4 ítems que antes estaban aquí como "v7+" (notarización distribución pú
 
 ## Session Continuity
 
-Last session: 2026-08-23T04:00:00Z
-Stopped at: **Fase 21 implementada, checkpoint humano pendiente**. Secuencia de esta sesión: (1) commit de la Fase 18/cierre de v6.0 (`f74f6dd`); (2) definición de v7.0, commit `d26f264`; (3) Fase 19 implementada y commiteada (`8fbc9cc`); (4) Fase 20 implementada y commiteada (`42a3c32`); (5) usuario dijo "adelante" — Fase 21: research a fondo sobre Gatekeeper/notarización de binarios sueltos (sin poder probar en Mac real, por búsqueda web), presentada al usuario con una pregunta de alcance explícita — confirmó acotar v1 a dependencias Python puras. Implementado `scripts/build_runtime_update.py` (ejecutado y verificado de verdad en el sandbox), `RuntimeUpdater.swift`/`PythonBridge.swift`/`SettingsViewModel.swift`/`SettingsView.swift`/`RuntimeUpdaterTests.swift` (Swift, sin poder compilar en este sandbox Linux — revisado a mano: llaves balanceadas, patrones de concurrencia consistentes con los ya establecidos en `refreshOperatingMode()`). Confirmado que el proyecto usa grupos sincronizados de Xcode 16, así que los archivos Swift nuevos no necesitan tocar `project.pbxproj`. `21-RESEARCH.md`/`CHECKPOINT-HUMANO.md` escritos. ROADMAP.md/STATE.md actualizados (PROJECT.md/REQUIREMENTS.md/MILESTONES.md pendientes de esta misma pasada). Nada de esto está commiteado todavía. Próximo paso natural: preguntar al usuario si quiere commitear ahora (código sin verificar en Xcode) o esperar al checkpoint humano primero.
-Resume file: .planning/phases/21-auto-actualizacion-runtime/CHECKPOINT-HUMANO.md
+Last session: 2026-08-24T00:00:00Z
+Stopped at: **Fase 21 completa**, verificada en checkpoint humano en Mac real — pero **nada commiteado todavía** (incluido un fix de bug de UI hecho durante el checkpoint). Nota: durante este checkpoint la terminal de este sandbox estuvo fallando de forma intermitente ("Unable to read current working directory" / "Shell cwd was reset... (deleted)") — probablemente el volumen externo `/Volumes/ESSAGER` se desconectó/reconectó (hubo un salto de fecha de 2026-08-23 a 2026-08-24 entre mensajes, sugiriendo que el Mac durmió). Las herramientas de archivo (Read/Edit/Write) siguieron funcionando con normalidad durante el fallo; solo Bash se vio afectado, y de forma intermitente (a veces funcionaba, a veces no). Si vuelve a pasar en la próxima sesión, no es un problema del proyecto — reintentar tras una pausa suele bastar. Resultado del checkpoint: build/tests OK, camino sin actualización manejado con gracia, **actualización real publicada y aplicada sin ningún aviso de Gatekeeper en ningún momento** (confirmado explícitamente por el usuario) — confirma el hallazgo central de la research. Degradación segura confirmada. Bug real de UI (mensaje de error poco visible tras un timeout de red genuino) encontrado y corregido. `21-01-SUMMARY.md` escrito, `CHECKPOINT-HUMANO.md` cerrado. ROADMAP.md/PROJECT.md/REQUIREMENTS.md/MILESTONES.md/STATE.md actualizados marcando la Fase 21 completa. Próximo paso natural: commitear todo (código + fix + docs), y preguntar si se sigue con la Fase 22 (notarización distribución pública, la última de v7.0).
+Resume file: ninguno — Fase 21 cerrada, pendiente solo el commit

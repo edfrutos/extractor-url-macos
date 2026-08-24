@@ -105,12 +105,12 @@
 **Shipped hasta ahora:**
 - Fase 19 (flags de filtrado CLI): `--no-images`/`--no-links` en `core.py` vía `_strip_images`/`_strip_links` (mutación in situ del soup, aplicada en texto/HTML/Markdown); `--clipboard` en `extractor_url.py` vía `pbcopy`/`subprocess.run`, aditivo sobre `--json`/`-o`/stdout. 67/67 tests, pylint 10.00/10, mypy limpio.
 - Fase 20 (rollouts por fases de Sparkle): `ROLLOUT_INTERVAL_SECONDS` (env var) → `--phased-rollout-interval` en `generate_appcast`, mismo patrón que `--channel`. Mecánica de Sparkle (7 grupos hardcodeados, duración = intervalo × 7, no aplica a comprobación manual/updates críticos) documentada en `RELEASING.md`.
-- Fase 21 (auto-actualización del runtime, dependencias puras): tras research a fondo sobre Gatekeeper/notarización de binarios sueltos, acotado a `requests`/`beautifulsoup4`/`markdownify`/`trafilatura` — override antepuesto al `PYTHONPATH` del bundle, nunca toca el `.app` firmado. `scripts/build_runtime_update.py` verificado de verdad en el sandbox. **Checkpoint humano pendiente** (Swift nuevo + confirmar ausencia de avisos de Gatekeeper).
+- Fase 21 (auto-actualización del runtime, dependencias puras): tras research a fondo sobre Gatekeeper/notarización de binarios sueltos, acotado a `requests`/`beautifulsoup4`/`markdownify`/`trafilatura` — override antepuesto al `PYTHONPATH` del bundle, nunca toca el `.app` firmado. Verificado en checkpoint humano (Mac real, 2026-08-24): actualización real publicada y aplicada **sin ningún aviso de Gatekeeper**, confirmando el hallazgo central de la research. Degradación segura confirmada.
 
 **Fases:**
 - Fase 19 — Flags de filtrado CLI (`--no-images`/`--no-links`/`--clipboard`) ✅ Complete
 - Fase 20 — Rollouts por fases de Sparkle ✅ Complete
-- Fase 21 — Auto-actualización del runtime Python embebido (deps puras) 🔶 Implementada, checkpoint humano pendiente
+- Fase 21 — Auto-actualización del runtime Python embebido (deps puras) ✅ Complete
 - Fase 22 — Notarización para distribución pública vía web (explícitamente no App Store)
 
 **Phases:** 4 (19→22) | **Requirements:** CONTENT-01→02, CLIP-01, ROLLOUT-01→02, PYRUNTIME-01→02, PUBLISH-01→02
