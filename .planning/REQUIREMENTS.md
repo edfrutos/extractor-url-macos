@@ -120,7 +120,7 @@
 | CONTENT-01…02, CLIP-01 | v7.0 | ✅ Complete | Phase 19 |
 | ROLLOUT-01…02 | v7.0 | ✅ Complete | Phase 20 |
 | PYRUNTIME-01…02 | v7.0 | ✅ Validated | Phase 21 |
-| PUBLISH-01…02 | v7.0 | ⬜ Pending | Phase 22 |
+| PUBLISH-01…02 | v7.0 | ✅ Validated | Phase 22 |
 
 ## Validated (v5.0 — Sparkle en la app)
 
@@ -186,10 +186,10 @@ Orden fijado por el usuario: historial → flags → canales → bundle JS → p
 - [x] **PYRUNTIME-01**: Mecanismo para actualizar las dependencias Python puras del runtime embebido sin re-publicar toda la app, sin romper la firma de código ni la notarización del `.app` — verificado en checkpoint humano: aplicar una actualización real publicada en GitHub Releases funcionó sin ningún aviso de Gatekeeper en ningún momento (confirmado explícitamente por el usuario).
 - [x] **PYRUNTIME-02**: Si la actualización del runtime falla o queda corrupta, la app degrada de forma segura — verificado en checkpoint humano: al borrar a mano el directorio de override, la extracción siguió funcionando sin intervención del usuario, cayendo automáticamente al runtime bundleado.
 
-### PUBLISH — Notarización para distribución pública (Phase 22)
+### PUBLISH — Notarización para distribución pública (Phase 22) ✅ Complete
 
-- [ ] **PUBLISH-01**: El `.app` notarizado se publica en una ubicación pública y descargable por cualquiera, sin requerir configuración especial del descargador.
-- [ ] **PUBLISH-02**: Un usuario en un Mac limpio (sin la cuenta de desarrollador del autor) puede descargar y abrir el `.app` sin avisos de Gatekeeper de "developer cannot be verified".
+- [x] **PUBLISH-01**: El `.app` notarizado se publica en una ubicación pública y descargable por cualquiera, sin requerir configuración especial del descargador — ya cumplido desde la Fase 13 (repo GitHub público), confirmado con `gh release list`/`gh release download` sin autenticación especial.
+- [x] **PUBLISH-02**: Un usuario en un Mac limpio (sin la cuenta de desarrollador del autor) puede descargar y abrir el `.app` sin avisos de Gatekeeper de "developer cannot be verified" — verificado con `spctl -a -vvv --type execute` contra el release real `v1.0`: `accepted`, `source=Notarized Developer ID`.
 
 ## Out of Scope (v6.0)
 

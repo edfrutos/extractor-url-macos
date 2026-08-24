@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v7.0
 milestone_name: (nombre por definir)
-status: executing
-last_updated: "2026-08-24T00:00:00.000Z"
-last_activity: 2026-08-24 -- Fase 21 (auto-actualizacion runtime) completa: verificada en checkpoint humano en Mac real. Publicado un release real de runtime y aplicado desde la app -- SIN ningun aviso de Gatekeeper en ningun momento (confirmado explicitamente por el usuario). Degradacion segura confirmada. Bug real de UI (mensaje de error poco visible) encontrado y corregido en el mismo checkpoint.
+status: complete
+last_updated: "2026-08-24T06:00:00.000Z"
+last_activity: 2026-08-24 -- v7.0 completo (Fases 19-22). Fase 22 (notarizacion distribucion publica) verificada con spctl contra el release real v1.0: accepted, source=Notarized Developer ID -- el mecanismo ya existia desde la Fase 13, solo hacia falta verificarlo y corregir documentacion contradictoria. De paso, corregidos dos bugs reales de layout en ContentView.swift reportados por el usuario.
 progress:
   total_phases: 4
-  completed_phases: 3
-  total_plans: 3
-  completed_plans: 3
-  percent: 75
+  completed_phases: 4
+  total_plans: 4
+  completed_plans: 4
+  percent: 100
 ---
 
 # Project State
@@ -20,21 +20,22 @@ progress:
 See: .planning/PROJECT.md (updated 2026-08-24)
 
 **Core value:** Convertir páginas web en Markdown útil y limpio de forma fiable, repetible y sin depender de servicios externos.
-**Current focus:** v6.0 completo y cerrado (Fases 14-18). v7.0 en marcha: Fases 19-21 completas. Falta commitear la Fase 21 (bug de UI corregido + docs) y seguir con la Fase 22 (notarización distribución pública) — la última de v7.0.
+**Current focus:** v6.0 y v7.0 completos y cerrados. Sin milestone v8.0 definido todavía — pendiente de decisión del usuario sobre qué priorizar a continuación (ver Deferred Items).
 
 ## Current Position
 
-Phase: 21 — Auto-actualización del runtime Python embebido (Complete)
-Plan: 21-01 completo (sin research/plan formales por separado — research se hizo inline, ver `21-RESEARCH.md`)
-Status: Complete — PYRUNTIME-01/PYRUNTIME-02 validados en checkpoint humano (Mac real, 2026-08-24)
-Last activity: 2026-08-24 — Checkpoint humano completo paso a paso: Build Succeeded (grupos sincronizados de Xcode 16 recogieron `RuntimeUpdater.swift` sin tocar `project.pbxproj`), 4 tests de `RuntimeUpdaterTests` pasaron, camino "sin actualización disponible" (404 antes de publicar nada) manejado con gracia. Publicado un release real (`runtime-2026-08-24`, generado con `scripts/build_runtime_update.py` — mismo resultado exacto en el Mac real que en el sandbox: excluye `lxml`/`charset_normalizer`/`regex`) y `runtime-manifest.json` commiteado/pusheado desde el Mac del usuario. Primer intento de aplicar la actualización: timeout de red genuino (`NSURLErrorTimedOut`, -1001, ~45s — probablemente propagación de CDN de GitHub tras publicar, no relacionado con Gatekeeper) que reveló un bug real: el estado interno transicionaba correctamente a `.failed` (botón se reactivaba, spinner paraba) pero el mensaje de error solo aparecía en una etiqueta secundaria diminuta (`caption2`) — corregido en `SettingsView.swift` (el mensaje ahora aparece en el texto de estado principal, en rojo). Reintento inmediato: **"Dependencias actualizadas a 2026-08-24."** — confirmado explícitamente por el usuario: **ningún aviso de Gatekeeper en ningún momento** de todo el proceso. Confirma el hallazgo central de `21-RESEARCH.md`. Extracción funcional con el override activo confirmada. Degradación segura (PYRUNTIME-02) confirmada borrando `~/Library/Application Support/ExtractorApp/python-packages-override/` a mano — la extracción siguió funcionando cayendo al bundle automáticamente. `21-01-SUMMARY.md` escrito, `CHECKPOINT-HUMANO.md` marcado como completado. ROADMAP.md/PROJECT.md/REQUIREMENTS.md/MILESTONES.md actualizados marcando PYRUNTIME-01/02 validados. Nada de esto está commiteado todavía (incluido el fix del bug de UI).
+Phase: 22 — Notarización para distribución pública (Complete) — última fase de v7.0
+Plan: 22-01 completo (sin research/plan formales por separado — verificación + documentación hechas directamente en conversación, ver `22-01-SUMMARY.md`)
+Status: Complete — PUBLISH-01/PUBLISH-02 validados con `spctl` contra un release real
+Last activity: 2026-08-24 — Antes de escribir nada, se revisó qué ya existía: el `.app` ya se notariza+staplea (Fase 13) y se publica en GitHub Releases de un repo ya público — el mecanismo técnico central de PUBLISH-01/02 ya estaba cubierto. Verificado con `spctl -a -vvv --type execute` contra el release real `v1.0` (descargado de verdad con `gh release download`, no un build local): `ExtractorApp.app: accepted`, `source=Notarized Developer ID` — el veredicto exacto que vería cualquiera abriendo la app por primera vez, sin depender del estado de confianza de la máquina (no hizo falta un Mac limpio de verdad). `RELEASING.md` nueva sección 3.8 (distribución pública, diferenciada del flujo de Sparkle). `README.md` corregido — ya no dice "no implica distribución pública a terceros"; tabla de milestones actualizada (estaba parada en v5.0) y nueva línea "Descarga" apuntando a Releases. `22-01-SUMMARY.md` escrito. **Con esto, v7.0 queda completo** (Fases 19-22, todos los requirements validados). De paso, fuera de fase (reportado por el usuario tras probar la Fase 21): dos bugs reales de layout en `ContentView.swift` corregidos — (1) `resultCard` vivía dentro de un `ScrollView` que envolvía todo el layout, cuyo `VStack` solo se dimensionaba al alto natural del contenido, dejando el preview HTML fijo en `minHeight:240` sin crecer nunca; movido fuera con `.frame(maxHeight: .infinity)` para ocupar el espacio restante de la ventana; (2) las etiquetas "Formato:"/"Exportar como" se solapaban con sus `Picker` segmentados (no se comprimían limpiamente pese al `.frame(maxWidth:)`) — corregido con `.fixedSize()` en ambos. Ambos confirmados visualmente por el usuario con capturas de pantalla reales tras recompilar. También se encontró (y revirtió sin commitear) un posible bug nuevo de Xcode 27.0 beta GOLD que corrompía `Info.plist` con una clave `CFBundleIdentifier` con contenido de log interno de Sparkle — ver Blockers/Concerns.
+ROADMAP.md/PROJECT.md/REQUIREMENTS.md/MILESTONES.md/STATE.md actualizados marcando v7.0 completo. Fase 21 y el fix de `ContentView.swift` (layout) ya están commiteados por el usuario desde su terminal (hash exacto no capturado en esta sesión — la terminal del sandbox estuvo caída, el commit se hizo directamente en el Mac del usuario). Pendiente: commitear la Fase 22 (docs de `RELEASING.md`/`README.md`/`.planning`).
 
 ```
-v7.0 Progress: [=======   ] 75% — Fases 19-21 completas, Fase 22 sin empezar.
+v7.0 Progress: [==========] 100% — Fases 19-22 completas. MILESTONE COMPLETO.
 Phase 19: [==========] Complete (19-01, commit 8fbc9cc)
 Phase 20: [==========] Complete (20-01, commit 42a3c32)
-Phase 21: [==========] Complete (21-01, verificado en checkpoint humano — sin avisos de Gatekeeper, sin commitear todavía)
-Phase 22: [          ] 0/? planes (notarización distribución pública vía web, no App Store)
+Phase 21: [==========] Complete (21-01, verificado en checkpoint humano — sin avisos de Gatekeeper)
+Phase 22: [==========] Complete (22-01, verificado con spctl contra release real v1.0)
 ```
 
 ## Accumulated Context
@@ -80,10 +81,14 @@ Decisiones relevantes para v6.0:
 - [v7.0]: Publicación del paquete de runtime como GitHub Release **separado** del release de la app (`runtime-<version>`, no el mismo tag) — evita mezclar los ciclos de vida de ambos mecanismos de actualización.
 - [v7.0]: Confirmado en checkpoint humano real — actualizar dependencias Python puras vía override de `PYTHONPATH` **no dispara ningún aviso de Gatekeeper**, ni siquiera tras un timeout de red real a mitad del proceso. Valida el hallazgo central de `21-RESEARCH.md` con un caso real, no solo búsqueda web.
 - [v7.0]: Mensaje de error de `.failed(message:)` movido al texto de estado principal (antes solo en una etiqueta secundaria diminuta) — bug real de UI encontrado en el checkpoint humano cuando un timeout de red genuino pasó casi desapercibido.
+- [v7.0]: Fase 22 no necesitó ningún cambio de pipeline — el `.app` ya se notariza+staplea y se publica en un repo GitHub público desde la Fase 13. La fase fue verificación (`spctl`) y corrección de documentación contradictoria, no implementación nueva.
+- [v7.0]: Verificación de PUBLISH-02 con `spctl -a -vvv --type execute` contra un release YA publicado (no un build local) — `spctl` evalúa la firma/notarización del binario en sí, no el estado de confianza de la máquina, así que no hace falta un Mac limpio de verdad para simular lo que vería un descargador nuevo.
+- [v7.0]: Bugs de layout de `ContentView.swift` (resultCard no llenaba la ventana, etiquetas solapadas con pickers) corregidos fuera de fase, a petición explícita del usuario tras probar la Fase 21 — no forman parte de ningún requirement de v7.0, pero se atendieron porque el usuario las reportó en el flujo natural de la conversación.
 
 ### Pending Todos
 
-- Commitear los cambios de la Fase 21 (código + fix del bug de UI + docs) — nada de esto está commiteado todavía.
+- Commitear los cambios de la Fase 22 (`RELEASING.md`/`README.md`/`.planning/`) — nada de esto está commiteado todavía.
+- Sin milestone v8.0 definido — cuando el usuario quiera, revisar `Deferred Items` como punto de partida (migrar Sparkle a paquete remoto si se resuelve el bug de Xcode, o cualquier backlog nuevo).
 - Recomendado no bloqueante: probar `python extractor_url.py <url> --clipboard` en un Mac real (sandbox Linux no tiene `pbcopy`, solo verificado con mocks) — Fase 19.
 - Recomendado no bloqueante: en el próximo release real con `ROLLOUT_INTERVAL_SECONDS` puesto, confirmar en el `appcast.xml` resultante que `<sparkle:phasedRolloutInterval>` aparece con el valor esperado — Fase 20.
 - Decidir si commitear `scripts/setup-sparkle-local.sh` (añadido durante el checkpoint de la Fase 16, no estaba en el plan original) — sigue pendiente, no bloqueante.
@@ -94,7 +99,7 @@ Decisiones relevantes para v6.0:
 
 ### Blockers/Concerns
 
-- Ninguno bloqueante. Fase 21 completa y verificada en Mac real.
+- Ninguno bloqueante. v7.0 completo.
 - **Bug nuevo sospechado de Xcode 27.0 beta GOLD** (encontrado tras el checkpoint de la Fase 21, el usuario había actualizado Xcode durante la sesión): `ExtractorApp/Info.plist` apareció con una clave `CFBundleIdentifier` corrupta — su valor no era un bundle identifier sino un mensaje de log interno de Sparkle (`/Users/runner/work/Sparkle/Sparkle/Sparkle/SPUStandardUserDriver.m:731 [Internal] Thread running at User-interactive quality-of-service class waiting on a lower QoS thread...`). No se identificó el mecanismo exacto (¿un build/index de Xcode 27 escribiendo salida de log en el sitio equivocado?). Revertido sin commitear (`git checkout -- Info.plist`) — no bloqueante porque no llegó a commitearse, pero **vigilar si reaparece** en futuros builds con Xcode 27 beta; si se repite, documentar como bug confirmado (mismo patrón que los bugs de Xcode 26.6 ya registrados en este proyecto) antes de considerar downgrade o workaround.
 - **Bug real de Xcode 26.6 confirmado** (relacionado con `POLISH-02`): `GENERATE_INFOPLIST_FILE = YES` no sintetiza NINGUNA clave `INFOPLIST_KEY_*` personalizada en el `Info.plist` generado (`SUFeedURL`, `SUPublicEDKey`, `NSHumanReadableCopyright` — las 3 ausentes, confirmado con DerivedData borrado por completo, no era caché). Efecto observado: "Buscar actualizaciones…" fallaba con `You must specify the URL of the appcast as the SUFeedURL key...`. Corregido con un `Info.plist` físico parcial (`ExtractorApp/Info.plist`, solo esas 3 claves) + `INFOPLIST_FILE` en build settings, combinado con `GENERATE_INFOPLIST_FILE = YES` (mecanismo de merge documentado por Apple) — verificado en Mac real: las claves aparecen en el `.app` compilado y "Buscar actualizaciones…" funciona sin error.
 - Notarización real con Chromium embebido (Paso 6 del checkpoint de la Fase 17) no se ha ejecutado todavía — deferida al próximo release real para no gastar cuota. El codesigning en sí ya está verificado (`codesign --verify --deep --strict` + `allow-jit` correctos), así que el riesgo residual es bajo, pero la notarización real (`notarytool submit --wait`) con un bundle de ~900MB no se ha probado y podría tardar sensiblemente más de lo habitual (ya documentado en `RELEASING.md` 3.5).
@@ -106,11 +111,15 @@ Decisiones relevantes para v6.0:
 |----------|------|--------|
 | Técnico | Migrar Sparkle a paquete remoto real (POLISH-02) si se resuelve el bug de Xcode 26.6 | v8+ si el usuario quiere reabrirlo — ver `18-RESEARCH.md` |
 | Distribución | Mac App Store | Explícitamente fuera de alcance de v7.0 (ver Decisions) — sin fecha |
+| Infraestructura | Medir tamaño de un build Release/archivado (886MB de la Fase 17 es de un build Debug) | Próximo release real |
+| Infraestructura | Ejecutar notarización real con Chromium embebido (Paso 6 del checkpoint de la Fase 17) | Próximo release real |
+| Investigación | Vigilar si reaparece el bug sospechado de Xcode 27.0 beta GOLD (corrupción de `Info.plist`) | Solo si se repite — ver Blockers/Concerns |
 
-Los 4 ítems que antes estaban aquí como "v7+" (notarización distribución pública, auto-actualización runtime, flags CLI, rollouts Sparkle) pasaron a ser el alcance activo de v7.0 — ver Current Position y ROADMAP.md `## v7.0`.
+v7.0 completo — ningún ítem de v7.0 queda diferido. Sin milestone v8.0
+definido todavía.
 
 ## Session Continuity
 
-Last session: 2026-08-24T00:00:00Z
-Stopped at: **Fase 21 completa**, verificada en checkpoint humano en Mac real — pero **nada commiteado todavía** (incluido un fix de bug de UI hecho durante el checkpoint). Nota: durante este checkpoint la terminal de este sandbox estuvo fallando de forma intermitente ("Unable to read current working directory" / "Shell cwd was reset... (deleted)") — probablemente el volumen externo `/Volumes/ESSAGER` se desconectó/reconectó (hubo un salto de fecha de 2026-08-23 a 2026-08-24 entre mensajes, sugiriendo que el Mac durmió). Las herramientas de archivo (Read/Edit/Write) siguieron funcionando con normalidad durante el fallo; solo Bash se vio afectado, y de forma intermitente (a veces funcionaba, a veces no). Si vuelve a pasar en la próxima sesión, no es un problema del proyecto — reintentar tras una pausa suele bastar. Resultado del checkpoint: build/tests OK, camino sin actualización manejado con gracia, **actualización real publicada y aplicada sin ningún aviso de Gatekeeper en ningún momento** (confirmado explícitamente por el usuario) — confirma el hallazgo central de la research. Degradación segura confirmada. Bug real de UI (mensaje de error poco visible tras un timeout de red genuino) encontrado y corregido. `21-01-SUMMARY.md` escrito, `CHECKPOINT-HUMANO.md` cerrado. ROADMAP.md/PROJECT.md/REQUIREMENTS.md/MILESTONES.md/STATE.md actualizados marcando la Fase 21 completa. Próximo paso natural: commitear todo (código + fix + docs), y preguntar si se sigue con la Fase 22 (notarización distribución pública, la última de v7.0).
-Resume file: ninguno — Fase 21 cerrada, pendiente solo el commit
+Last session: 2026-08-24T06:00:00Z
+Stopped at: **v7.0 completo** (Fases 19-22) — pero la Fase 22 (docs) **todavía sin commitear**. Secuencia de esta sesión (continuación de una sesión previa que ya había completado Fases 19-20): (1) Fase 21 (auto-actualización runtime) investigada, implementada y verificada en checkpoint humano real — release real publicado y aplicado sin ningún aviso de Gatekeeper, confirmado explícitamente por el usuario; un bug real de UI (mensaje de error poco visible) encontrado y corregido; (2) durante el checkpoint, la terminal de este sandbox estuvo fallando de forma intermitente ("Unable to read current working directory" / "Shell cwd was reset... (deleted)") — probablemente el volumen externo `/Volumes/ESSAGER` se desconectó/reconectó (hubo un salto de fecha de 2026-08-23 a 2026-08-24 entre mensajes, sugiriendo que el Mac durmió); las herramientas de archivo (Read/Edit/Write) siguieron funcionando con normalidad, solo Bash se vio afectado, y de forma intermitente — si vuelve a pasar en la próxima sesión, reintentar tras una pausa suele bastar, o pedir al usuario que ejecute los comandos directamente en su terminal (mismo filesystem, funciona igual); (3) usuario reportó `Info.plist` corrupto con una clave `CFBundleIdentifier` conteniendo un log interno de Sparkle — causa sospechada: acababa de actualizar a Xcode 27.0 beta GOLD; revertido sin commitear, documentado como bug a vigilar; (4) usuario commiteó la Fase 21 + el fix de `Info.plist` revertido desde su propia terminal; (5) usuario reportó un problema de layout (área de resultado HTML muy estrecha) — diagnosticado y corregido en `ContentView.swift` (dos bugs reales: `resultCard` atrapado en un `ScrollView` que no lo dejaba crecer, y etiquetas solapadas con sus pickers segmentados), confirmado visualmente con capturas reales, commiteado por el usuario; (6) Fase 22 (notarización distribución pública): revisado que el mecanismo ya existía desde la Fase 13, verificado con `spctl -a -vvv --type execute` contra el release real `v1.0` (`accepted`, `source=Notarized Developer ID`), documentación corregida en `RELEASING.md`/`README.md`. `22-01-SUMMARY.md` escrito. ROADMAP.md/PROJECT.md/REQUIREMENTS.md/MILESTONES.md/STATE.md actualizados marcando v7.0 completo. **Los cambios de la Fase 22 (RELEASING.md, README.md, .planning/) no están commiteados todavía** — próximo paso natural: dar al usuario el comando de commit final, y preguntarle qué quiere priorizar para un futuro v8.0 (o si lo dejamos aquí).
+Resume file: ninguno — v7.0 cerrado, pendiente el commit final de la Fase 22 y definir v8.0 si el usuario quiere seguir

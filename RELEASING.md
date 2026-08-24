@@ -238,6 +238,46 @@ toca ni un solo archivo dentro de `Contents/Resources/` del `.app`
 firmado, así que esto no afecta a la firma de código ni a la
 notarización del bundle principal.
 
+## 3.8. Distribución pública (descarga directa, sin Sparkle)
+
+Desde la Fase 22, el `.app` publicado en GitHub Releases es también el
+canal de **distribución pública para descarga directa** — no solo el
+mecanismo de auto-actualización de Sparkle para instalaciones ya
+existentes. No hace falta ningún pipeline nuevo: el `.app` que
+`scripts/release-macos.sh` ya notariza + staplea (Fase 13) es el mismo
+artefacto que cualquiera puede descargar de
+`https://github.com/edfrutos/extractor-url-macos/releases` sin
+autenticarse ni configurar nada — el repositorio ya es público (por eso
+`curl` sin credenciales ya podía leer `appcast.xml` desde la Fase 13).
+
+**Diferencia con el flujo de Sparkle:** el appcast/auto-actualización
+(secciones 2-3.7 de este documento) es para usuarios que **ya tienen la
+app instalada** y reciben la notificación de la nueva versión
+automáticamente. Esta sección es para alguien que **todavía no tiene la
+app** y la descarga por primera vez desde la página de Releases — el
+mismo `.zip`, publicado por el mismo `gh release create`, sin pasos
+adicionales.
+
+**Verificación (Success Criterion 2 de la Fase 22):** `spctl` simula el
+veredicto real de Gatekeeper contra la firma/notarización del binario,
+sin depender del estado de confianza de la máquina donde se ejecuta —
+así que no hace falta un Mac limpio de verdad para confirmarlo:
+
+```bash
+gh release download v1.0 --repo edfrutos/extractor-url-macos -D /tmp/gatekeeper-test
+cd /tmp/gatekeeper-test && unzip -q *.zip
+spctl -a -vvv --type execute ExtractorApp.app
+```
+
+Resultado esperado: `accepted`, `source=Notarized Developer ID` — sin
+ningún aviso de "no se puede verificar el desarrollador". Confirmado
+contra el release real `v1.0` el 2026-08-24.
+
+**Nada que cambiar en el pipeline** — `scripts/release-macos.sh` no
+necesita ningún flag ni modo nuevo para esto; simplemente publicar un
+release ya cubre ambos usos (actualización automática + descarga
+directa) a la vez, porque son el mismo artefacto.
+
 ## 4. Verificación post-release
 
 ```bash

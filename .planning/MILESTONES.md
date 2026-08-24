@@ -98,19 +98,21 @@
 
 ---
 
-## v7.0 — (nombre por definir) 🔄 (en marcha)
+## v7.0 — (nombre por definir) ✅ (2026-08-24)
 
 **Goal:** Cerrar el backlog diferido restante de v6.0 — flags de filtrado CLI, rollouts por fases de Sparkle, auto-actualización del runtime Python embebido, y notarización para distribución pública vía web (no App Store). Orden fijado por el usuario: flags CLI → rollouts Sparkle → auto-actualización runtime → notarización pública.
 
-**Shipped hasta ahora:**
+**Shipped:**
 - Fase 19 (flags de filtrado CLI): `--no-images`/`--no-links` en `core.py` vía `_strip_images`/`_strip_links` (mutación in situ del soup, aplicada en texto/HTML/Markdown); `--clipboard` en `extractor_url.py` vía `pbcopy`/`subprocess.run`, aditivo sobre `--json`/`-o`/stdout. 67/67 tests, pylint 10.00/10, mypy limpio.
 - Fase 20 (rollouts por fases de Sparkle): `ROLLOUT_INTERVAL_SECONDS` (env var) → `--phased-rollout-interval` en `generate_appcast`, mismo patrón que `--channel`. Mecánica de Sparkle (7 grupos hardcodeados, duración = intervalo × 7, no aplica a comprobación manual/updates críticos) documentada en `RELEASING.md`.
-- Fase 21 (auto-actualización del runtime, dependencias puras): tras research a fondo sobre Gatekeeper/notarización de binarios sueltos, acotado a `requests`/`beautifulsoup4`/`markdownify`/`trafilatura` — override antepuesto al `PYTHONPATH` del bundle, nunca toca el `.app` firmado. Verificado en checkpoint humano (Mac real, 2026-08-24): actualización real publicada y aplicada **sin ningún aviso de Gatekeeper**, confirmando el hallazgo central de la research. Degradación segura confirmada.
+- Fase 21 (auto-actualización del runtime, dependencias puras): tras research a fondo sobre Gatekeeper/notarización de binarios sueltos, acotado a `requests`/`beautifulsoup4`/`markdownify`/`trafilatura` — override antepuesto al `PYTHONPATH` del bundle, nunca toca el `.app` firmado. Verificado en checkpoint humano (Mac real): actualización real publicada y aplicada **sin ningún aviso de Gatekeeper**, confirmando el hallazgo central de la research. Degradación segura confirmada.
+- Fase 22 (notarización distribución pública): el mecanismo ya existía desde la Fase 13 — verificado con `spctl -a -vvv --type execute` contra el release real `v1.0`: `accepted`, `source=Notarized Developer ID`. `README.md`/`RELEASING.md` corregidos (ya no dicen que la notarización "no implica distribución pública a terceros").
+- De paso (fuera de fase): dos bugs reales de layout en `ContentView.swift` corregidos — el área de resultado no llenaba la ventana, y las etiquetas "Formato:"/"Exportar como" se solapaban con sus pickers segmentados.
 
 **Fases:**
 - Fase 19 — Flags de filtrado CLI (`--no-images`/`--no-links`/`--clipboard`) ✅ Complete
 - Fase 20 — Rollouts por fases de Sparkle ✅ Complete
 - Fase 21 — Auto-actualización del runtime Python embebido (deps puras) ✅ Complete
-- Fase 22 — Notarización para distribución pública vía web (explícitamente no App Store)
+- Fase 22 — Notarización para distribución pública vía web (explícitamente no App Store) ✅ Complete
 
-**Phases:** 4 (19→22) | **Requirements:** CONTENT-01→02, CLIP-01, ROLLOUT-01→02, PYRUNTIME-01→02, PUBLISH-01→02
+**Phases:** 4 (19→22) | **Requirements:** CONTENT-01→02, CLIP-01, ROLLOUT-01→02, PYRUNTIME-01→02, PUBLISH-01→02 (todos validados)

@@ -528,7 +528,7 @@ confirmar todavía). La Fase 22 (notarización pública) es explícitamente
 - [x] **Phase 19: Flags de filtrado CLI** - `--no-images`/`--no-links`/`--clipboard` en el motor Python. (completed 2026-08-23)
 - [x] **Phase 20: Rollouts por fases de Sparkle** - Publicar actualizaciones progresivamente en vez de a todos los usuarios a la vez. (completed 2026-08-23)
 - [x] **Phase 21: Auto-actualización del runtime Python embebido** - Actualizar el runtime sin re-publicar toda la app. (completed 2026-08-24)
-- [ ] **Phase 22: Notarización para distribución pública** - El `.app` notarizado se puede descargar y ejecutar sin avisos de Gatekeeper, vía web (no App Store).
+- [x] **Phase 22: Notarización para distribución pública** - El `.app` notarizado se puede descargar y ejecutar sin avisos de Gatekeeper, vía web (no App Store). (completed 2026-08-24)
 
 ### Phase 19: Flags de filtrado CLI
 
@@ -624,7 +624,20 @@ revisar App Sandbox (hoy OFF), Apple Review y metadatos en App Store
 Connect, contradiciendo el "Out of Scope: App Store" ya establecido del
 proyecto. Decisión explícita del usuario al definir v7.0.
 
-**Plans**: por definir (research/planning pendiente)
+**Plans**: 1 plan — Wave 1: 22-01 (ejecutada directamente en conversación, ver `22-01-SUMMARY.md`)
+
+**Estado**: Completa. Hallazgo previo: el mecanismo técnico central ya
+existía desde la Fase 13 (`.app` notarizado+stapleado, publicado en un
+repo GitHub ya público) — esta fase fue sobre todo verificación y
+documentación, sin cambios de pipeline. Verificado con `spctl -a -vvv
+--type execute` contra el release real `v1.0` (descargado de verdad, no
+un build local): `accepted`, `source=Notarized Developer ID` — el
+veredicto exacto que vería cualquiera abriendo el `.app` por primera
+vez, sin depender del estado de confianza de la máquina. `RELEASING.md`
+nueva sección 3.8 (distribución pública, diferenciada del flujo de
+Sparkle); `README.md` corregido (ya no dice "no implica distribución
+pública a terceros") y actualizado con la tabla de milestones v6.0/v7.0
+que estaba parada en v5.0.
 
 **UI hint**: no
 
@@ -637,4 +650,4 @@ proyecto. Decisión explícita del usuario al definir v7.0.
 | 19. Flags de filtrado CLI | 1/1 | Complete | 2026-08-23 |
 | 20. Rollouts por fases de Sparkle | 1/1 | Complete | 2026-08-23 |
 | 21. Auto-actualización del runtime Python embebido | 1/1 | Complete | 2026-08-24 |
-| 22. Notarización para distribución pública | 0/? | Planning | — |
+| 22. Notarización para distribución pública | 1/1 | Complete | 2026-08-24 |
