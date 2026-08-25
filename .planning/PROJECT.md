@@ -86,9 +86,14 @@ Convertir páginas web en Markdown útil y limpio de forma fiable, repetible y s
 - ✓ PUBLISH-01: El `.app` notarizado se publica en una ubicación pública y descargable por cualquiera, sin requerir configuración especial del descargador. — Validated in Phase 22 (22-01), ya cumplido desde la Fase 13 (repo GitHub público)
 - ✓ PUBLISH-02: Un usuario en un Mac limpio puede descargar y abrir el `.app` sin avisos de Gatekeeper. — Validated in Phase 22 (22-01), verificado con `spctl -a -vvv --type execute` contra el release real v1.0: `accepted`, `source=Notarized Developer ID`
 
-### Active (v7.0)
+### Active (v8.0)
 
-Ninguno — v7.0 completo (Fases 19-22).
+- [ ] MAINT-01: Un release real completo se ejecuta de principio a fin; el tamaño del `.app` Release/archivado (con strip) queda medido y documentado en `RELEASING.md`.
+- [ ] MAINT-02: La notarización real con Chromium embebido se confirma exitosa, con el tiempo real medido y documentado.
+- [ ] MAINT-03: `--clipboard` se prueba contra un `pbcopy` real en el Mac.
+- [ ] MAINT-04: Si se usa `ROLLOUT_INTERVAL_SECONDS` en este release, se confirma `<sparkle:phasedRolloutInterval>` en el `appcast.xml` resultante — opcional.
+- [ ] MAINT-05: Decisión tomada sobre commitear o no `scripts/setup-sparkle-local.sh`.
+- [ ] MAINT-06: Si el bug sospechado de Xcode 27.0 beta GOLD reaparece durante este build, se documenta como confirmado; si no, se anota que no se repitió.
 
 ### Out of Scope
 
@@ -98,18 +103,20 @@ Ninguno — v7.0 completo (Fases 19-22).
 
 El proyecto tiene dos capas: el motor Python (`core.py` + `extractor_url.py`) y la app nativa SwiftUI (`ExtractorApp/`). La app lanza el motor vía `Foundation.Process()` con `--json`. v3.0 eliminó la dependencia del usuario de instalar Python y configurar rutas. v4.0 amplió el motor Python para extraer contenido de páginas que requieren JavaScript (SPAs). v5.0 añadió auto-actualización a la app SwiftUI (Sparkle). v6.0 cubrió el backlog diferido de v4.0/v5.0: historial y cola de extracciones, control manual del fallback JS, canales beta de Sparkle, Playwright embebido en el bundle, y pulido técnico menor. v7.0 cubre el backlog diferido restante de v6.0: flags de filtrado de contenido CLI, rollouts por fases de Sparkle, auto-actualización del runtime Python embebido, y notarización para distribución pública vía web (no App Store).
 
-## Current Milestone: v7.0 (nombre por definir) — Completo (2026-08-24)
+## Current Milestone: v8.0 (nombre por definir)
 
-**Goal:** Cerrar el backlog diferido de v6.0 — flags de filtrado CLI (`--no-images`/`--no-links`/`--clipboard`), rollouts por fases de Sparkle, auto-actualización del runtime Python embebido, y notarización para distribución pública vía web.
+**Goal:** Sin backlog de funcionalidad nueva — cerrar los ítems de mantenimiento/verificación que quedaron pendientes de v6.0/v7.0 porque solo se pueden comprobar durante un release real completo.
 
 **Target features:**
 
-- `--no-images`/`--no-links`/`--clipboard` en el motor Python (CLI)
-- `sparkle:phasedRolloutInterval` opcional en el pipeline de release
-- Mecanismo de actualización del runtime Python embebido independiente de un release completo de la app
-- `.app` notarizado publicado en una ubicación pública descargable por cualquiera, sin avisos de Gatekeeper — vía web (GitHub Releases o similar), no Mac App Store
+- Un release real completo ejecutado de principio a fin (`scripts/release-macos.sh <version>`)
+- Tamaño real de un build Release/archivado (con strip) medido y documentado
+- Notarización real con Chromium embebido confirmada exitosa, tiempo medido
+- `--clipboard` probado contra un `pbcopy` real
+- Decisión sobre commitear `scripts/setup-sparkle-local.sh`
+- Confirmación de si el bug sospechado de Xcode 27.0 beta GOLD reaparece
 
-**Orden de fases fijado por el usuario:** flags CLI → rollouts Sparkle → auto-actualización runtime → notarización distribución pública. De menor a mayor complejidad/incertidumbre; ninguna fase posterior es dependencia de una anterior.
+**Alcance decidido explícitamente por el usuario:** agrupar todo en una única fase corta (Fase 23) en vez de definir un milestone con más alcance — no hay backlog de funcionalidades nuevas esta vez, a diferencia de v6.0/v7.0.
 
 ## Current State
 
@@ -119,7 +126,8 @@ Milestone v3.0 (Standalone App) completado y cerrado: Fases 8, 9 y 10 verificada
 Milestone v4.0 (Contenido Dinámico) completado y cerrado: Fase 11 implementa `_looks_insufficient()` + `_fetch_via_playwright()` en `core.py`, integrados en `_fetch_raw()`. Verificado con `pytest tests/` (28/28), `pylint` 10/10 y `mypy` limpio en un venv equivalente al del repo — ver `.planning/phases/11-playwright-fallback/11-01-SUMMARY.md`.
 Milestone v5.0 (Auto-actualización) completado y cerrado: Fase 12 (Sparkle integrado en la app, paquete local por un bug de búsqueda de Xcode 26.6) y Fase 13 (`scripts/release-macos.sh` — build, firma Developer ID, notarización, appcast firmado con EdDSA, publicación en GitHub Releases) verificadas con un release real: `https://github.com/edfrutos/extractor-url-macos/releases/tag/v1.0`, `appcast.xml` publicado y confirmado en vivo — ver `.planning/phases/13-release-pipeline/13-01-SUMMARY.md` para los 4 bugs reales encontrados y corregidos durante el checkpoint (team ID en exportOptions.plist, hardened runtime del Python embebido, orden de bootstrap, firma EdDSA de generate_appcast).
 Milestone v6.0 (Historial y Distribución Completa) completado y cerrado (2026-08-23): Fase 14 (historial y cola), Fase 15 (flag manual `--js`/`--no-js`), Fase 16 (canales beta de Sparkle), Fase 17 (Playwright/Chromium embebido, 886MB medidos, dos bugs reales de Playwright 1.62.0 encontrados y corregidos en el checkpoint) y Fase 18 (`_bump_version` acotado al target correcto, bug de Xcode 26.6 investigado sin causa raíz confirmada) — ver `.planning/phases/18-pulido-tecnico/18-01-SUMMARY.md` y `MILESTONES.md` para el detalle completo.
-Milestone v7.0 (Historial y Distribución Completa — flags CLI, rollouts, auto-actualización runtime, distribución pública) completado y cerrado (2026-08-24): Fase 19 (flags de filtrado CLI, commit `8fbc9cc`) — `--no-images`/`--no-links`/`--clipboard`, 67/67 tests, pylint 10.00/10. Fase 20 (rollouts por fases de Sparkle, commit `42a3c32`) — `ROLLOUT_INTERVAL_SECONDS` → `--phased-rollout-interval`. Fase 21 (auto-actualización del runtime Python embebido, deps puras) — verificada en checkpoint humano: release real publicado y aplicado sin ningún aviso de Gatekeeper en ningún momento, confirmando el hallazgo central de la research (`.py` puros no pasan por Gatekeeper); degradación segura confirmada; un bug real de UI (mensaje de error poco visible) corregido en el mismo checkpoint. Fase 22 (notarización distribución pública) — el mecanismo técnico ya existía desde la Fase 13 (repo GitHub público, `.app` notarizado+stapleado); esta fase fue verificación (`spctl -a -vvv --type execute` contra el release real `v1.0`: `accepted`, `source=Notarized Developer ID`) y corrección de documentación contradictoria en `README.md`/`RELEASING.md`. De paso (fuera de fase, reportado por el usuario tras probar Fase 21), corregidos dos bugs reales de layout en `ContentView.swift`: el área de resultado no llenaba la ventana (quedaba dentro de un `ScrollView` que solo se dimensionaba a su contenido) y las etiquetas "Formato:"/"Exportar como" se solapaban con sus `Picker` segmentados. Ver `.planning/phases/22-notarizacion-distribucion-publica/22-01-SUMMARY.md` y `MILESTONES.md` para el detalle completo.
+Milestone v7.0 (flags CLI, rollouts, auto-actualización runtime, distribución pública) completado y cerrado (2026-08-24): Fase 19 (flags de filtrado CLI, commit `8fbc9cc`) — `--no-images`/`--no-links`/`--clipboard`, 67/67 tests, pylint 10.00/10. Fase 20 (rollouts por fases de Sparkle, commit `42a3c32`) — `ROLLOUT_INTERVAL_SECONDS` → `--phased-rollout-interval`. Fase 21 (auto-actualización del runtime Python embebido, deps puras) — verificada en checkpoint humano: release real publicado y aplicado sin ningún aviso de Gatekeeper en ningún momento, confirmando el hallazgo central de la research (`.py` puros no pasan por Gatekeeper); degradación segura confirmada; un bug real de UI (mensaje de error poco visible) corregido en el mismo checkpoint. Fase 22 (notarización distribución pública) — el mecanismo técnico ya existía desde la Fase 13 (repo GitHub público, `.app` notarizado+stapleado); esta fase fue verificación (`spctl -a -vvv --type execute` contra el release real `v1.0`: `accepted`, `source=Notarized Developer ID`) y corrección de documentación contradictoria en `README.md`/`RELEASING.md`. De paso (fuera de fase, reportado por el usuario tras probar Fase 21), corregidos dos bugs reales de layout en `ContentView.swift`: el área de resultado no llenaba la ventana (quedaba dentro de un `ScrollView` que solo se dimensionaba a su contenido) y las etiquetas "Formato:"/"Exportar como" se solapaban con sus `Picker` segmentados. Ver `.planning/phases/22-notarizacion-distribucion-publica/22-01-SUMMARY.md` y `MILESTONES.md` para el detalle completo.
+Milestone v8.0 en definición (2026-08-25): sin backlog de funcionalidad nueva — agrupa los ítems de mantenimiento/verificación pendientes de v6.0/v7.0 en una única fase corta (Fase 23), decisión explícita del usuario. Sin research/plan todavía.
 
 ## Constraints
 
@@ -194,6 +202,7 @@ Milestone v7.0 (Historial y Distribución Completa — flags CLI, rollouts, auto
 | [v7.0] `resultCard` sale del `ScrollView` general y usa `.frame(maxHeight: .infinity)` para ocupar el espacio vertical restante de la ventana | El `ScrollView` envolvía todo el layout (input/opciones/resultado/exportar); su `VStack` solo se dimensionaba al alto natural del contenido, dejando el preview HTML fijo en `minHeight:240` sin crecer nunca — bug real de layout reportado por el usuario tras el checkpoint de la Fase 21, sin relación con esa fase | ✓ Good (encontrado y corregido fuera de fase, 2026-08-24) |
 | [v7.0] `.fixedSize()` en las etiquetas "Formato:"/"Exportar como" y sus `Picker` segmentados | El `Picker(.segmented)` no se comprimía limpiamente pese al `.frame(maxWidth:)` aplicado, solapando el texto de la etiqueta — `.fixedSize()` fuerza el tamaño natural en vez de dejar que el layout los comprima | ✓ Good (encontrado y corregido fuera de fase, 2026-08-24) |
 | [v7.0] Fase 22 (PUBLISH-01/02) no necesitó ningún cambio de pipeline | El `.app` ya se notariza+staplea y se publica en un repo GitHub público desde la Fase 13 — el mecanismo técnico central ya existía; la fase fue verificación (`spctl -a -vvv --type execute` contra un release real: `accepted`, `source=Notarized Developer ID`) y corrección de documentación que decía lo contrario | ✓ Good (Phase 22-01) |
+| [v8.0] Alcance = una única fase corta agrupando ítems de mantenimiento, no un milestone con backlog de funcionalidad | A diferencia de v6.0/v7.0, `Deferred Items` de `STATE.md` solo tenía ítems de verificación/mantenimiento (tamaño de build Release, notarización real con Chromium, `--clipboard` contra `pbcopy` real) que dependen todos de ejecutar un release real — no había funcionalidad nueva pendiente. El usuario confirmó explícitamente esta decisión al preguntársele | Pending (definido, sin ejecutar) |
 
 ## Evolution
 
@@ -203,4 +212,4 @@ Este documento evoluciona en transiciones de fase y límites de milestone.
 **Después de cada milestone:** revisar Core Value, auditar Out of Scope, actualizar Context.
 
 ---
-*Last updated: 2026-08-24 — v6.0 completo (Fases 14-18); v7.0 completo (Fases 19-22) — flags CLI, rollouts Sparkle, auto-actualización de runtime sin avisos de Gatekeeper, distribución pública verificada con spctl. Sin milestone v8.0 definido todavía.*
+*Last updated: 2026-08-25 — v6.0 y v7.0 completos; v8.0 definido (una fase corta de mantenimiento/verificación, Fase 23), sin research/plan todavía.*

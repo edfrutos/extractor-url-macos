@@ -121,6 +121,7 @@
 | ROLLOUT-01…02 | v7.0 | ✅ Complete | Phase 20 |
 | PYRUNTIME-01…02 | v7.0 | ✅ Validated | Phase 21 |
 | PUBLISH-01…02 | v7.0 | ✅ Validated | Phase 22 |
+| MAINT-01…06 | v8.0 | ⬜ Pending | Phase 23 |
 
 ## Validated (v5.0 — Sparkle en la app)
 
@@ -190,6 +191,15 @@ Orden fijado por el usuario: historial → flags → canales → bundle JS → p
 
 - [x] **PUBLISH-01**: El `.app` notarizado se publica en una ubicación pública y descargable por cualquiera, sin requerir configuración especial del descargador — ya cumplido desde la Fase 13 (repo GitHub público), confirmado con `gh release list`/`gh release download` sin autenticación especial.
 - [x] **PUBLISH-02**: Un usuario en un Mac limpio (sin la cuenta de desarrollador del autor) puede descargar y abrir el `.app` sin avisos de Gatekeeper de "developer cannot be verified" — verificado con `spctl -a -vvv --type execute` contra el release real `v1.0`: `accepted`, `source=Notarized Developer ID`.
+
+### MAINT — Verificación de release real y cierre de deuda técnica (Phase 23)
+
+- [ ] **MAINT-01**: Un release real completo se ejecuta de principio a fin; el tamaño del `.app` Release/archivado (con strip) queda medido y documentado en `RELEASING.md`.
+- [ ] **MAINT-02**: La notarización real con Chromium embebido se confirma exitosa, con el tiempo real medido y documentado (Paso 6 diferido del checkpoint de la Fase 17).
+- [ ] **MAINT-03**: `--clipboard` se prueba contra un `pbcopy` real en el Mac (Fase 19 solo lo verificó con mocks).
+- [ ] **MAINT-04**: Si se usa `ROLLOUT_INTERVAL_SECONDS` en este release, se confirma `<sparkle:phasedRolloutInterval>` en el `appcast.xml` resultante (Fase 20) — opcional.
+- [ ] **MAINT-05**: Decisión tomada sobre commitear o no `scripts/setup-sparkle-local.sh` (pendiente desde la Fase 16).
+- [ ] **MAINT-06**: Si el bug sospechado de Xcode 27.0 beta GOLD (corrupción de `Info.plist`) reaparece durante este build, se documenta como confirmado; si no, se anota que no se repitió.
 
 ## Out of Scope (v6.0)
 

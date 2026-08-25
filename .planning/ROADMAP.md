@@ -651,3 +651,43 @@ que estaba parada en v5.0.
 | 20. Rollouts por fases de Sparkle | 1/1 | Complete | 2026-08-23 |
 | 21. Auto-actualización del runtime Python embebido | 1/1 | Complete | 2026-08-24 |
 | 22. Notarización para distribución pública | 1/1 | Complete | 2026-08-24 |
+
+## v8.0 (nombre por definir)
+
+## Overview
+
+A diferencia de v6.0/v7.0, esta vez no queda un backlog claro de
+funcionalidades — solo un puñado de ítems de mantenimiento/verificación
+que quedaron pendientes de v6.0/v7.0 porque requieren un **release real
+completo** para comprobarse (medir un build Release de verdad, ejecutar
+la notarización real con Chromium embebido, probar `--clipboard` contra
+un `pbcopy` real). El usuario decidió explícitamente agruparlos en una
+única fase corta en vez de definir un milestone con más alcance.
+
+### Checklist v8.0
+
+- [ ] **Phase 23: Verificación de release real y cierre de deuda técnica** - Ejecutar un release real completo y confirmar los cabos sueltos de v6.0/v7.0 que solo se pueden verificar así.
+
+### Phase 23: Verificación de release real y cierre de deuda técnica
+
+**Goal**: Ejecutar un release real completo de la app y usarlo para cerrar todos los ítems de mantenimiento/verificación pendientes que dependían de eso — sin introducir funcionalidad nueva.
+**Depends on**: Phase 13 (pipeline de release), Phase 17 (Chromium embebido), Phase 19 (`--clipboard`), Phase 20 (rollouts), Phase 16 (paquete local de Sparkle) — no extiende ninguno, solo los ejercita de verdad.
+**Requirements**: MAINT-01, MAINT-02, MAINT-03, MAINT-04, MAINT-05, MAINT-06
+**Success Criteria** (what must be TRUE):
+
+  1. Un release real completo (`scripts/release-macos.sh <version>`) se ejecuta de principio a fin; el tamaño del `.app` Release/archivado (con strip) queda medido y documentado en `RELEASING.md` junto a la cifra de 886MB (Debug) ya existente.
+  2. La notarización real con Chromium embebido se confirma exitosa (`notarytool submit --wait` completa sin errores) y `_resign_bundled_chromium()` funciona end-to-end con Developer ID real — tiempo real medido y documentado (Paso 6 diferido del checkpoint de la Fase 17).
+  3. `--clipboard` se prueba contra un `pbcopy` real en el Mac (Fase 19 solo lo verificó con `subprocess.run` mockeado, sin `pbcopy` disponible en el sandbox).
+  4. Si se usa `ROLLOUT_INTERVAL_SECONDS` en este release, se confirma que `<sparkle:phasedRolloutInterval>` aparece en el `appcast.xml` resultante con el valor esperado (Fase 20) — opcional, solo si el usuario decide probar un rollout real en este release.
+  5. Decisión tomada (commitear o no) sobre `scripts/setup-sparkle-local.sh`, pendiente desde el checkpoint de la Fase 16.
+  6. Si el bug sospechado de Xcode 27.0 beta GOLD (corrupción de `Info.plist` con una clave `CFBundleIdentifier` conteniendo un log interno de Sparkle) reaparece durante este build, se documenta como confirmado; si no reaparece, se anota que no se repitió.
+
+**Plans**: por definir (research/planning pendiente)
+
+**UI hint**: no
+
+### Estado v8.0
+
+| Phase | Plans Complete | Status | Completed |
+|-------|----------------|--------|-----------|
+| 23. Verificación de release real y cierre de deuda técnica | 0/? | Planning | — |

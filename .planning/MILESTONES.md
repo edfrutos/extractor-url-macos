@@ -116,3 +116,20 @@
 - Fase 22 — Notarización para distribución pública vía web (explícitamente no App Store) ✅ Complete
 
 **Phases:** 4 (19→22) | **Requirements:** CONTENT-01→02, CLIP-01, ROLLOUT-01→02, PYRUNTIME-01→02, PUBLISH-01→02 (todos validados)
+
+---
+
+## v8.0 — (nombre por definir) 🔄 (en definición)
+
+**Goal:** Sin backlog de funcionalidad nueva — cerrar los ítems de
+mantenimiento/verificación que quedaron pendientes de v6.0/v7.0 porque
+solo se pueden comprobar durante un release real completo (tamaño de un
+build Release/archivado, notarización real con Chromium embebido,
+`--clipboard` contra un `pbcopy` real). Decisión explícita del usuario:
+agruparlos en una única fase corta en vez de un milestone con más
+alcance.
+
+**Fases:**
+- Fase 23 — Verificación de release real y cierre de deuda técnica
+
+**Phases:** 1 (23) | **Requirements:** MAINT-01→06
