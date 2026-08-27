@@ -4,13 +4,13 @@ milestone: v8.0
 milestone_name: (nombre por definir)
 status: in-progress
 last_updated: "2026-08-27T00:00:00.000Z"
-last_activity: 2026-08-27 -- Fase 23 en curso. af48439 (fix 23-01, en origin/main) endurece la firma/notarizacion del pipeline. VERIFICADO en Mac real contra el release publico v2.1: spctl accepted + source=Notarized Developer ID, stapler OK, codesign --deep --strict OK, cero Mach-O sin hardened runtime (Chromium incluido) -> SC2 sustancialmente satisfecho, el binario publico NO hay que rehacerlo. Tag local espurio v3.1 borrado. Pendiente: SC1 (tamano .app Release), SC3 (--clipboard vs pbcopy real), SC4 (rollout, opcional), SC6 (vigilar Xcode 27), decidir tag v2.1, y subir MARKETING_VERSION cuando toque el proximo release.
+last_activity: 2026-08-27 -- Fase 23 casi cerrada. Verificado en Mac real: SC2 (release publico v2.1 notarizado+stapled, cero Mach-O sin hardened runtime), SC1 (.app Release = 882MB, documentado en RELEASING.md 3.5), SC3 (--clipboard copia a pbcopy real y es aditivo con -o). SC5 ya estaba resuelto. Tag local v3.1 borrado; sobre v2.1 el usuario decide dejarlo. Pendiente real: arreglar el bug estructural de tagging de release-macos.sh (gh release create taggea antes del commit chore(release)). SC4/SC6 son condicionales a un release futuro. No bloqueante: pytest/pylint/mypy en el .venv del Mac.
 progress:
   total_phases: 1
   completed_phases: 0
   total_plans: 1
   completed_plans: 0
-  percent: 45
+  percent: 75
 ---
 
 # Project State
@@ -26,12 +26,12 @@ See: .planning/PROJECT.md (updated 2026-08-25)
 
 Phase: 23 — Verificación de release real y cierre de deuda técnica (In progress)
 Plan: 23-01 informal (sin PLAN.md) — commit `af48439`, correcciones de firma/notarización
-Status: In progress — `af48439` en `origin/main`; **SC2 verificado** contra el release público v2.1 (notarizado + stapled + hardened runtime en todo el bundle). Pendientes: SC1, SC3, SC4 (opcional), SC6 y limpieza de tags — todo verificación ligera, sin release completo obligatorio
+Status: In progress (~75%) — SC1 ✓ SC2 ✓ SC3 ✓ SC5 ✓ verificados en Mac real. Queda: arreglar el bug estructural de tagging de `release-macos.sh` (único trabajo de código pendiente); SC4/SC6 son condicionales a un release futuro; `pytest`/`pylint`/`mypy` en el Mac (no bloqueante)
 Last activity: 2026-08-27 — Revisión de estado del proyecto. Se constató que la definición de v8.0 ya estaba commiteada (`b6bc9f9`, la nota de "nada commiteado" de `STATE.md` estaba obsoleta) y que se había ejecutado un release real v2.1 (`ec071d9`; `appcast.xml` con zip de 387 MB y firma EdDSA) cuya notarización `notarytool` rechazó por ejecutables sin hardened runtime: sueltos en `Helpers/` (`web_app_shortcut_copier`, `app_mode_loader`, no solo `chrome_crashpad_handler`) y las instalaciones hermanas `chromium_headless_shell-*` / `ffmpeg-*` bajo `.local-browsers/` (el patrón `chromium-*` no las cazaba). Los 3 scripts modificados en el working tree se commitearon como `af48439` (`fix(23-01)`): firma por descubrimiento en `bundle-playwright.sh` y `release-macos.sh`, `verify-bundle.sh` comprueba la firma de los hermanos, se quita `--sequesterRsrc` del `ditto` (evita `__MACOSX/` y sus avisos), se pide el log detallado de `notarytool` al rechazar, y guard `"${array[@]+...}"` para no abortar con bash 3.2 y arrays vacíos. Además `.gitignore` ignora el recurso de icono de carpeta de macOS (`Icon?`) y se eliminó el `Icon\r` suelto. Commit pusheado a `origin/main`.
 
 ```
-v8.0 Progress: [====      ] ~45% — SC2 verificado (release público v2.1 notarizado OK), SC5 resuelto, tag v3.1 borrado.
-Phase 23: [====      ] SC2✓ SC5✓ · pendientes SC1 (tamaño Release) · SC3 (--clipboard) · SC4 (rollout, opcional) · SC6 (Xcode 27) · tag v2.1
+v8.0 Progress: [=======   ] ~75% — SC1/SC2/SC3/SC5 verificados en Mac real; tag v3.1 borrado.
+Phase 23: [=======   ] SC1✓ SC2✓ SC3✓ SC5✓ · pendiente: fix de tagging en release-macos.sh · SC4/SC6 condicionales a release futuro
 ```
 
 ## Accumulated Context
@@ -90,13 +90,13 @@ Decisiones relevantes para v6.0:
 
 ### Pending Todos
 
-- **Re-lanzar `scripts/release-macos.sh <version>`** con los fixes de `af48439` y confirmar que `notarytool` acepta el bundle (cierra MAINT-02 / SC2). El release v2.1 anterior fue rechazado exactamente por lo que corrige ese commit.
-- Medir el tamaño del `.app` Release/archivado (con strip) y documentarlo en `RELEASING.md` junto a la cifra de 886 MB de Debug (MAINT-01 / SC1).
-- Probar `--clipboard` contra un `pbcopy` real en el Mac (MAINT-03 / SC3) — Fase 19 solo lo verificó con mocks.
-- Si se usa `ROLLOUT_INTERVAL_SECONDS` en ese release, confirmar `<sparkle:phasedRolloutInterval>` en el `appcast.xml` resultante (MAINT-04 / SC4, opcional).
+- **SC2 (MAINT-02) — VERIFICADO** (2026-08-27, contra el release público v2.1): `spctl` → `Notarized Developer ID`, `stapler validate` OK, `codesign --deep --strict` OK, cero Mach-O sin hardened runtime. El binario público es correcto; residual no bloqueante = ejercitar el pipeline scriptado (con `af48439`) en el próximo release que toque.
+- **SC1 (MAINT-01) — HECHO** (2026-08-27): `.app` Release/notarizado de v2.1 = **882 MB** en disco (~387 MB comprimido), casi idéntico a los 886 MB de Debug — el strip no adelgaza porque el peso es Chrome for Testing. Documentado en `RELEASING.md` §3.5.
+- **SC3 (MAINT-03) — HECHO** (2026-08-27): `python extractor_url.py <url> --clipboard` copia a `pbcopy` real (`pbpaste` devuelve el contenido extraído); combinado con `-o` es aditivo (fichero escrito de 142 B *y* portapapeles). Verificado en el Mac, ya no solo con mocks.
+- Si se usa `ROLLOUT_INTERVAL_SECONDS` en un futuro release, confirmar `<sparkle:phasedRolloutInterval>` en el `appcast.xml` resultante (MAINT-04 / SC4, opcional — solo aplica al lanzar un release nuevo).
 - **SC5 (MAINT-05) ya resuelto**: `scripts/setup-sparkle-local.sh` está trackeado desde `5c3d663` (cierre de la Fase 16) — la decisión efectiva fue "sí, commitear" y ya ocurrió. Solo queda dejar constancia en el SUMMARY de la fase.
-- Vigilar si reaparece el bug sospechado de Xcode 27.0 beta GOLD durante ese build (MAINT-06 / SC6) — ver Blockers/Concerns.
-- **Limpiar los tags de git** (deuda descubierta el 2026-08-27, ver Blockers/Concerns): borrar el tag local `v3.1` (apunta a un commit de junio, no publicado) y decidir qué hacer con el tag `v2.1` publicado, que apunta a `c662647` en vez de a `ec071d9` (`chore(release): v2.1`).
+- Vigilar si reaparece el bug sospechado de Xcode 27.0 beta GOLD durante el próximo build (MAINT-06 / SC6) — ver Blockers/Concerns.
+- **Tags de git**: `v3.1` local espurio **borrado** (2026-08-27). Sobre el tag `v2.1` (apunta a `c662647`, no a `ec071d9`), decisión del usuario: **dejarlo como está**; el arreglo va en que el *próximo* release taggee bien — pendiente ajustar `release-macos.sh` para que el tag caiga en el commit `chore(release): vX` y no en el HEAD remoto previo (ver Blockers/Concerns).
 - Recomendado no bloqueante: repetir `pytest tests/`/`pylint`/`mypy` de 14-01/15-01 en el `.venv` real del Mac (el `.venv` del repo es de macOS y no arranca en el sandbox Linux).
 - Recomendado no bloqueante: si el usuario quiere reabrir POLISH-02 en el futuro, probar `defaults write com.apple.dt.Xcode IDEPackageSupportUseBuiltinSCM 1` + reinicio de Xcode en su Mac real (ver `18-RESEARCH.md`).
 
@@ -111,8 +111,9 @@ Decisiones relevantes para v6.0:
   - Conclusión: el zip público de v2.1 está notarizado y bien firmado — **no hay que rehacer el binario**. `af48439` sigue siendo valioso: endurece el *pipeline* para que la próxima ejecución scriptada no dependa del arreglo manual que se hizo esta vez. Queda como residual "no bloqueante" probar ese pipeline scriptado end-to-end en el próximo release que toque por otro motivo.
 - **Tags de git** (descubierto el 2026-08-27):
   - Tag local espurio `v3.1` → `af96740` (`Añade icono de app`, 12-jun): **borrado** (`git tag -d v3.1`; no estaba en `origin`, nada que propagar).
-  - El tag `v2.1` (publicado en `origin`) apunta a `c662647` (`chore(runtime): 2026-08-24`), **6 commits por detrás** de `ec071d9` (`chore(release): v2.1`, donde se subió `MARKETING_VERSION 2.1` + `appcast.xml`). Bajo impacto: el release y su asset son correctos; solo el commit señalado por el tag es "viejo". Decisión pendiente del usuario: mover el tag a `ec071d9` (correcto pero reescribe un tag publicado) o dejarlo y asegurar que el *próximo* release taggee bien.
-  - `pbxproj` sigue en `MARKETING_VERSION = 2.1` / `CURRENT_PROJECT_VERSION = 10` — cuando toque el próximo release, subir a `2.2` (o superior); re-lanzar `release-macos.sh 2.1` fallaría en `gh release create "v2.1"` por el tag existente.
+  - El tag `v2.1` (publicado en `origin`) apunta a `c662647` (`chore(runtime): 2026-08-24`), **6 commits por detrás** de `ec071d9` (`chore(release): v2.1`). **Decisión del usuario (2026-08-27): dejarlo como está** — el release y su asset son correctos, solo el commit señalado es "viejo"; no merece reescribir un tag publicado.
+  - **Causa raíz (bug estructural del pipeline, pendiente de arreglar)**: `release-macos.sh` NO commitea — por diseño deja el `git add/commit/push` de `appcast.xml` + `project.pbxproj` como paso manual al final (líneas 33-34, 492-496). Pero `_publish_release()` llama a `gh release create "v${VERSION}"` ANTES de que exista ese commit, así que el tag lo crea `gh` sobre el HEAD del `origin/main` de ese momento (el commit *anterior* al bump), no sobre el `chore(release): vX`. Se repetirá en cada release mientras no se cambie. Arreglo a decidir: (a) que el script commitee+pushee el "release commit" justo antes de `_publish_release` (rompe la regla "el script no commitea"), o (b) que `_publish_release` cree primero el tag anotado en el commit correcto ya pusheado y luego `gh release create` lo reutilice, o (c) añadir al eco final un `git tag -f v${VERSION} && git push -f origin v${VERSION}` tras el commit manual. Ninguna implementada aún.
+  - `pbxproj` sigue en `MARKETING_VERSION = 2.1` / `CURRENT_PROJECT_VERSION = 10` — el próximo release sube a `2.2`+ ; re-lanzar `release-macos.sh 2.1` fallaría en `gh release create "v2.1"` por el tag existente.
 - **Bug nuevo sospechado de Xcode 27.0 beta GOLD** (encontrado tras el checkpoint de la Fase 21, el usuario había actualizado Xcode durante la sesión): `ExtractorApp/Info.plist` apareció con una clave `CFBundleIdentifier` corrupta — su valor no era un bundle identifier sino un mensaje de log interno de Sparkle (`/Users/runner/work/Sparkle/Sparkle/Sparkle/SPUStandardUserDriver.m:731 [Internal] Thread running at User-interactive quality-of-service class waiting on a lower QoS thread...`). No se identificó el mecanismo exacto (¿un build/index de Xcode 27 escribiendo salida de log en el sitio equivocado?). Revertido sin commitear (`git checkout -- Info.plist`) — no bloqueante porque no llegó a commitearse, pero **vigilar si reaparece** en futuros builds con Xcode 27 beta; si se repite, documentar como bug confirmado (mismo patrón que los bugs de Xcode 26.6 ya registrados en este proyecto) antes de considerar downgrade o workaround.
 - **Bug real de Xcode 26.6 confirmado** (relacionado con `POLISH-02`): `GENERATE_INFOPLIST_FILE = YES` no sintetiza NINGUNA clave `INFOPLIST_KEY_*` personalizada en el `Info.plist` generado (`SUFeedURL`, `SUPublicEDKey`, `NSHumanReadableCopyright` — las 3 ausentes, confirmado con DerivedData borrado por completo, no era caché). Efecto observado: "Buscar actualizaciones…" fallaba con `You must specify the URL of the appcast as the SUFeedURL key...`. Corregido con un `Info.plist` físico parcial (`ExtractorApp/Info.plist`, solo esas 3 claves) + `INFOPLIST_FILE` en build settings, combinado con `GENERATE_INFOPLIST_FILE = YES` (mecanismo de merge documentado por Apple) — verificado en Mac real: las claves aparecen en el `.app` compilado y "Buscar actualizaciones…" funciona sin error.
 - ~~Notarización real con Chromium embebido (Paso 6 del checkpoint de la Fase 17) no se ha ejecutado todavía~~ → **RESUELTO 2026-08-27**: el release público v2.1 (con Chromium embebido) está notarizado y stapled, verificado en Mac real (`spctl`/`stapler`/`codesign` + barrido de hardened runtime). Ver el punto "SC2" arriba en esta sección.

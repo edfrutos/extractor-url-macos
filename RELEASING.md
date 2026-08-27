@@ -136,10 +136,17 @@ un snapshot de Chromium más ligero. Playwright 1.62.0 distribuye "Chrome for
 Testing" (`Google Chrome for Testing.app`), un build más pesado que incluye
 locales de decenas de idiomas y helpers duplicados. No es un límite duro del
 proyecto, pero sí una cifra a tener muy presente al planificar la subida a
-notarización/GitHub Releases. La cifra de un build Release/archivado real
-(con strip y sin artefactos de Debug) queda pendiente de medir en el
-próximo release real — normalmente algo menor, pero del mismo orden de
-magnitud.
+notarización/GitHub Releases.
+
+**Cifra Release/archivado real (medida en la Fase 23, 2026-08-27):** el
+`.app` notarizado que se publicó en `v2.1` (descomprimido de
+`ExtractorApp-2.1.zip`, ~387MB comprimido) pesa **882MB** en disco —
+prácticamente igual que los 886MB del Debug local. El strip y la
+eliminación de artefactos de Debug apenas mueven la aguja porque el peso
+lo domina "Chrome for Testing" (locales de decenas de idiomas + helpers),
+no el binario propio ni los símbolos. Conclusión práctica: contar con
+~880-890MB de `.app` (y ~390MB de zip) para cualquier release con Chromium
+embebido, sin esperar que un build Release "adelgace" el bundle.
 
 **Notarización más lenta de lo habitual:** con Chromium embebido, `xcrun
 notarytool submit --wait` puede tardar sensiblemente más que los ~1-3
