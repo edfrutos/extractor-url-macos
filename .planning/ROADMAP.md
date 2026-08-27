@@ -676,7 +676,7 @@ un `pbcopy` real). El usuario decidió explícitamente agruparlos en una
 **Success Criteria** (what must be TRUE):
 
   1. Un release real completo (`scripts/release-macos.sh <version>`) se ejecuta de principio a fin; el tamaño del `.app` Release/archivado (con strip) queda medido y documentado en `RELEASING.md` junto a la cifra de 886MB (Debug) ya existente.
-  2. La notarización real con Chromium embebido se confirma exitosa (`notarytool submit --wait` completa sin errores) y `_resign_bundled_chromium()` funciona end-to-end con Developer ID real — tiempo real medido y documentado (Paso 6 diferido del checkpoint de la Fase 17).
+  2. La notarización real con Chromium embebido se confirma exitosa (`notarytool submit --wait` completa sin errores) y `_resign_bundled_chromium()` funciona end-to-end con Developer ID real — tiempo real medido y documentado (Paso 6 diferido del checkpoint de la Fase 17). — **VERIFICADO 2026-08-27** contra el release público `v2.1`: `spctl` → `Notarized Developer ID`, `stapler validate` OK, `codesign --deep --strict` OK, cero Mach-O sin hardened runtime (Chromium incluido). Binario público correcto; residual no bloqueante = probar el pipeline *scriptado* (con `af48439`) en el próximo release.
   3. `--clipboard` se prueba contra un `pbcopy` real en el Mac (Fase 19 solo lo verificó con `subprocess.run` mockeado, sin `pbcopy` disponible en el sandbox).
   4. Si se usa `ROLLOUT_INTERVAL_SECONDS` en este release, se confirma que `<sparkle:phasedRolloutInterval>` aparece en el `appcast.xml` resultante con el valor esperado (Fase 20) — opcional, solo si el usuario decide probar un rollout real en este release.
   5. Decisión tomada (commitear o no) sobre `scripts/setup-sparkle-local.sh`, pendiente desde el checkpoint de la Fase 16. — **Resuelto**: ya está trackeado desde `5c3d663` (cierre de la Fase 16); la decisión efectiva fue "sí".
@@ -692,4 +692,4 @@ un `pbcopy` real). El usuario decidió explícitamente agruparlos en una
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 23. Verificación de release real y cierre de deuda técnica | 0/? (23-01 informal en curso) | In progress | — |
+| 23. Verificación de release real y cierre de deuda técnica | 23-01 informal · SC2✓ SC5✓ · pendientes SC1/SC3/SC4/SC6 | In progress (~45%) | — |
