@@ -692,4 +692,4 @@ un `pbcopy` real). El usuario decidió explícitamente agruparlos en una
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 23. Verificación de release real y cierre de deuda técnica | 23-01 informal · SC1✓ SC2✓ SC3✓ SC5✓ · pendiente fix tagging `release-macos.sh` · SC4/SC6 condicionales | In progress (~75%) | — |
+| 23. Verificación de release real y cierre de deuda técnica | 23-01 informal · SC1✓ SC2✓ SC3✓ SC5✓ · fix tagging `release-macos.sh` listo · SC4/SC6 condicionales | In progress (~85%) | — |

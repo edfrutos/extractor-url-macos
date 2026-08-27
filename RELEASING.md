@@ -76,13 +76,26 @@ El script:
 4. Empaqueta a `.zip` con `ditto` (nunca `zip`/`unzip` genéricos — rompen la firma de código, ver Troubleshooting).
 5. Notariza (`notarytool submit --wait`) y graba el ticket al `.app` (`stapler staple`) — en ese orden, antes de crear el `.zip` final.
 6. Guarda el `.zip` en el histórico local `.build-cache/release/archive/` (necesario para que `generate_appcast` genere delta updates) y genera `appcast.xml`.
-7. Publica el `.zip` como asset de un GitHub Release nuevo.
-8. Copia el `appcast.xml` a la raíz del repo e imprime el `git add`/`commit`/`push` exacto a ejecutar.
+7. Publica el `.zip` como asset de un GitHub Release nuevo. `gh release
+   create` crea el tag `vX.Y` sobre el HEAD actual de `origin` — que
+   **aún no** incluye el commit `chore(release): vX.Y` (ese va en el paso
+   manual siguiente).
+8. Copia el `appcast.xml` a la raíz del repo e imprime el `git
+   add`/`commit`/`push` **+ `git tag -f` / `git push -f origin vX.Y`**
+   exacto a ejecutar.
 
 El script **no** hace el `git push` final por ti — revisa el resumen y
 ejecuta tú mismo los comandos que imprime al terminar. Es la acción que
 activa el feed de Sparkle para los usuarios existentes; queda bajo tu
 control explícito.
+
+**Mueve el tag al commit del release.** Como `gh release create` taggea
+antes de que exista el commit `chore(release): vX.Y`, el resumen final
+incluye un `git tag -f vX.Y` + `git push -f origin vX.Y`. Ejecútalos
+justo después del `git push` del commit: dejan el tag `vX.Y` apuntando al
+commit correcto en vez de al anterior. (En v2.1 esto no se hizo y el tag
+quedó en `c662647` en lugar de en `ec071d9`; se decidió no reescribirlo
+a posteriori. A partir de v2.2 el paso está en el guion impreso.)
 
 ## 3. Publicar un canal beta (opcional)
 

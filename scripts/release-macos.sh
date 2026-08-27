@@ -33,6 +33,14 @@
 # Tras terminar, el script deja appcast.xml actualizado en la raíz del
 # repo e imprime el `git add/commit/push` exacto a ejecutar — no lo hace
 # automáticamente (acción visible sobre un repo compartido).
+#
+# IMPORTANTE sobre el tag: `gh release create "v${VERSION}"` crea el tag
+# sobre el HEAD del `origin` de ese momento, que todavía NO contiene el
+# commit `chore(release): v${VERSION}` (el bump de versión + appcast va en
+# el paso manual de después). Por eso el eco final incluye un `git tag -f`
+# + `git push -f origin "v${VERSION}"` para MOVER el tag al commit del
+# release una vez commiteado. Sin ese paso, el tag apunta al commit
+# anterior (fue el caso de v2.1 -> c662647 en vez de ec071d9).
 set -euo pipefail
 
 # ── Configuración ──────────────────────────────────────────────────────────
@@ -489,9 +497,12 @@ echo "════════════════════════�
 echo "Release v${VERSION} publicado en:"
 echo "  https://github.com/${GITHUB_REPO}/releases/tag/v${VERSION}"
 echo ""
-echo "Para activar el feed de Sparkle, revisa y publica el appcast.xml:"
+echo "Para activar el feed de Sparkle, revisa y publica el appcast.xml"
+echo "y MUEVE el tag v${VERSION} al commit del release:"
 echo "  cd \"${PROJECT_DIR}\""
 echo "  git add appcast.xml ExtractorApp/ExtractorApp/ExtractorApp.xcodeproj/project.pbxproj"
 echo "  git commit -m \"chore(release): v${VERSION}\""
 echo "  git push"
+echo "  git tag -f \"v${VERSION}\"            # gh lo creó sobre el commit anterior"
+echo "  git push -f origin \"v${VERSION}\"    # deja el tag en el commit del release"
 echo "════════════════════════════════════════════════════════════════"
