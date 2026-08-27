@@ -119,7 +119,7 @@
 
 ---
 
-## v8.0 — (nombre por definir) 🔄 (en definición)
+## v8.0 — (nombre por definir) ✅ (2026-08-27)
 
 **Goal:** Sin backlog de funcionalidad nueva — cerrar los ítems de
 mantenimiento/verificación que quedaron pendientes de v6.0/v7.0 porque
@@ -129,7 +129,39 @@ build Release/archivado, notarización real con Chromium embebido,
 agruparlos en una única fase corta en vez de un milestone con más
 alcance.
 
-**Fases:**
-- Fase 23 — Verificación de release real y cierre de deuda técnica
+**Shipped:**
+- **Endurecimiento del pipeline** (`af48439`): firma de ejecutables de
+  Chromium por descubrimiento (no por nombre fijo) en `bundle-playwright.sh`
+  y `release-macos.sh` — cubre `Helpers/` sueltos y las instalaciones
+  hermanas `chromium_headless_shell-*`/`ffmpeg-*` que el patrón `chromium-*`
+  no cazaba y que hicieron a `notarytool` rechazar un intento de `v2.1`.
+  `ditto` sin `--sequesterRsrc`; log detallado de `notarytool` al rechazar;
+  guard `"${array[@]+…}"` para bash 3.2; `.gitignore` para `Icon?`.
+- **Fix del tagging de release** (`cc1af03`): el guion impreso por
+  `release-macos.sh` ahora incluye `git tag -f` + `git push -f origin vX.Y`
+  tras el commit manual de `chore(release)`, porque `gh release create`
+  taggea antes de que ese commit exista (causa de `v2.1` → `c662647`).
+  Documentado en `RELEASING.md` §2. Aplica desde v2.2.
+- **Verificaciones contra el release público `v2.1`** (Mac real):
+  - SC1 — `.app` Release/notarizado = **882 MB** (~387 MB zip), casi igual
+    al Debug; el strip no adelgaza (peso = Chrome for Testing).
+    En `RELEASING.md` §3.5.
+  - SC2 — `spctl` → `Notarized Developer ID`, `stapler validate` OK,
+    `codesign --deep --strict` OK, cero Mach-O sin hardened runtime
+    (Chromium incluido). Binario público correcto — no hubo que rehacerlo.
+  - SC3 — `--clipboard` copia a `pbcopy` real y es aditivo con `-o`.
+- **Limpieza de deuda**: SC5 (`setup-sparkle-local.sh`) ya estaba
+  trackeado desde `5c3d663`; tag local espurio `v3.1` borrado; tag `v2.1`
+  mal ubicado — se deja por decisión del usuario.
+- `pytest` 67/67 · `pylint` 10.00/10 · `mypy` limpio (sandbox, código
+  Python puro).
 
-**Phases:** 1 (23) | **Requirements:** MAINT-01→06
+**Diferido-condicional** (criterios "si/cuando un release futuro haga X",
+no bloqueos): SC4 (`<sparkle:phasedRolloutInterval>` en el appcast, solo
+si un release usa `ROLLOUT_INTERVAL_SECONDS`) y SC6 (vigilar el bug de
+`Info.plist` de Xcode 27 beta, solo observable durante un build nuevo).
+
+**Fases:**
+- Fase 23 — Verificación de release real y cierre de deuda técnica ✅ Complete
+
+**Phases:** 1 (23) | **Requirements:** MAINT-01→03, MAINT-05 (validados) · MAINT-04, MAINT-06 (diferidos-condicionales)

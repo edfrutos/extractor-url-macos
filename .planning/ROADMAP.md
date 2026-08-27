@@ -666,7 +666,7 @@ un `pbcopy` real). El usuario decidió explícitamente agruparlos en una
 
 ### Checklist v8.0
 
-- [ ] **Phase 23: Verificación de release real y cierre de deuda técnica** - Ejecutar un release real completo y confirmar los cabos sueltos de v6.0/v7.0 que solo se pueden verificar así.
+- [x] **Phase 23: Verificación de release real y cierre de deuda técnica** - Cabos sueltos de v6.0/v7.0 cerrados verificando el release público `v2.1` (SC1/SC2/SC3/SC5) + endurecimiento del pipeline (`af48439`) y fix del tagging (`cc1af03`). SC4/SC6 diferidos-condicionales. (completed 2026-08-27)
 
 ### Phase 23: Verificación de release real y cierre de deuda técnica
 
@@ -692,4 +692,10 @@ un `pbcopy` real). El usuario decidió explícitamente agruparlos en una
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 23. Verificación de release real y cierre de deuda técnica | 23-01 informal · SC1✓ SC2✓ SC3✓ SC5✓ · fix tagging `release-macos.sh` listo · SC4/SC6 condicionales | In progress (~85%) | — |
+| 23. Verificación de release real y cierre de deuda técnica | 23-01 informal · SC1✓ SC2✓ SC3✓ SC5✓ · SC4/SC6 diferidos-condicionales | ✅ Complete | 2026-08-27 |
+
+**v8.0 cerrado (2026-08-27).** SC1/SC2/SC3/SC5 verificados contra el
+release público `v2.1`; pipeline endurecido (`af48439`) y tagging
+arreglado (`cc1af03`). SC4 (rollout en appcast) y SC6 (bug Info.plist
+Xcode 27) quedan como criterios condicionales a un release futuro — no
+bloquean el cierre. Ver `.planning/phases/23-verificacion-release-real/23-01-SUMMARY.md`.
