@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v8.0
 milestone_name: (nombre por definir)
-status: planning
-last_updated: "2026-08-25T00:00:00.000Z"
-last_activity: 2026-08-25 -- v8.0 definido: alcance = una unica fase corta (Fase 23) agrupando los items de mantenimiento/verificacion pendientes de v6.0/v7.0 que dependen de un release real completo (tamano de build Release, notarizacion real con Chromium, --clipboard contra pbcopy real, decision sobre setup-sparkle-local.sh, vigilar bug de Xcode 27 beta). Decision explicita del usuario -- sin backlog de funcionalidad nueva esta vez. Sin research/plan todavia.
+status: in-progress
+last_updated: "2026-08-27T00:00:00.000Z"
+last_activity: 2026-08-27 -- Fase 23 arrancada. La definicion de v8.0 ya estaba commiteada (b6bc9f9). Se ejecuto un release real v2.1 (ec071d9, appcast.xml con zip de 387MB + firma EdDSA) que notarytool RECHAZO por ejecutables sin hardened runtime (sueltos en Helpers/ y hermanos chromium_headless_shell-*/ffmpeg-* bajo .local-browsers/). Commit af48439 (fix 23-01, ya en origin/main) corrige esos rechazos: firma por descubrimiento en bundle-playwright.sh y release-macos.sh, quita --sequesterRsrc del ditto, pide el log detallado de notarytool al rechazar, guard "${array[@]+...}" para bash 3.2, .gitignore para el recurso Icon. Pendiente: re-lanzar el release para confirmar que notarytool acepta y recoger las metricas de la fase.
 progress:
   total_phases: 1
   completed_phases: 0
-  total_plans: 0
+  total_plans: 1
   completed_plans: 0
-  percent: 0
+  percent: 15
 ---
 
 # Project State
@@ -20,18 +20,18 @@ progress:
 See: .planning/PROJECT.md (updated 2026-08-25)
 
 **Core value:** Convertir páginas web en Markdown útil y limpio de forma fiable, repetible y sin depender de servicios externos.
-**Current focus:** v6.0 y v7.0 completos y cerrados. v8.0 recién definido (una fase corta de mantenimiento) — sin research/plan todavía. Siguiente paso natural: ejecutar un release real (`scripts/release-macos.sh <version>`) cuando el usuario esté listo, ya que la Fase 23 entera depende de eso.
+**Current focus:** v6.0 y v7.0 completos y cerrados. v8.0 en curso: la definición está commiteada (`b6bc9f9`) y la Fase 23 ya arrancó — un release real v2.1 se ejecutó y su notarización fue rechazada; los fixes de firma están en `origin/main` (`af48439`). Siguiente paso: re-lanzar `scripts/release-macos.sh <version>` para confirmar que `notarytool` acepta y recoger las métricas de la fase (tamaño Release, tiempo de notarización, `--clipboard` real).
 
 ## Current Position
 
-Phase: 23 — Verificación de release real y cierre de deuda técnica (Not started)
-Plan: ninguno todavía
-Status: Planning — v8.0 recién definido, sin research ni plan
-Last activity: 2026-08-25 — El usuario pidió definir v8.0. A diferencia de v6.0/v7.0, `Deferred Items` de `STATE.md` no tenía un backlog de funcionalidades nuevas — solo ítems de mantenimiento/verificación (medir tamaño de build Release, notarización real con Chromium, `--clipboard` contra `pbcopy` real, decisión sobre `setup-sparkle-local.sh`, vigilar el bug de Xcode 27 beta). Presentados al usuario junto con la opción de "nada por ahora" o "idea nueva"; eligió agruparlos en una fase corta. Propuesta la Fase 23 con 6 Success Criteria (uno por ítem) y confirmada sin cambios. Documentado en ROADMAP.md (nueva sección `## v8.0`), PROJECT.md (Active requirements + Key Decisions + Current Milestone), REQUIREMENTS.md (nueva sección MAINT), MILESTONES.md (entrada v8.0 en definición). Nada de esto está commiteado todavía. La Fase 23 completa depende de que el usuario ejecute un release real cuando esté listo — no es trabajo que se pueda adelantar sin eso.
+Phase: 23 — Verificación de release real y cierre de deuda técnica (In progress)
+Plan: 23-01 informal (sin PLAN.md) — commit `af48439`, correcciones de firma/notarización
+Status: In progress — fixes de los rechazos de notarytool del release v2.1 ya en `origin/main`; pendiente re-lanzar el release y verificar los 6 Success Criteria
+Last activity: 2026-08-27 — Revisión de estado del proyecto. Se constató que la definición de v8.0 ya estaba commiteada (`b6bc9f9`, la nota de "nada commiteado" de `STATE.md` estaba obsoleta) y que se había ejecutado un release real v2.1 (`ec071d9`; `appcast.xml` con zip de 387 MB y firma EdDSA) cuya notarización `notarytool` rechazó por ejecutables sin hardened runtime: sueltos en `Helpers/` (`web_app_shortcut_copier`, `app_mode_loader`, no solo `chrome_crashpad_handler`) y las instalaciones hermanas `chromium_headless_shell-*` / `ffmpeg-*` bajo `.local-browsers/` (el patrón `chromium-*` no las cazaba). Los 3 scripts modificados en el working tree se commitearon como `af48439` (`fix(23-01)`): firma por descubrimiento en `bundle-playwright.sh` y `release-macos.sh`, `verify-bundle.sh` comprueba la firma de los hermanos, se quita `--sequesterRsrc` del `ditto` (evita `__MACOSX/` y sus avisos), se pide el log detallado de `notarytool` al rechazar, y guard `"${array[@]+...}"` para no abortar con bash 3.2 y arrays vacíos. Además `.gitignore` ignora el recurso de icono de carpeta de macOS (`Icon?`) y se eliminó el `Icon\r` suelto. Commit pusheado a `origin/main`.
 
 ```
-v8.0 Progress: [          ] 0% — Alcance definido, Fase 23 sin empezar.
-Phase 23: [          ] 0/? planes (depende de ejecutar un release real completo)
+v8.0 Progress: [=         ] ~15% — Fase 23 arrancada; fixes de notarización commiteados, release real por re-lanzar.
+Phase 23: [=         ] 1/? planes (23-01 informal); faltan SC1–SC6 (dependen de re-lanzar el release real)
 ```
 
 ## Accumulated Context
@@ -80,19 +80,30 @@ Decisiones relevantes para v6.0:
 - [v7.0]: Fase 22 no necesitó ningún cambio de pipeline — el `.app` ya se notariza+staplea y se publica en un repo GitHub público desde la Fase 13. La fase fue verificación (`spctl`) y corrección de documentación contradictoria, no implementación nueva.
 - [v7.0]: Verificación de PUBLISH-02 con `spctl -a -vvv --type execute` contra un release YA publicado (no un build local) — `spctl` evalúa la firma/notarización del binario en sí, no el estado de confianza de la máquina, así que no hace falta un Mac limpio de verdad para simular lo que vería un descargador nuevo.
 - [v7.0]: Bugs de layout de `ContentView.swift` (resultCard no llenaba la ventana, etiquetas solapadas con pickers) corregidos fuera de fase, a petición explícita del usuario tras probar la Fase 21 — no forman parte de ningún requirement de v7.0, pero se atendieron porque el usuario las reportó en el flujo natural de la conversación.
+- [v8.0]: Fase 23 arrancada con un plan informal (`23-01`, sin `PLAN.md` formal) — los fixes salieron directamente de los rechazos reales de `notarytool` del release v2.1, no de un research/planning previo. Mismo criterio que la Fase 19 (fase pequeña, patrones ya establecidos, se documenta a posteriori).
+- [v8.0]: Firma de ejecutables de Chromium **por descubrimiento** (`find -type f -perm -u+x`), no por nombre fijo — `notarytool` rechaza CUALQUIER ejecutable sin hardened runtime aunque no se use en un build headless. `chrome_crashpad_handler` a mano dejaba sin firmar `web_app_shortcut_copier`/`app_mode_loader` y cualquier otro que Chrome for Testing añada aguas arriba.
+- [v8.0]: Firma de las instalaciones hermanas bajo `.local-browsers/` (`chromium_headless_shell-*`, `ffmpeg-*`) — árboles planos sin `.app` ni Framework; basta con firmar cada ejecutable suelto. El patrón `chromium-*` nunca las cazaba (`chromium_headless_shell` lleva guion bajo) y `ffmpeg-*` no se contemplaba.
+- [v8.0]: `ditto` de empaquetado sin `--sequesterRsrc` — un `.app` moderno totalmente firmado no usa resource forks HFS+; con `--sequesterRsrc`, `ditto` crea un `__MACOSX/` dentro del zip que `notarytool` intenta notarizar y genera decenas de avisos de ruido. Mismo comando que la guía oficial de notarización de Apple.
+- [v8.0]: Ante rechazo de notarización, `release-macos.sh` pide ahora `xcrun notarytool log <id>` explícitamente — el resumen de `submit --wait` solo trae `id`/`status`, no las razones del rechazo (el mensaje anterior decía "log completo arriba" y era falso).
+- [v8.0]: `"${array[@]+"${array[@]}"}"` en vez de `"${array[@]}"` a secas en `release-macos.sh` — bajo `set -u`, bash 3.2 (el de macOS de serie) trata un array vacío como variable no definida y aborta con "unbound variable". Invisible en `bash -n`/linter estático; solo se manifiesta en ejecución con un array genuinamente vacío.
+- [v8.0]: El recurso de icono de carpeta de macOS (`Icon\r`) se elimina y se añade `Icon?` al `.gitignore` — artefacto local sin valor en el repo.
 
 ### Pending Todos
 
-- Ejecutar un release real completo (`scripts/release-macos.sh <version>`) cuando el usuario esté listo — de ahí salen MAINT-01/02/04 de la Fase 23 (tamaño de build Release, notarización real con Chromium, `sparkle:phasedRolloutInterval` en el appcast si se usa `ROLLOUT_INTERVAL_SECONDS` en ese release).
-- Probar `--clipboard` contra un `pbcopy` real en el Mac (MAINT-03) — Fase 19 solo lo verificó con mocks.
-- Decidir si commitear `scripts/setup-sparkle-local.sh` (MAINT-05, pendiente desde la Fase 16).
-- Vigilar si reaparece el bug sospechado de Xcode 27.0 beta GOLD (MAINT-06) — ver Blockers/Concerns.
-- Recomendado no bloqueante: repetir `pytest tests/`/`pylint`/`mypy` de 14-01/15-01 en el `.venv` real del Mac.
+- **Re-lanzar `scripts/release-macos.sh <version>`** con los fixes de `af48439` y confirmar que `notarytool` acepta el bundle (cierra MAINT-02 / SC2). El release v2.1 anterior fue rechazado exactamente por lo que corrige ese commit.
+- Medir el tamaño del `.app` Release/archivado (con strip) y documentarlo en `RELEASING.md` junto a la cifra de 886 MB de Debug (MAINT-01 / SC1).
+- Probar `--clipboard` contra un `pbcopy` real en el Mac (MAINT-03 / SC3) — Fase 19 solo lo verificó con mocks.
+- Si se usa `ROLLOUT_INTERVAL_SECONDS` en ese release, confirmar `<sparkle:phasedRolloutInterval>` en el `appcast.xml` resultante (MAINT-04 / SC4, opcional).
+- Decidir si commitear `scripts/setup-sparkle-local.sh` (MAINT-05 / SC5, pendiente desde la Fase 16).
+- Vigilar si reaparece el bug sospechado de Xcode 27.0 beta GOLD durante ese build (MAINT-06 / SC6) — ver Blockers/Concerns.
+- Actualizar la tabla `### Estado v8.0` de `ROADMAP.md` (sigue marcando la Fase 23 como `Planning 0/?`, ya obsoleto tras `af48439`).
+- Recomendado no bloqueante: repetir `pytest tests/`/`pylint`/`mypy` de 14-01/15-01 en el `.venv` real del Mac (el `.venv` del repo es de macOS y no arranca en el sandbox Linux).
 - Recomendado no bloqueante: si el usuario quiere reabrir POLISH-02 en el futuro, probar `defaults write com.apple.dt.Xcode IDEPackageSupportUseBuiltinSCM 1` + reinicio de Xcode en su Mac real (ver `18-RESEARCH.md`).
 
 ### Blockers/Concerns
 
-- Ninguno bloqueante. v7.0 completo; v8.0 definido pero sin trabajo empezado (depende de un release real).
+- Ninguno bloqueante. v7.0 completo; v8.0 en curso — Fase 23 arrancada (`af48439` en `origin/main`), pero los 6 Success Criteria dependen de re-lanzar un release real que solo el usuario puede ejecutar en su Mac.
+- **Release v2.1 rechazado por `notarytool`** (release real ejecutado, `ec071d9` + `appcast.xml`): `chrome-headless-shell` y `ffmpeg-mac` (y los ejecutables sueltos de `Helpers/`) sin hardened runtime. Corregido en `af48439` pero **aún sin re-verificar contra `notarytool` real** — el zip de v2.1 publicado en GitHub Releases puede no estar notarizado; revisar antes de anunciarlo como estable.
 - **Bug nuevo sospechado de Xcode 27.0 beta GOLD** (encontrado tras el checkpoint de la Fase 21, el usuario había actualizado Xcode durante la sesión): `ExtractorApp/Info.plist` apareció con una clave `CFBundleIdentifier` corrupta — su valor no era un bundle identifier sino un mensaje de log interno de Sparkle (`/Users/runner/work/Sparkle/Sparkle/Sparkle/SPUStandardUserDriver.m:731 [Internal] Thread running at User-interactive quality-of-service class waiting on a lower QoS thread...`). No se identificó el mecanismo exacto (¿un build/index de Xcode 27 escribiendo salida de log en el sitio equivocado?). Revertido sin commitear (`git checkout -- Info.plist`) — no bloqueante porque no llegó a commitearse, pero **vigilar si reaparece** en futuros builds con Xcode 27 beta; si se repite, documentar como bug confirmado (mismo patrón que los bugs de Xcode 26.6 ya registrados en este proyecto) antes de considerar downgrade o workaround.
 - **Bug real de Xcode 26.6 confirmado** (relacionado con `POLISH-02`): `GENERATE_INFOPLIST_FILE = YES` no sintetiza NINGUNA clave `INFOPLIST_KEY_*` personalizada en el `Info.plist` generado (`SUFeedURL`, `SUPublicEDKey`, `NSHumanReadableCopyright` — las 3 ausentes, confirmado con DerivedData borrado por completo, no era caché). Efecto observado: "Buscar actualizaciones…" fallaba con `You must specify the URL of the appcast as the SUFeedURL key...`. Corregido con un `Info.plist` físico parcial (`ExtractorApp/Info.plist`, solo esas 3 claves) + `INFOPLIST_FILE` en build settings, combinado con `GENERATE_INFOPLIST_FILE = YES` (mecanismo de merge documentado por Apple) — verificado en Mac real: las claves aparecen en el `.app` compilado y "Buscar actualizaciones…" funciona sin error.
 - Notarización real con Chromium embebido (Paso 6 del checkpoint de la Fase 17) no se ha ejecutado todavía — deferida al próximo release real para no gastar cuota. El codesigning en sí ya está verificado (`codesign --verify --deep --strict` + `allow-jit` correctos), así que el riesgo residual es bajo, pero la notarización real (`notarytool submit --wait`) con un bundle de ~900MB no se ha probado y podría tardar sensiblemente más de lo habitual (ya documentado en `RELEASING.md` 3.5).
@@ -112,6 +123,6 @@ ROADMAP.md `## v8.0`.
 
 ## Session Continuity
 
-Last session: 2026-08-25T00:00:00Z
-Stopped at: **v8.0 definido** (alcance de la Fase 23 confirmado con el usuario), pero **sin research ni plan todavía** — no hay trabajo de código de v8.0 empezado, y no puede empezar del todo hasta que el usuario ejecute un release real. Secuencia de esta sesión: continuación de la sesión anterior que cerró v7.0 (Fases 19-22, con la Fase 22 ya commiteada por el usuario). El usuario pidió definir v8.0; se revisó `Deferred Items` y, a diferencia de v6.0/v7.0, no había backlog de funcionalidad nueva — solo ítems de mantenimiento/verificación que dependen de un release real. Presentadas las opciones (idea nueva / agrupar mantenimiento / nada por ahora); el usuario eligió agrupar. Propuesta la Fase 23 (6 Success Criteria, uno por ítem) y confirmada sin cambios. Documentado en ROADMAP.md (nueva sección `## v8.0`), PROJECT.md (Active requirements + Key Decisions + Current Milestone), REQUIREMENTS.md (nueva sección MAINT), MILESTONES.md (entrada v8.0), STATE.md. Nada de esto está commiteado todavía.
-Resume file: ninguno — v8.0 definido, pendiente commitear la definición y que el usuario ejecute un release real para poder avanzar la Fase 23
+Last session: 2026-08-27T00:00:00Z
+Stopped at: **Fase 23 arrancada**. La definición de v8.0 ya estaba commiteada de una sesión anterior (`b6bc9f9`; la nota de "nada commiteado" de este archivo estaba obsoleta y se ha corregido). Secuencia de esta sesión: el usuario pidió revisar el estado del proyecto. Se encontró que (a) se había ejecutado un release real v2.1 (`ec071d9`, `appcast.xml` con zip de 387 MB + firma EdDSA) cuya notarización `notarytool` rechazó por ejecutables sin hardened runtime, y (b) el working tree tenía 3 scripts modificados que corregían justo esos rechazos. Se validó su sintaxis (`bash -n` + `shellcheck -S warning`, se reformuló un comentario que empezaba por la palabra `shellcheck` y el linter tomaba por directiva), se limpió el `Icon\r` suelto + `.gitignore`, y se commiteó todo como `af48439` (`fix(23-01)`), pusheado a `origin/main` a petición del usuario. Después se actualizó este `STATE.md` para reflejar el trabajo commiteado.
+Resume file: ninguno — Fase 23 en curso. Siguiente acción: el usuario re-lanza `scripts/release-macos.sh <version>` en su Mac con los fixes de `af48439` y verifica los 6 Success Criteria (empezando por SC2: `notarytool` acepta). Los tests/pylint/mypy y la tabla `### Estado v8.0` de `ROADMAP.md` quedan pendientes de repasar.
