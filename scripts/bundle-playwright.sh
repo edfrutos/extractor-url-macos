@@ -63,7 +63,7 @@ fi
 
 # ── Quitar quarantine (builds de desarrollo) ─────────────────────────────────
 echo "Eliminando quarantine..."
-xattr -rd com.apple.quarantine "${CHROMIUM_DIR}" 2>/dev/null || true
+xattr -rd com.apple.quarantine "${LOCAL_BROWSERS}" 2>/dev/null || true
 
 # ── Codesigning bottom-up (BUNDLEJS-01) ──────────────────────────────────────
 # Orden obligatorio: Helpers -> crashpad_handler -> Framework -> .app raíz
@@ -116,12 +116,16 @@ if [[ -d "${HELPERS_DIR}" ]]; then
     fi
   done
 
-  # 2. crashpad_handler (ejecutable suelto, sin entitlements especiales).
-  if [[ -f "${HELPERS_DIR}/chrome_crashpad_handler" ]]; then
+  # 2. Cualquier ejecutable suelto en Helpers/ — por descubrimiento, no por
+  #    nombre fijo. Bug real (Fase 23): firmar solo chrome_crashpad_handler
+  #    a mano dejaba sin firmar web_app_shortcut_copier/app_mode_loader (y
+  #    cualquier otro que Chrome for Testing añada en el futuro), y
+  #    notarytool rechaza CUALQUIER ejecutable sin hardened runtime, se use
+  #    o no en un build headless.
+  find "${HELPERS_DIR}" -maxdepth 1 -type f -perm -u+x | while IFS= read -r loose_exe; do
     # shellcheck disable=SC2086
-    codesign --force $CSIGN_EXTRA --sign "${IDENTITY}" \
-      "${HELPERS_DIR}/chrome_crashpad_handler" 2>/dev/null || true
-  fi
+    codesign --force $CSIGN_EXTRA --sign "${IDENTITY}" "${loose_exe}" 2>/dev/null || true
+  done
 else
   echo "AVISO: ${HELPERS_DIR} no encontrado — omitiendo firma de Helpers" >&2
 fi
@@ -136,10 +140,26 @@ fi
 # shellcheck disable=SC2086
 codesign --force $CSIGN_EXTRA --sign "${IDENTITY}" "${CHROMIUM_APP}"
 
+# 5. Instalaciones hermanas bajo .local-browsers/ (chromium_headless_shell-*,
+#    ffmpeg-*, y cualquier otra que `playwright install chromium` traiga en
+#    el futuro) — bug real encontrado en notarización real (Fase 23):
+#    ninguna se firmaba porque el patrón `chromium-*` no cazaba
+#    `chromium_headless_shell-*` (guion bajo, no guion) y `ffmpeg-*` nunca
+#    se contempló; notarytool rechazó chrome-headless-shell y ffmpeg-mac
+#    con "The executable does not have the hardened runtime enabled".
+#    Son árboles planos (sin .app ni Framework) — basta con firmar cada
+#    ejecutable suelto que contengan.
+find "${LOCAL_BROWSERS}" -mindepth 1 -maxdepth 1 -type d ! -samefile "${CHROMIUM_DIR}" 2>/dev/null | while IFS= read -r sibling_dir; do
+  find "${sibling_dir}" -type f -perm -u+x | while IFS= read -r loose_exe; do
+    # shellcheck disable=SC2086
+    codesign --force $CSIGN_EXTRA --sign "${IDENTITY}" "${loose_exe}" 2>/dev/null || true
+  done
+done
+
 echo "Codesigning Chromium: OK"
 
 # ── Validación de salida (informativa, no bloqueante) ────────────────────────
-echo "Chromium bundle listo en: ${CHROMIUM_DIR}"
-du -sh "${CHROMIUM_DIR}" 2>/dev/null || true
+echo "Chromium bundle listo en: ${LOCAL_BROWSERS}"
+du -sh "${LOCAL_BROWSERS}" 2>/dev/null || true
 
 echo "=== bundle-playwright.sh: COMPLETADO ==="

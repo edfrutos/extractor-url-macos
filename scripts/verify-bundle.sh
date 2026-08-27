@@ -174,6 +174,25 @@ if [[ -d "${LOCAL_BROWSERS}" ]]; then
       fail "No se encontró ningún Helper (Renderer).app dentro de $(basename "${CHROMIUM_FRAMEWORK}")/Versions/Current/Helpers"
     fi
 
+    # Instalaciones hermanas bajo .local-browsers/ (chromium_headless_shell-*,
+    # ffmpeg-*) — bug real (Fase 23): quedaban completamente SIN firmar
+    # (ni siquiera ad-hoc) porque el patrón `chromium-*` no las cazaba;
+    # notarytool rechazó un release real por esto. Aquí solo se comprueba
+    # que tengan ALGUNA firma (ad-hoc vale en build local) — el hardened
+    # runtime real solo se aplica en el pipeline de release, no aquí.
+    SIBLING_UNSIGNED=0
+    while IFS= read -r sibling_dir; do
+      while IFS= read -r loose_exe; do
+        if ! codesign --verify "${loose_exe}" 2>/dev/null; then
+          fail "Sin firma de código: ${loose_exe#"${LOCAL_BROWSERS}"/}"
+          SIBLING_UNSIGNED=1
+        fi
+      done < <(find "${sibling_dir}" -type f -perm -u+x 2>/dev/null)
+    done < <(find "${LOCAL_BROWSERS}" -mindepth 1 -maxdepth 1 -type d ! -samefile "${CHROMIUM_DIR}" 2>/dev/null)
+    if [[ "${SIBLING_UNSIGNED}" -eq 0 ]]; then
+      ok "ejecutables de instalaciones hermanas (chromium_headless_shell/ffmpeg) firmados"
+    fi
+
     echo ""
     echo "=== BUNDLEJS-02: Fallback JS embebido funciona end-to-end ==="
     RENDER_TEST=$(PLAYWRIGHT_BROWSERS_PATH=0 PYTHONPATH="${VENDORED_LIB}" "${PYTHON}" -c "

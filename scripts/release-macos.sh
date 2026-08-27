@@ -299,24 +299,48 @@ _resign_bundled_chromium() {
 			fi
 		done
 
-		if [[ -f "${helpers_dir}/chrome_crashpad_handler" ]]; then
-			codesign --force --timestamp --options runtime --sign "${identity}" \
-				"${helpers_dir}/chrome_crashpad_handler"
-		fi
+		# Cualquier ejecutable suelto en Helpers/ — por descubrimiento, no por
+		# nombre fijo. Bug real (Fase 23): firmar solo chrome_crashpad_handler
+		# a mano dejaba sin firmar web_app_shortcut_copier/app_mode_loader (y
+		# cualquier otro que Chrome for Testing añada en el futuro) —
+		# notarytool rechazó el release real v2.1 por esto exactamente
+		# ("The executable does not have the hardened runtime enabled").
+		find "${helpers_dir}" -maxdepth 1 -type f -perm -u+x | while IFS= read -r loose_exe; do
+			codesign --force --timestamp --options runtime --sign "${identity}" "${loose_exe}"
+		done
 	fi
 
 	[[ -d "${framework}" ]] && codesign --force --timestamp --options runtime --sign "${identity}" "${framework}"
 	codesign --force --timestamp --options runtime --sign "${identity}" "${chromium_app}"
+
+	# Instalaciones hermanas bajo .local-browsers/ (chromium_headless_shell-*,
+	# ffmpeg-*, y cualquier otra que `playwright install chromium` traiga en
+	# el futuro) — mismo bug real: el patrón `chromium-*` no cazaba
+	# `chromium_headless_shell-*` (guion bajo, no guion) y `ffmpeg-*` nunca se
+	# contempló; notarytool rechazó chrome-headless-shell y ffmpeg-mac del
+	# release real v2.1. Son árboles planos (sin .app ni Framework) — basta
+	# con firmar cada ejecutable suelto que contengan.
+	find "${local_browsers}" -mindepth 1 -maxdepth 1 -type d ! -samefile "${chromium_dir}" 2>/dev/null | while IFS= read -r sibling_dir; do
+		find "${sibling_dir}" -type f -perm -u+x | while IFS= read -r loose_exe; do
+			codesign --force --timestamp --options runtime --sign "${identity}" "${loose_exe}"
+		done
+	done
 
 	echo "Re-sellando el .app completo tras modificar contenido firmado…"
 	codesign --force --deep --timestamp --options runtime --sign "${identity}" "${app_path}"
 }
 
 # ── Empaquetado (ditto, nunca zip/unzip genéricos — Pitfall 1) ─────────────
+# Sin --sequesterRsrc: un .app moderno completamente firmado no usa
+# resource forks HFS+ para nada — con --sequesterRsrc, ditto crea un
+# __MACOSX/ paralelo dentro del zip que notarytool intenta (y no puede)
+# notarizar, generando decenas de avisos "Unable to notarize __MACOSX/..."
+# de puro ruido (no bloquean por sí solos, pero mejor no generarlos).
+# Mismo comando que la guía oficial de notarización de Apple.
 _package() {
 	local zip_path="$1"
 	rm -f "${zip_path}"
-	ditto -c -k --sequesterRsrc --keepParent \
+	ditto -c -k --keepParent \
 		"${CACHE_DIR}/export/${SCHEME}.app" \
 		"${zip_path}"
 }
@@ -333,7 +357,17 @@ _notarize_and_staple() {
 	echo "${notary_output}"
 
 	if ! grep -q "status: Accepted" <<<"${notary_output}"; then
-		echo "Error: notarización no aceptada. Log completo arriba." >&2
+		# El resumen de `submit --wait` (arriba) NO trae las razones reales
+		# del rechazo, solo el id/status — hace falta pedir el log aparte.
+		# Bug real (Fase 23): el mensaje anterior decía "Log completo
+		# arriba", que era falso — el log de verdad no se pedía nunca.
+		local submission_id
+		submission_id="$(grep -m1 '^  id:' <<<"${notary_output}" | awk '{print $2}')"
+		echo "Error: notarización no aceptada." >&2
+		if [[ -n "${submission_id}" ]]; then
+			echo "Log detallado (razones exactas del rechazo):" >&2
+			xcrun notarytool log "${submission_id}" --keychain-profile "${NOTARY_PROFILE}" >&2 || true
+		fi
 		exit 1
 	fi
 
@@ -370,10 +404,18 @@ _archive_and_generate_appcast() {
 		echo "Rollout por fases activado: ${ROLLOUT_INTERVAL_SECONDS}s/grupo × 7 grupos (Sparkle los hardcodea) — ver RELEASING.md 3.6."
 	fi
 
+	# "${array[@]+"${array[@]}"}" (no "${array[@]}" a secas): bajo `set -u`,
+	# /bin/bash 3.2 (la versión que trae macOS de serie, sin actualizar por
+	# licencia GPLv2) trata un array vacío como variable no definida y
+	# aborta con "unbound variable" — bash 4.4+ no tiene este problema, pero
+	# no podemos asumir qué bash usa quien ejecute este script. Bug real
+	# encontrado en un release real (Fase 23): ni `bash -n` ni el linter
+	# estático lo detectan porque solo se manifiesta en tiempo de ejecución
+	# con un array genuinamente vacío.
 	"${SPARKLE_TOOLS_DIR}/bin/generate_appcast" \
 		--download-url-prefix "https://github.com/${GITHUB_REPO}/releases/download/v${VERSION}/" \
-		"${channel_args[@]}" \
-		"${rollout_args[@]}" \
+		"${channel_args[@]+"${channel_args[@]}"}" \
+		"${rollout_args[@]+"${rollout_args[@]}"}" \
 		-o "${ARCHIVE_DIR}/appcast.xml" \
 		"${ARCHIVE_DIR}"
 
@@ -415,11 +457,14 @@ _publish_release() {
 	fi
 
 	echo "Publicando release v${VERSION} en ${GITHUB_REPO}…"
+	# Ver el comentario sobre "${array[@]+"${array[@]}"}" en
+	# _archive_and_generate_appcast() — mismo bug real de bash 3.2 con
+	# arrays vacíos bajo `set -u`.
 	gh release create "v${VERSION}" "${zip_path}" \
 		--repo "${GITHUB_REPO}" \
 		--title "${title}" \
 		--notes "${notes}" \
-		"${gh_flags[@]}"
+		"${gh_flags[@]+"${gh_flags[@]}"}"
 }
 
 # ── Main ─────────────────────────────────────────────────────────────────

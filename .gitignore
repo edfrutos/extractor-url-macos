@@ -21,3 +21,6 @@ xcuserdata/
 
 # Python bundle build cache (tarballs ~24 MB cada uno, regenerados en build time)
 .build-cache/
+
+# Recurso de icono de carpeta de macOS
+Icon?
