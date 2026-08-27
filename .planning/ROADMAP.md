@@ -682,7 +682,9 @@ un `pbcopy` real). El usuario decidió explícitamente agruparlos en una
   5. Decisión tomada (commitear o no) sobre `scripts/setup-sparkle-local.sh`, pendiente desde el checkpoint de la Fase 16.
   6. Si el bug sospechado de Xcode 27.0 beta GOLD (corrupción de `Info.plist` con una clave `CFBundleIdentifier` conteniendo un log interno de Sparkle) reaparece durante este build, se documenta como confirmado; si no reaparece, se anota que no se repitió.
 
-**Plans**: por definir (research/planning pendiente)
+**Plans**:
+
+- [~] 23-01 (informal, sin PLAN.md) — commit `af48439` (`fix(23-01)`): corrige los rechazos reales de `notarytool` del release v2.1 (ejecutables de Chromium sin hardened runtime — sueltos en `Helpers/` y hermanos `chromium_headless_shell-*`/`ffmpeg-*`), quita `--sequesterRsrc` del `ditto`, pide el log detallado de `notarytool` al rechazar, guard `"${array[@]+...}"` para bash 3.2. Falta re-lanzar el release para verificar SC1–SC6.
 
 **UI hint**: no
 
@@ -690,4 +692,4 @@ un `pbcopy` real). El usuario decidió explícitamente agruparlos en una
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 23. Verificación de release real y cierre de deuda técnica | 0/? | Planning | — |
+| 23. Verificación de release real y cierre de deuda técnica | 0/? (23-01 informal en curso) | In progress | — |
