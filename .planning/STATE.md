@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v8.0
 milestone_name: (nombre por definir)
 status: complete
-last_updated: "2026-08-27T00:00:00.000Z"
-last_activity: 2026-08-27 -- v8.0 / Fase 23 CERRADA. SC1 (.app Release v2.1 = 882MB, en RELEASING.md 3.5), SC2 (release publico v2.1 notarizado+stapled, cero Mach-O sin hardened runtime), SC3 (--clipboard vs pbcopy real, aditivo con -o) y SC5 (setup-sparkle-local.sh ya trackeado) verificados. Pipeline endurecido (af48439) y tagging de release arreglado (cc1af03). Tag local v3.1 borrado; v2.1 se deja como esta. pytest 67/67, pylint 10.00/10, mypy limpio (sandbox). SC4/SC6 diferidos-condicionales a un release futuro. SUMMARY en .planning/phases/23-verificacion-release-real/23-01-SUMMARY.md. Commits af48439..cc1af03 en origin/main.
+last_updated: "2026-08-28T00:00:00.000Z"
+last_activity: 2026-08-28 -- Sin trabajo nuevo. Se propuso un release 2.2 de validacion y el usuario lo DESCARTO: no hay cambios de cara al usuario desde v2.1 (solo scripts/pipeline y docs), un 2.2 empujaria un auto-update vacio via Sparkle. Se validara el pipeline endurecido y SC4/SC6 en el proximo release con feature/fix real. Registrado en Current focus + Session Continuity (commit 5286ea5). --- (2026-08-27) v8.0 / Fase 23 CERRADA: SC1 (882MB), SC2 (v2.1 notarizado+stapled, cero Mach-O sin hardened runtime), SC3 (--clipboard vs pbcopy real), SC5 ya resuelto. Pipeline endurecido (af48439), tagging arreglado (cc1af03). pytest 67/67, pylint 10.00/10, mypy limpio.
 progress:
   total_phases: 1
   completed_phases: 1
@@ -135,7 +135,10 @@ Todos y Blockers/Concerns.
 
 ## Session Continuity
 
-Last session: 2026-08-27T00:00:00Z
+Last session: 2026-08-28T00:00:00Z
+Stopped at (2026-08-28): sesión de seguimiento sin trabajo de código. Se propuso lanzar un release `2.2` de validación del pipeline; el usuario lo descartó (sin cambios de cara al usuario desde `v2.1`). Documentación de planificación repasada y consistente; repo limpio y en sync. Commit `5286ea5`. Sin milestone activo — nada pendiente hasta que haya una feature/fix real que shippear.
+
+Sesión previa: 2026-08-27T00:00:00Z
 Stopped at: **v8.0 / Fase 23 CERRADA**. La sesión empezó con "revisa el estado del proyecto" y terminó ejecutando la Fase 23 entera. Secuencia: (1) se detectó que la definición de v8.0 ya estaba commiteada (`b6bc9f9`) y que había un release `v2.1` publicado (`ec071d9` + `appcast.xml`) con 3 scripts modificados sin commitear que corregían rechazos reales de `notarytool`; (2) validados (`bash -n` + `shellcheck`), limpiado `Icon\r` + `.gitignore`, commiteados como `af48439`; (3) el usuario verificó en su Mac contra el `.app` público de `v2.1`: SC1 (882 MB), SC2 (`spctl`/`stapler`/`codesign` + barrido hardened runtime OK), SC3 (`--clipboard` vs `pbcopy` real, aditivo); (4) SC5 ya resuelto (`5c3d663`); (5) tag `v3.1` espurio borrado, `v2.1` mal ubicado se deja por decisión del usuario, causa raíz arreglada para v2.2+ (`cc1af03`); (6) `pytest` 67/67 + `pylint` 10.00/10 + `mypy` limpio en venv temporal del sandbox; (7) SUMMARY escrito, ROADMAP/MILESTONES/STATE cerrados. Commits `af48439`, `e2962d6`, `3b2b3d8`, `d78784c`, `055e7bd`, `50383d4`, `cc1af03` + el de cierre, todos en `origin/main`.
 Resume file: ninguno — **sin milestone activo**.
 
