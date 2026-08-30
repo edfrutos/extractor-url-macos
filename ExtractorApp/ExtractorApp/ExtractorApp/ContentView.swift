@@ -95,7 +95,7 @@ struct ContentView: View {
                     ProgressView()
                         .scaleEffect(0.7)
                         .controlSize(.mini)
-                    Text("Extrayendo...")
+                    Text("Extrayendo…")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
@@ -169,12 +169,11 @@ struct ContentView: View {
                     }
                 } label: {
                     HStack(spacing: 6) {
-                        Image(
-                            systemName: vm.isExtracting
-                                ? "stop.circle"
-                                : "arrow.down.circle.fill"
-                        )
-                        .font(.system(size: 14, weight: .semibold))
+                        // El botón queda deshabilitado mientras `vm.isExtracting`
+                        // (más abajo), así que no hay acción de cancelar: mostrar
+                        // un icono de "stop" era un affordance que no responde.
+                        Image(systemName: "arrow.down.circle.fill")
+                            .font(.system(size: 14, weight: .semibold))
                         Text("Extraer")
                             .font(.system(size: 14, weight: .semibold))
                     }
@@ -201,7 +200,7 @@ struct ContentView: View {
                     .padding(.horizontal, -14)
 
                 optionRow(icon: "number", label: "Selector CSS") {
-                    TextField("article, .content\u{2026}", text: $vm.selectorCSS)
+                    TextField("article, .content…", text: $vm.selectorCSS)
                         .textFieldStyle(.plain)
                         .font(.system(size: 13, design: .monospaced))
                         .padding(.horizontal, 8)
@@ -218,7 +217,7 @@ struct ContentView: View {
                 Divider()
                     .padding(.horizontal, -14)
 
-                optionRow(icon: "clock", label: "Tiempo limite (s)") {
+                optionRow(icon: "clock", label: "Tiempo límite (s)") {
                     TextField("15", value: $vm.timeout, formatter: NumberFormatter())
                         .textFieldStyle(.plain)
                         .font(.system(size: 13, design: .monospaced))
@@ -335,7 +334,7 @@ struct ContentView: View {
     }
 
     private var resultHeaderLabel: String {
-        if vm.isExtracting { return "Extrayendo..." }
+        if vm.isExtracting { return "Extrayendo…" }
         if vm.resultContent != nil {
             let chars = vm.resultContent?.count ?? 0
             return "Resultado — \(chars.formatted()) caracteres"
@@ -350,7 +349,7 @@ struct ContentView: View {
             VStack(spacing: 16) {
                 ProgressView()
                     .scaleEffect(1.2)
-                Text("Extrayendo contenido\u{2026}")
+                Text("Extrayendo contenido…")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
             }
@@ -372,7 +371,7 @@ struct ContentView: View {
                         .foregroundStyle(.orange)
                         .font(.title3)
                     VStack(alignment: .leading, spacing: 2) {
-                        Text("Error de extraccion")
+                        Text("Error de extracción")
                             .font(.subheadline)
                             .bold()
                         Text(errorMsg)
@@ -383,11 +382,16 @@ struct ContentView: View {
                 }
                 if vm.isPythonPathError {
                     Button("Abrir Preferencias") {
-                        NSApp.sendAction(
-                            Selector(("showPreferencesWindow:")),
-                            to: nil,
-                            from: nil
-                        )
+                        // macOS 14+ renombró el selector a `showSettingsWindow:`;
+                        // `showPreferencesWindow:` dejó de responder. Se intenta
+                        // el nuevo y se cae al antiguo para macOS 13.
+                        if !NSApp.sendAction(
+                            Selector(("showSettingsWindow:")), to: nil, from: nil
+                        ) {
+                            NSApp.sendAction(
+                                Selector(("showPreferencesWindow:")), to: nil, from: nil
+                            )
+                        }
                     }
                     .buttonStyle(.link)
                     .font(.caption)
@@ -413,7 +417,7 @@ struct ContentView: View {
             Text("Introduce una URL y pulsa Extraer")
                 .font(.system(size: 13, weight: .medium))
                 .foregroundStyle(.secondary)
-            Text("El resultado aparecera aqui")
+            Text("El resultado aparecerá aquí")
                 .font(.caption)
                 .foregroundStyle(.secondary.opacity(0.7))
         }
@@ -475,7 +479,7 @@ struct ContentView: View {
 
 // MARK: - LogoMark
 
-/// Icono vectorial de la marca: nodo central con 3 ramas de extraccion.
+/// Icono vectorial de la marca: nodo central con 3 ramas de extracción.
 /// Pure SwiftUI Canvas — sin dependencia de assets externos.
 struct LogoMark: View {
     let size: CGFloat

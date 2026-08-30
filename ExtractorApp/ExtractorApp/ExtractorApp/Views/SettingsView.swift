@@ -24,11 +24,11 @@ struct SettingsView: View {
                 .padding(.bottom, 8)
 
             Form {
-                // MARK: Modo de operacion
+                // MARK: Modo de operación
                 Section {
                     OperatingModeRow(mode: vm.operatingMode)
                 } header: {
-                    Label("Modo de operacion", systemImage: "gearshape.2")
+                    Label("Modo de operación", systemImage: "gearshape.2")
                         .font(.headline)
                 }
 
@@ -57,13 +57,13 @@ struct SettingsView: View {
                     }
                 }
 
-                // MARK: Configuracion avanzada (colapsable, opcional)
+                // MARK: Configuración avanzada (colapsable, opcional)
                 Section {
                     Button {
                         withAnimation { advancedExpanded.toggle() }
                     } label: {
                         HStack {
-                            Label("Configuracion avanzada", systemImage: "wrench.and.screwdriver")
+                            Label("Configuración avanzada", systemImage: "wrench.and.screwdriver")
                                 .font(.headline)
                             Spacer()
                             Text(advancedExpanded ? "Ocultar" : "Mostrar")
@@ -77,17 +77,17 @@ struct SettingsView: View {
                     }
                     .buttonStyle(.plain)
 
-                    Text("Override manual de rutas para desarrollo o instalaciones no estandar. No es necesario para el uso normal — la app funciona con el Python incluido.")
+                    Text("Override manual de rutas para desarrollo o instalaciones no estándar. No es necesario para el uso normal — la app funciona con el Python incluido.")
                         .font(.caption2)
                         .foregroundStyle(.tertiary)
                 }
 
                 if advancedExpanded {
-                    // MARK: Rutas de ejecucion
+                    // MARK: Rutas de ejecución
                     Section {
                         PathInputRow(
-                            label: "Interprete Python",
-                            helpText: "Interprete Python nativo del Mac (no Rosetta). Selecciona el ejecutable del entorno virtual.",
+                            label: "Intérprete Python",
+                            helpText: "Intérprete Python nativo del Mac (no Rosetta). Selecciona el ejecutable del entorno virtual.",
                             placeholder: "/ruta/al/.venv/bin/python",
                             path: $vm.pythonPath,
                             validation: vm.pythonValidation,
@@ -103,14 +103,14 @@ struct SettingsView: View {
                             onPick: { vm.pickScriptPath() }
                         )
                     } header: {
-                        Label("Rutas de ejecucion", systemImage: "terminal")
+                        Label("Rutas de ejecución", systemImage: "terminal")
                             .font(.headline)
                     }
 
-                    // MARK: Verificacion
+                    // MARK: Verificación
                     Section {
                         VStack(alignment: .leading, spacing: 8) {
-                            Button("Verificar configuracion") {
+                            Button("Verificar configuración") {
                                 Task { await verifyConfiguration() }
                             }
                             .buttonStyle(.bordered)
@@ -121,7 +121,7 @@ struct SettingsView: View {
                                     ProgressView()
                                         .scaleEffect(0.7)
                                         .controlSize(.mini)
-                                    Text("Comprobando interprete...")
+                                    Text("Comprobando intérprete…")
                                         .font(.caption)
                                         .foregroundStyle(.secondary)
                                 }
@@ -133,8 +133,8 @@ struct SettingsView: View {
                                     .monospaced()
                                     .foregroundStyle(
                                         result.lowercased().contains("error")
-                                            ? AnyShapeStyle(Color.red)
-                                            : AnyShapeStyle(Color.secondary)
+                                            ? Color.red
+                                            : Color.secondary
                                     )
                                     .padding(.horizontal, 8)
                                     .padding(.vertical, 4)
@@ -144,7 +144,7 @@ struct SettingsView: View {
                         }
                         .padding(.vertical, 4)
                     } header: {
-                        Label("Verificacion", systemImage: "checkmark.seal")
+                        Label("Verificación", systemImage: "checkmark.seal")
                             .font(.headline)
                     }
 
@@ -197,7 +197,7 @@ struct SettingsView: View {
                             )
                             helpRow(
                                 icon: "2.circle.fill",
-                                title: "Localizar el interprete",
+                                title: "Localizar el intérprete",
                                 body: "Ejecuta 'which python' en Terminal con el venv activo para obtener la ruta exacta."
                             )
                             helpRow(
@@ -251,7 +251,23 @@ struct SettingsView: View {
 
                 do {
                     try process.run()
+
+                    // Un binario que cuelga bloquearía `waitUntilExit()`
+                    // indefinidamente y con él el spinner "Comprobando
+                    // intérprete…", sin forma de cancelar. Watchdog: a los
+                    // 10 s se envía SIGTERM y `waitUntilExit()` retorna;
+                    // eso deja `terminationReason == .uncaughtSignal`.
+                    let watchdog = DispatchWorkItem { process.terminate() }
+                    DispatchQueue.global().asyncAfter(deadline: .now() + 10, execute: watchdog)
+
                     process.waitUntilExit()
+                    watchdog.cancel()
+
+                    if process.terminationReason == .uncaughtSignal {
+                        cont.resume(returning: "Error: la verificación superó el tiempo límite (10 s) o el proceso terminó de forma anómala.")
+                        return
+                    }
+
                     let data = pipe.fileHandleForReading.readDataToEndOfFile()
                     let output = String(data: data, encoding: .utf8)?
                         .trimmingCharacters(in: .whitespacesAndNewlines)
@@ -405,7 +421,7 @@ private struct ValidationSummaryView: View {
                     Image(systemName: pythonValidation.systemImageName)
                         .foregroundStyle(pythonValidation.color)
                     VStack(alignment: .leading, spacing: 2) {
-                        Text("Interprete Python")
+                        Text("Intérprete Python")
                             .fontWeight(.medium)
                         Text(msg)
                             .foregroundStyle(.secondary)
@@ -465,7 +481,7 @@ private struct OperatingModeRow: View {
             guard let version else { return "Usando Python incluido" }
             return "Usando Python incluido (Python \(version))"
         case .override:
-            return "Usando configuracion manual"
+            return "Usando configuración manual"
         case .unavailable:
             return "Python no disponible"
         }
@@ -474,11 +490,11 @@ private struct OperatingModeRow: View {
     private var subtitle: String {
         switch mode {
         case .bundle:
-            return "No necesitas configurar nada — la extraccion funciona de serie."
+            return "No necesitas configurar nada — la extracción funciona de serie."
         case .override:
-            return "Sobrescribiendo el Python incluido con la ruta manual de Configuracion avanzada."
+            return "Sobrescribiendo el Python incluido con la ruta manual de Configuración avanzada."
         case .unavailable:
-            return "Configura una ruta manual en Configuracion avanzada para poder extraer contenido."
+            return "Configura una ruta manual en Configuración avanzada para poder extraer contenido."
         }
     }
 
@@ -512,7 +528,7 @@ private struct RuntimeUpdateRow: View {
             Text(statusText)
                 .font(.subheadline)
                 .foregroundStyle(statusColor)
-            Text("requests, beautifulsoup4, markdownify y trafilatura — el intérprete Python y Chromium se actualizan solo con un release completo de la app.")
+            Text("requests, beautifulsoup4, markdownify y trafilatura — el intérprete Python y Chromium solo se actualizan con un release completo de la app.")
                 .font(.caption2)
                 .foregroundStyle(.tertiary)
 
