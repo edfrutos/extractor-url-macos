@@ -46,7 +46,7 @@ def test_fetch_raw_js_mode_force_invoca_playwright_pese_a_html_rico(
         lambda url, **_kwargs: _FakeResponse(html_rico, url),
     )
     monkeypatch.setattr(
-        core, "_fetch_via_playwright", lambda _url, _timeout: html_forzado
+        core, "_fetch_via_playwright", lambda _url, _timeout, **_kw: html_forzado
     )
 
     result = core._fetch_raw("https://example.com/rico", use_cache=False, js_mode="force")
@@ -66,7 +66,7 @@ def test_fetch_raw_js_mode_force_sin_playwright_degrada_a_estatico(
         "get",
         lambda url, **_kwargs: _FakeResponse(html_rico, url),
     )
-    monkeypatch.setattr(core, "_fetch_via_playwright", lambda _url, _timeout: None)
+    monkeypatch.setattr(core, "_fetch_via_playwright", lambda _url, _timeout, **_kw: None)
 
     result = core._fetch_raw("https://example.com/rico", use_cache=False, js_mode="force")
 
@@ -119,7 +119,7 @@ def test_fetch_raw_js_mode_auto_preserva_heuristica(
         lambda url, **_kwargs: _FakeResponse(html_pobre, url),
     )
     monkeypatch.setattr(
-        core, "_fetch_via_playwright", lambda _url, _timeout: html_rico
+        core, "_fetch_via_playwright", lambda _url, _timeout, **_kw: html_rico
     )
 
     result = core._fetch_raw("https://example.com/spa", use_cache=False, js_mode="auto")
@@ -149,7 +149,7 @@ def test_fetch_raw_js_mode_force_bypassa_lectura_de_cache(
         "get",
         lambda url, **_kwargs: _FakeResponse(html_estatico, url),
     )
-    monkeypatch.setattr(core, "_fetch_via_playwright", lambda _url, _timeout: html_forzado)
+    monkeypatch.setattr(core, "_fetch_via_playwright", lambda _url, _timeout, **_kw: html_forzado)
 
     url = "https://example.com/cacheada"
 

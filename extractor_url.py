@@ -24,14 +24,31 @@ from core import (
     _fetch_raw,
     _extract_title,
     record_history_entry,
+    PlaywrightSession,
 )
+
+# Traduce el --type de la CLI (nombres cortos) al return_type de core.py.
+_CONTENT_TYPE_MAP = {
+    "text": "text",
+    "html": "html_string",
+    "markdown": "markdown_structure",
+}
+
+# Mensaje de error uniforme cuando extract_formatted_content devuelve None.
+_EXTRACTION_ERROR_MESSAGE = "No se pudo extraer el contenido de la URL."
 
 
 def _lookup_title(
-    url: str, timeout: int, use_cache: bool, js_mode: str = "auto",
+    url: str,
+    timeout: int,
+    use_cache: bool,
+    js_mode: str = "auto",
+    session: Optional[PlaywrightSession] = None,
 ) -> Optional[str]:
     """Extrae el <title> de una URL ya descargada (segunda llamada = hit de caché)."""
-    raw_result = _fetch_raw(url, timeout=timeout, use_cache=use_cache, js_mode=js_mode)
+    raw_result = _fetch_raw(
+        url, timeout=timeout, use_cache=use_cache, js_mode=js_mode, session=session,
+    )
     if raw_result is None:
         return None
     html_text, _ = raw_result
@@ -294,6 +311,34 @@ def _print_json_output(data: dict[str, Any]) -> None:
     sys.exit(0 if data.get("status") == "success" else 1)
 
 
+def _success_payload(  # pylint: disable=too-many-arguments,too-many-positional-arguments
+    url: str,
+    selector: Optional[str],
+    output_type: Optional[str],
+    result_str: str,
+    page_title: Optional[str],
+) -> dict[str, Any]:
+    """Construye el payload JSON de una extracción exitosa (--json/--batch)."""
+    return {
+        "status": "success",
+        "url": url,
+        "selector": selector,
+        "output_type": output_type,
+        "char_count": len(result_str),
+        "content": result_str,
+        "title": page_title,
+    }
+
+
+def _error_payload(url: str) -> dict[str, Any]:
+    """Construye el payload JSON de una extracción fallida (--json/--batch)."""
+    return {
+        "status": "error",
+        "url": url,
+        "error_message": _EXTRACTION_ERROR_MESSAGE,
+    }
+
+
 def _build_parser() -> argparse.ArgumentParser:
     """Construye el parser de argumentos de la CLI."""
     parser = argparse.ArgumentParser(description="Extractor de contenido web")
@@ -397,64 +442,53 @@ def main() -> None:
         _run_gui()
         return
 
-    content_type_map = {
-        "text": "text",
-        "html": "html_string",
-        "markdown": "markdown_structure",
-    }
-    content_type = content_type_map.get(args.type, "text")
+    content_type = _CONTENT_TYPE_MAP.get(args.type, "text")
     js_mode = _resolve_js_mode(args)
 
-    # Llamada a la función importada desde core.py
-    result = extract_formatted_content(
-        args.url,
-        return_type=content_type,
-        selector=args.selector,
-        timeout=args.timeout,
-        use_cache=args.use_cache,
-        js_mode=js_mode,
-        no_images=args.no_images,
-        no_links=args.no_links,
-    )
-
-    if result is None:
-        record_history_entry(
-            _history_entry(
-                args.url, args.type, args.selector, "error",
-                error_message="No se pudo extraer el contenido de la URL.",
-            )
+    with PlaywrightSession() as session:
+        # Llamada a la función importada desde core.py
+        result = extract_formatted_content(
+            args.url,
+            return_type=content_type,
+            selector=args.selector,
+            timeout=args.timeout,
+            use_cache=args.use_cache,
+            js_mode=js_mode,
+            no_images=args.no_images,
+            no_links=args.no_links,
+            session=session,
         )
+
+        if result is None:
+            record_history_entry(
+                _history_entry(
+                    args.url, args.type, args.selector, "error",
+                    error_message=_EXTRACTION_ERROR_MESSAGE,
+                )
+            )
+            if args.json:
+                _print_json_output(_error_payload(args.url))
+            sys.exit(1)
+
+        result_str = result if isinstance(result, str) else str(result)
+
+        if args.clipboard:
+            _copy_to_clipboard(result_str)
+
         if args.json:
-            _print_json_output({
-                "status": "error",
-                "url": args.url,
-                "error_message": "No se pudo extraer el contenido de la URL."
-            })
-        sys.exit(1)
-
-    result_str = result if isinstance(result, str) else str(result)
-
-    if args.clipboard:
-        _copy_to_clipboard(result_str)
-
-    if args.json:
-        page_title = _lookup_title(args.url, args.timeout, args.use_cache, js_mode=js_mode)
-        record_history_entry(
-            _history_entry(
-                args.url, args.type, args.selector, "success",
-                char_count=len(result_str), title=page_title,
+            page_title = _lookup_title(
+                args.url, args.timeout, args.use_cache, js_mode=js_mode, session=session,
             )
-        )
-        _print_json_output({
-            "status": "success",
-            "url": args.url,
-            "selector": args.selector,
-            "output_type": args.type,
-            "char_count": len(result_str),
-            "content": result_str,
-            "title": page_title,
-        })
-        return
+            record_history_entry(
+                _history_entry(
+                    args.url, args.type, args.selector, "success",
+                    char_count=len(result_str), title=page_title,
+                )
+            )
+            _print_json_output(
+                _success_payload(args.url, args.selector, args.type, result_str, page_title)
+            )
+            return
 
     record_history_entry(
         _history_entry(
@@ -483,12 +517,7 @@ def _run_batch(args: argparse.Namespace) -> None:
     independiente: si una falla, su línea refleja status "error" y el
     bucle continúa con la siguiente (nunca aborta las restantes).
     """
-    content_type_map = {
-        "text": "text",
-        "html": "html_string",
-        "markdown": "markdown_structure",
-    }
-    content_type = content_type_map.get(args.type, "text")
+    content_type = _CONTENT_TYPE_MAP.get(args.type, "text")
     js_mode = _resolve_js_mode(args)
 
     try:
@@ -498,54 +527,51 @@ def _run_batch(args: argparse.Namespace) -> None:
         print(f"Error al leer {args.batch}: {e}", file=sys.stderr)
         sys.exit(1)
 
-    for url in urls:
-        result = extract_formatted_content(
-            url,
-            return_type=content_type,
-            selector=args.selector,
-            timeout=args.timeout,
-            use_cache=args.use_cache,
-            js_mode=js_mode,
-            no_images=args.no_images,
-            no_links=args.no_links,
-        )
+    # Un único Chromium compartido entre todas las URLs del batch — evita
+    # relanzarlo por cada SPA que necesite el fallback Playwright.
+    with PlaywrightSession() as session:
+        for url in urls:
+            result = extract_formatted_content(
+                url,
+                return_type=content_type,
+                selector=args.selector,
+                timeout=args.timeout,
+                use_cache=args.use_cache,
+                js_mode=js_mode,
+                no_images=args.no_images,
+                no_links=args.no_links,
+                session=session,
+            )
 
-        if result is None:
+            if result is None:
+                record_history_entry(
+                    _history_entry(
+                        url, args.type, args.selector, "error",
+                        error_message=_EXTRACTION_ERROR_MESSAGE,
+                    )
+                )
+                print(json.dumps(_error_payload(url), ensure_ascii=False))
+                continue
+
+            result_str = result if isinstance(result, str) else str(result)
+
+            if args.clipboard:
+                _copy_to_clipboard(result_str)
+
+            page_title = _lookup_title(
+                url, args.timeout, args.use_cache, js_mode=js_mode, session=session,
+            )
+
             record_history_entry(
                 _history_entry(
-                    url, args.type, args.selector, "error",
-                    error_message="No se pudo extraer el contenido de la URL.",
+                    url, args.type, args.selector, "success",
+                    char_count=len(result_str), title=page_title,
                 )
             )
-            print(json.dumps({
-                "status": "error",
-                "url": url,
-                "error_message": "No se pudo extraer el contenido de la URL.",
-            }, ensure_ascii=False))
-            continue
-
-        result_str = result if isinstance(result, str) else str(result)
-
-        if args.clipboard:
-            _copy_to_clipboard(result_str)
-
-        page_title = _lookup_title(url, args.timeout, args.use_cache, js_mode=js_mode)
-
-        record_history_entry(
-            _history_entry(
-                url, args.type, args.selector, "success",
-                char_count=len(result_str), title=page_title,
-            )
-        )
-        print(json.dumps({
-            "status": "success",
-            "url": url,
-            "selector": args.selector,
-            "output_type": args.type,
-            "char_count": len(result_str),
-            "content": result_str,
-            "title": page_title,
-        }, ensure_ascii=False))
+            print(json.dumps(
+                _success_payload(url, args.selector, args.type, result_str, page_title),
+                ensure_ascii=False,
+            ))
 
 
 if __name__ == "__main__":

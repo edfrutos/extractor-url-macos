@@ -11,6 +11,7 @@ import hashlib
 import json
 import re
 import sys
+import time
 import unicodedata
 from pathlib import Path
 from typing import Optional, Union
@@ -60,9 +61,17 @@ _MIN_VISIBLE_TEXT_LENGTH = 100
 
 _CACHE_DIR = Path.home() / ".cache" / "extractor-url"
 
+# HTML cacheado más viejo que esto se trata como cache miss (y se borra al
+# detectarlo) — evita crecimiento indefinido de ~/.cache con páginas obsoletas.
+_CACHE_TTL_SECONDS = 7 * 24 * 3600
+
 # --- Historial de extracciones ---
 
 _HISTORY_FILE = _CACHE_DIR / "history.jsonl"
+
+# Tope de líneas conservadas en el historial — se trunca a las más recientes
+# tras cada escritura para que el archivo no crezca sin límite.
+_HISTORY_MAX_ENTRIES = 500
 
 
 def record_history_entry(entry: dict) -> None:
@@ -71,6 +80,19 @@ def record_history_entry(entry: dict) -> None:
         _CACHE_DIR.mkdir(parents=True, exist_ok=True)
         with _HISTORY_FILE.open("a", encoding="utf-8") as f:
             f.write(json.dumps(entry, ensure_ascii=False) + "\n")
+        _trim_history_file()
+    except OSError:
+        pass
+
+
+def _trim_history_file() -> None:
+    """Recorta el historial a las últimas _HISTORY_MAX_ENTRIES líneas."""
+    try:
+        with _HISTORY_FILE.open("r", encoding="utf-8") as f:
+            lines = f.readlines()
+        if len(lines) > _HISTORY_MAX_ENTRIES:
+            with _HISTORY_FILE.open("w", encoding="utf-8") as f:
+                f.writelines(lines[-_HISTORY_MAX_ENTRIES:])
     except OSError:
         pass
 
@@ -118,6 +140,7 @@ def _fetch_raw(
     timeout: int = 15,
     use_cache: bool = True,
     js_mode: str = "auto",
+    session: Optional["PlaywrightSession"] = None,
 ) -> Optional[tuple[str, str]]:
     """Descarga una URL (con caché opcional) y devuelve (html_text, url_final).
 
@@ -141,11 +164,14 @@ def _fetch_raw(
         _CACHE_DIR.mkdir(parents=True, exist_ok=True)
         if js_mode == "auto" and cache_file.exists():
             try:
-                with cache_file.open("r", encoding="utf-8") as f:
-                    cached_data = json.load(f)
-                    return cached_data["html"], cached_data["final_url"]
-            except (IOError, json.JSONDecodeError):
-                # Si hay un error al leer la caché, simplemente se ignora y se procede a la descarga
+                if time.time() - cache_file.stat().st_mtime > _CACHE_TTL_SECONDS:
+                    cache_file.unlink(missing_ok=True)
+                else:
+                    with cache_file.open("r", encoding="utf-8") as f:
+                        cached_data = json.load(f)
+                        return cached_data["html"], cached_data["final_url"]
+            except (IOError, OSError, json.JSONDecodeError):
+                # Si hay un error al leer/borrar la caché, se ignora y se procede a la descarga
                 pass
 
     # Lógica de descarga
@@ -163,16 +189,18 @@ def _fetch_raw(
         # Fallback JS (Fase 11) + control manual (Fase 15): "force" renderiza
         # siempre, "off" nunca, "auto" deja decidir a la heurística.
         if js_mode == "force":
-            rendered = _fetch_via_playwright(url, timeout)
+            rendered = _fetch_via_playwright(url, timeout, session=session)
             if rendered is not None:
                 html_text = rendered
         elif js_mode != "off" and _looks_insufficient(html_text):
-            rendered = _fetch_via_playwright(url, timeout)
+            rendered = _fetch_via_playwright(url, timeout, session=session)
             if rendered is not None:
                 html_text = rendered
 
-        # Guardar en caché si la descarga fue exitosa
-        if use_cache:
+        # Guardar en caché si la descarga fue exitosa. Solo en js_mode="auto":
+        # "force"/"off" no deben poder envenenar la caché que lee el modo
+        # automático con un resultado que ignoró deliberadamente la heurística.
+        if use_cache and js_mode == "auto":
             try:
                 with cache_file.open("w", encoding="utf-8") as f:
                     json.dump({"html": html_text, "final_url": final_url}, f)
@@ -190,18 +218,26 @@ def _fetch_raw(
         return None
 
 
-def _fetch_soup(
-    url: str, timeout: int = 15, use_cache: bool = True, js_mode: str = "auto",
-) -> Optional[BeautifulSoup]:
-    """Descarga una URL y devuelve un objeto BeautifulSoup."""
-    raw = _fetch_raw(url, timeout=timeout, use_cache=use_cache, js_mode=js_mode)
-    if raw is None:
-        return None
-    html_text, _ = raw
+def _parse_html(html_text: str) -> BeautifulSoup:
+    """Parsea HTML con lxml, con fallback a html.parser si lxml no está instalado."""
     try:
         return BeautifulSoup(html_text, "lxml")
     except FeatureNotFound:
         return BeautifulSoup(html_text, "html.parser")
+
+
+def _fetch_soup(
+    url: str, timeout: int = 15, use_cache: bool = True, js_mode: str = "auto",
+    session: Optional["PlaywrightSession"] = None,
+) -> Optional[BeautifulSoup]:
+    """Descarga una URL y devuelve un objeto BeautifulSoup."""
+    raw = _fetch_raw(
+        url, timeout=timeout, use_cache=use_cache, js_mode=js_mode, session=session,
+    )
+    if raw is None:
+        return None
+    html_text, _ = raw
+    return _parse_html(html_text)
 
 
 def _looks_insufficient(html_text: str) -> bool:
@@ -211,10 +247,7 @@ def _looks_insufficient(html_text: str) -> bool:
     SPA sin hidratar) da menos de _MIN_VISIBLE_TEXT_LENGTH caracteres de
     texto visible tras quitar _NOISE_TAGS.
     """
-    try:
-        soup = BeautifulSoup(html_text, "lxml")
-    except FeatureNotFound:
-        soup = BeautifulSoup(html_text, "html.parser")
+    soup = _parse_html(html_text)
     for tag in soup(_NOISE_TAGS):
         tag.decompose()
     body = soup.find("body") or soup
@@ -222,18 +255,82 @@ def _looks_insufficient(html_text: str) -> bool:
     return len(visible_text) < _MIN_VISIBLE_TEXT_LENGTH
 
 
-def _fetch_via_playwright(url: str, timeout: int) -> Optional[str]:
+class PlaywrightSession:
+    """Chromium headless reutilizable entre varias llamadas a _fetch_via_playwright.
+
+    Lanza el browser de forma perezosa en el primer uso (una sola vez) y lo
+    mantiene abierto hasta close()/__exit__ — evita relanzar Chromium por
+    cada URL de un --batch con varias SPA. Uso: `with PlaywrightSession() as
+    session:` y pasar `session=session` a extract_formatted_content().
+    """
+
+    def __init__(self) -> None:
+        self._playwright = None
+        self._browser = None
+
+    def _ensure_browser(self):
+        if self._browser is not None:
+            return self._browser
+        try:
+            from playwright.sync_api import sync_playwright  # pylint: disable=import-outside-toplevel
+        except ImportError:
+            return None
+        self._playwright = sync_playwright().start()
+        self._browser = self._playwright.chromium.launch()
+        return self._browser
+
+    def new_page(self):
+        """Crea una página en el browser compartido, o None si no disponible."""
+        browser = self._ensure_browser()
+        return browser.new_page() if browser is not None else None
+
+    def close(self) -> None:
+        """Cierra el browser y detiene Playwright, si se llegaron a lanzar."""
+        if self._browser is not None:
+            self._browser.close()
+        if self._playwright is not None:
+            self._playwright.stop()
+
+    def __enter__(self) -> "PlaywrightSession":
+        return self
+
+    def __exit__(self, *_exc_info: object) -> None:
+        self.close()
+
+
+def _fetch_via_playwright(
+    url: str, timeout: int, session: Optional[PlaywrightSession] = None,
+) -> Optional[str]:
     """Renderiza `url` con Chromium headless y devuelve el HTML final.
 
     Devuelve None si Playwright no está instalado (paquete pip ausente) o
     si los binarios del browser no están instalados (`playwright install
     chromium` nunca ejecutado) — ambos casos degradan, no son fatales.
+
+    Si se pasa `session` (PlaywrightSession), reutiliza su browser en vez de
+    lanzar uno nuevo — pensado para --batch con varias URLs consecutivas.
     """
     try:
         from playwright.sync_api import Error as PlaywrightError  # type: ignore[import-not-found]  # pylint: disable=import-outside-toplevel
         from playwright.sync_api import sync_playwright  # type: ignore[import-not-found]  # pylint: disable=import-outside-toplevel
     except ImportError:
         return None
+
+    if session is not None:
+        page = session.new_page()
+        if page is None:
+            return None
+        try:
+            page.goto(url, timeout=timeout * 1000, wait_until="networkidle")
+            return page.content()
+        except PlaywrightError as e:
+            print(
+                f"Playwright no disponible o falló el render de '{url}': {e}",
+                file=sys.stderr,
+            )
+            return None
+        finally:
+            page.close()
 
     try:
         with sync_playwright() as p:
@@ -344,8 +441,11 @@ def _extract_title(
             meta = trafilatura.extract_metadata(html_text)
             if meta and meta.title:
                 return meta.title.strip()
-        except Exception:  # pylint: disable=broad-exception-caught
-            pass
+        except Exception as e:  # pylint: disable=broad-exception-caught
+            print(
+                f"Aviso: fallo al leer metadata con trafilatura: {e}",
+                file=sys.stderr,
+            )
     return None
 
 
@@ -400,15 +500,18 @@ def extract_formatted_content(  # pylint: disable=too-many-arguments,too-many-po
     js_mode: str = "auto",
     no_images: bool = False,
     no_links: bool = False,
+    session: Optional["PlaywrightSession"] = None,
 ) -> Optional[Union[str, BeautifulSoup]]:
     """Extrae contenido formateado de una página web."""
     if return_type == "markdown_structure":
         return extract_html_structure_to_markdown(
             url, selector=selector, timeout=timeout, use_cache=use_cache, js_mode=js_mode,
-            no_images=no_images, no_links=no_links,
+            no_images=no_images, no_links=no_links, session=session,
         )
 
-    soup = _fetch_soup(url, timeout=timeout, use_cache=use_cache, js_mode=js_mode)
+    soup = _fetch_soup(
+        url, timeout=timeout, use_cache=use_cache, js_mode=js_mode, session=session,
+    )
     if soup is None:
         return None
 
@@ -423,19 +526,18 @@ def extract_html_structure_to_markdown(  # pylint: disable=too-many-arguments,to
     js_mode: str = "auto",
     no_images: bool = False,
     no_links: bool = False,
+    session: Optional["PlaywrightSession"] = None,
 ) -> Optional[str]:
     """Convierte el contenido principal de una URL a Markdown fiel."""
-    raw = _fetch_raw(url, timeout=timeout, use_cache=use_cache, js_mode=js_mode)
+    raw = _fetch_raw(
+        url, timeout=timeout, use_cache=use_cache, js_mode=js_mode, session=session,
+    )
     if raw is None:
         return None
 
     html_text, final_url = raw
 
-    try:
-        soup = BeautifulSoup(html_text, "lxml")
-    except FeatureNotFound:
-        soup = BeautifulSoup(html_text, "html.parser")
-
+    soup = _parse_html(html_text)
     soup = _clean_soup(soup, final_url)
     if no_images:
         _strip_images(soup)

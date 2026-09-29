@@ -74,7 +74,7 @@ def test_fetch_raw_usa_playwright_cuando_html_estatico_es_insuficiente(
         lambda url, **_kwargs: _FakeResponse(html_pobre, url),
     )
     monkeypatch.setattr(
-        core, "_fetch_via_playwright", lambda _url, _timeout: html_rico
+        core, "_fetch_via_playwright", lambda _url, _timeout, **_kw: html_rico
     )
 
     result = core._fetch_raw("https://example.com/spa", use_cache=False)
@@ -99,7 +99,7 @@ def test_fetch_raw_degrada_a_html_estatico_cuando_playwright_no_disponible(
         "get",
         lambda url, **_kwargs: _FakeResponse(html_pobre, url),
     )
-    monkeypatch.setattr(core, "_fetch_via_playwright", lambda _url, _timeout: None)
+    monkeypatch.setattr(core, "_fetch_via_playwright", lambda _url, _timeout, **_kw: None)
 
     result = core._fetch_raw("https://example.com/spa", use_cache=False)
 
