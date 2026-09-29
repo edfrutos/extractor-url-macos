@@ -35,12 +35,8 @@ struct ContentView: View {
                 // hueco vacío debajo dentro del área con scroll).
                 resultCard
                     .padding(.horizontal, 24)
-                    .padding(.top, 16)
-                    .frame(maxHeight: .infinity)
-
-                exportCard
-                    .padding(.horizontal, 24)
                     .padding(.vertical, 16)
+                    .frame(maxHeight: .infinity)
             }
         }
         .frame(minWidth: 560, minHeight: 480)
@@ -86,9 +82,13 @@ struct ContentView: View {
                 showingHistory = true
             } label: {
                 Image(systemName: "clock.arrow.circlepath")
+                    .font(.system(size: 14, weight: .medium))
+                    .frame(width: 22, height: 22)
             }
             .buttonStyle(.plain)
+            .contentShape(Rectangle())
             .help("Historial de extracciones")
+            .accessibilityLabel("Historial de extracciones")
 
             if vm.isExtracting {
                 HStack(spacing: 6) {
@@ -290,16 +290,65 @@ struct ContentView: View {
                 if vm.resultContent != nil && !vm.isExtracting {
                     Text(vm.outputType.uppercased())
                         .font(.system(size: 10, weight: .bold, design: .monospaced))
-                        .foregroundStyle(Color.accentColor)
+                        .foregroundStyle(.secondary)
                         .padding(.horizontal, 7)
                         .padding(.vertical, 3)
-                        .background(Color.accentColor.opacity(0.12))
+                        .background(Color(.controlBackgroundColor))
                         .clipShape(RoundedRectangle(cornerRadius: 4, style: .continuous))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 4, style: .continuous)
+                                .stroke(Color.accentColor.opacity(0.5), lineWidth: 1)
+                        )
                 }
             }
             .padding(.horizontal, 14)
             .padding(.top, 12)
             .padding(.bottom, 8)
+
+            // Fila de exportación — deliberadamente en la CABECERA de la
+            // tarjeta de resultado, no en una barra pegada al borde inferior
+            // de la ventana: layout.md (macOS) desaconseja controles
+            // críticos ahí porque la gente reubica ventanas de forma que el
+            // borde inferior queda fuera de pantalla.
+            HStack(spacing: 10) {
+                Image(systemName: "square.and.arrow.down")
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundStyle(vm.contentReady ? Color.accentColor : Color.secondary)
+
+                Text("Exportar como")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(.secondary)
+                    .fixedSize()
+
+                Picker("", selection: $vm.exportFormat) {
+                    Text("Markdown").tag("markdown")
+                    Text("HTML").tag("html")
+                    Text("PDF").tag("pdf")
+                }
+                .pickerStyle(.segmented)
+                .labelsHidden()
+                .disabled(!vm.contentReady)
+                .fixedSize()
+
+                Spacer()
+
+                Button {
+                    Task { await vm.export() }
+                } label: {
+                    HStack(spacing: 6) {
+                        Image(systemName: "square.and.arrow.down")
+                            .font(.system(size: 13, weight: .semibold))
+                        Text("Exportar")
+                            .font(.system(size: 13, weight: .semibold))
+                    }
+                }
+                .buttonStyle(.borderedProminent)
+                .accessibilityLabel("Exportar contenido")
+                .disabled(!vm.contentReady)
+                .animation(.easeInOut(duration: 0.2), value: vm.contentReady)
+            }
+            .padding(.horizontal, 14)
+            .padding(.bottom, 10)
 
             Divider()
                 .padding(.horizontal, -24)
@@ -381,7 +430,7 @@ struct ContentView: View {
                     }
                 }
                 if vm.isPythonPathError {
-                    Button("Abrir Preferencias") {
+                    Button("Abrir Preferencias…") {
                         // macOS 14+ renombró el selector a `showSettingsWindow:`;
                         // `showPreferencesWindow:` dejó de responder. Se intenta
                         // el nuevo y se cae al antiguo para macOS 13.
@@ -423,57 +472,6 @@ struct ContentView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .padding(.vertical, 40)
-    }
-
-    // MARK: - Export Card
-
-    private var exportCard: some View {
-        VStack(spacing: 0) {
-            Divider()
-
-            HStack(spacing: 10) {
-                Image(systemName: "square.and.arrow.up")
-                    .font(.system(size: 12, weight: .medium))
-                    .foregroundStyle(vm.contentReady ? Color.accentColor : Color.secondary)
-
-                Text("Exportar como")
-                    .font(.system(size: 12, weight: .semibold))
-                    .foregroundStyle(.secondary)
-                    .fixedSize()
-
-                Picker("", selection: $vm.exportFormat) {
-                    Text("Markdown").tag("markdown")
-                    Text("HTML").tag("html")
-                    Text("PDF").tag("pdf")
-                }
-                .pickerStyle(.segmented)
-                .labelsHidden()
-                .disabled(!vm.contentReady)
-                .fixedSize()
-
-                Spacer()
-
-                Button {
-                    Task { await vm.export() }
-                } label: {
-                    HStack(spacing: 6) {
-                        Image(systemName: "square.and.arrow.down")
-                            .font(.system(size: 13, weight: .semibold))
-                        Text("Exportar")
-                            .font(.system(size: 13, weight: .semibold))
-                    }
-                }
-                .buttonStyle(.borderedProminent)
-                .accessibilityLabel("Exportar contenido")
-                .disabled(!vm.contentReady)
-                .animation(.easeInOut(duration: 0.2), value: vm.contentReady)
-            }
-            .padding(.horizontal, 14)
-            .padding(.vertical, 10)
-            .padding(.top, 8)
-        }
-        .background(Color(.controlBackgroundColor))
-        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
     }
 }
 

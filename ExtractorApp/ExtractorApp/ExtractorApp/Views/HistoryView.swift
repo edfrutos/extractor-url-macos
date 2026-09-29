@@ -71,7 +71,7 @@ private struct HistoryRow: View {
 
                 if let outputType = entry.outputType {
                     Text(outputType.uppercased())
-                        .font(.system(size: 9, weight: .bold, design: .monospaced))
+                        .font(.system(size: 10, weight: .bold, design: .monospaced))
                         .foregroundStyle(.secondary)
                 }
             }
