@@ -22,6 +22,7 @@ final class ExtractionViewModel: ObservableObject {
     @Published var contentReady: Bool = false       // D-10: DOM del preview renderizado
     @Published var exportFormat: String = "markdown" // "markdown" | "html" | "pdf" (D-14)
     @Published var pageTitle: String? = nil           // Phase 6 — poblado al decodificar ExtractionResult
+    @Published var sourceURL: String? = nil           // URL real extraída — para <base href> en el preview/export HTML
 
     // Phase 6 (D-01): proveedor del WKWebView visible — registrado desde WebPreviewView.makeNSView
     var webViewProvider: (() -> WKWebView?)? = nil
@@ -29,7 +30,7 @@ final class ExtractionViewModel: ObservableObject {
     // D-05: computada, no @Published — se deriva de resultContent + outputType
     var htmlForPreview: String? {
         guard let content = resultContent else { return nil }
-        return generateHTML(content: content, outputType: outputType)
+        return generateHTML(content: content, outputType: outputType, sourceURL: sourceURL)
     }
 
     // MARK: - Private
@@ -44,6 +45,7 @@ final class ExtractionViewModel: ObservableObject {
         // D-09: limpiar estado anterior antes de lanzar
         errorMessage = nil
         resultContent = nil
+        sourceURL = nil
         isPythonPathError = false
         contentReady = false  // D-10
         isExtracting = true
@@ -66,6 +68,7 @@ final class ExtractionViewModel: ObservableObject {
                 await MainActor.run {
                     self?.resultContent = result?.content
                     self?.pageTitle = result?.title
+                    self?.sourceURL = result?.url
                     self?.isExtracting = false
                 }
             } catch {
@@ -88,21 +91,29 @@ final class ExtractionViewModel: ObservableObject {
 
     // MARK: - Phase 5: Export
 
-    /// HTML5 autocontenido: CSS inline + marked.js bundled, sin recursos externos.
-    func generateHTML(content: String, outputType: String) -> String {
+    /// HTML5 autocontenido: CSS inline + marked.js bundled, sin recursos externos
+    /// (salvo los del propio documento original en el caso "html" — ver más abajo).
+    ///
+    /// `sourceURL`, si se pasa, se inserta como `<base href>`: permite que
+    /// rutas relativas (`<link rel="stylesheet" href="/tema/estilo.css">`,
+    /// imágenes, etc.) se resuelvan contra el sitio real en vez de fallar.
+    /// Sin esto, un `--type html` completo (con su propio CSS del tema)
+    /// pierde ese CSS al previsualizarse/exportarse — el sitio deja de
+    /// centrarse/reescalar como en el original.
+    func generateHTML(content: String, outputType: String, sourceURL: String? = nil) -> String {
         let style = """
         <style>
         body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; \
         font-size: 16px; line-height: 1.6; max-width: 800px; margin: 0 auto; \
         padding: 1em; }
         pre, code { font-family: ui-monospace, monospace; font-size: 14px; }
+        img, table, video, iframe { max-width: 100%; height: auto; }
         @media (prefers-color-scheme: dark) { \
         body { background: #1e1e1e; color: #d4d4d4; } a { color: #6ab0f5; } }
         @media print { body { max-width: none; } }
         </style>
         """
 
-        let body: String
         switch outputType {
         case "markdown":
             // PITFALL 3: escapar \ luego ` luego $ EN ESE ORDEN antes de
@@ -111,34 +122,95 @@ final class ExtractionViewModel: ObservableObject {
                 .replacingOccurrences(of: "\\", with: "\\\\")
                 .replacingOccurrences(of: "`", with: "\\`")
                 .replacingOccurrences(of: "$", with: "\\$")
-            body = """
+            let body = """
             <div id="content"></div>
             <script>\(Self.markedJS)</script>
             <script>document.getElementById('content').innerHTML = \
             marked.parse(`\(escaped)`);</script>
             """
+            return Self.wrapInTemplate(body: body, style: style, sourceURL: sourceURL)
+
         case "html":
-            // El contenido ya es HTML saneado por el extractor Python.
-            body = content
+            // `--type html` sin selector devuelve el documento COMPLETO
+            // (core.py: "HTML completo" — head, CSS/scripts propios de la
+            // página incluidos). Envolverlo en OTRO <html><head><body>
+            // anidaría dos documentos y le impondría nuestro CSS de lectura
+            // por encima del diseño real del sitio (rompe layouts
+            // deliberadamente a ancho completo, p.ej. cabeceras/hero).
+            // En vez de eso: si ya es un documento completo, solo le
+            // añadimos <base href> (para que sus rutas relativas — CSS,
+            // imágenes — carguen contra el sitio real) y el viewport meta
+            // si falta. Su propio CSS hace el resto — igual que en el
+            // navegador original.
+            if let injected = Self.injectMetaIntoExistingHead(sourceURL: sourceURL, into: content) {
+                return injected
+            }
+            // Fragmento (p.ej. `--selector` acotó la extracción, sin
+            // <head> propio) — usar la plantilla de lectura normal.
+            return Self.wrapInTemplate(body: content, style: style, sourceURL: sourceURL)
+
         default:
             let escaped = content
                 .replacingOccurrences(of: "&", with: "&amp;")
                 .replacingOccurrences(of: "<", with: "&lt;")
-            body = "<pre>\(escaped)</pre>"
+            return Self.wrapInTemplate(body: "<pre>\(escaped)</pre>", style: style, sourceURL: sourceURL)
         }
+    }
 
+    /// Escapa `sourceURL` para insertarlo con seguridad dentro de un atributo
+    /// HTML (`href="..."`) — defensa mínima si la URL contiene comillas.
+    private static func attributeSafe(_ url: String) -> String {
+        url.replacingOccurrences(of: "&", with: "&amp;")
+            .replacingOccurrences(of: "\"", with: "&quot;")
+    }
+
+    private static func wrapInTemplate(body: String, style: String, sourceURL: String?) -> String {
+        let baseTag = sourceURL.map { "<base href=\"\(attributeSafe($0))\">\n" } ?? ""
         return """
         <!DOCTYPE html>
         <html>
         <head>
         <meta charset="utf-8">
-        \(style)
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        \(baseTag)\(style)
         </head>
         <body>
         \(body)
         </body>
         </html>
         """
+    }
+
+    /// Si `html` ya es un documento completo con su propio `<head>`, le
+    /// inserta `<base href>` (si hay `sourceURL`) y el viewport meta (si
+    /// falta) — sin tocar nada más del documento. Es una única inserción
+    /// anclada justo tras `<head ...>`, no un recorte/reemplazo que
+    /// dependa de encontrar `</body>`/`</html>` en el sitio correcto, así
+    /// que no hay riesgo de confundir con texto/código que contenga
+    /// literalmente "<head>" o "<body>" en el contenido visible de la
+    /// página. Devuelve `nil` si no hay `<head>` (documento sin head, o
+    /// `content` es en realidad un fragmento).
+    private static func injectMetaIntoExistingHead(sourceURL: String?, into html: String) -> String? {
+        guard let headOpenRange = html.range(
+            of: "(?i)<head[^>]*>", options: .regularExpression
+        ) else {
+            return nil
+        }
+
+        var insertion = ""
+        if let sourceURL,
+           html.range(of: "(?i)<base\\b", options: .regularExpression) == nil {
+            insertion += "<base href=\"\(attributeSafe(sourceURL))\">\n"
+        }
+        if html.range(of: "(?i)<meta[^>]+name=[\"']viewport[\"']", options: .regularExpression) == nil {
+            insertion += "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n"
+        }
+
+        guard !insertion.isEmpty else { return html }
+
+        var result = html
+        result.insert(contentsOf: insertion, at: headOpenRange.upperBound)
+        return result
     }
 
     /// D-14: despacha la exportación según exportFormat. "pdf" llega en Phase 6.
@@ -183,7 +255,7 @@ final class ExtractionViewModel: ObservableObject {
     @MainActor
     func exportHTML() async {
         guard let content = resultContent else { return }
-        let html = generateHTML(content: content, outputType: outputType)
+        let html = generateHTML(content: content, outputType: outputType, sourceURL: sourceURL)
 
         let panel = NSSavePanel()
         panel.allowedContentTypes = [.html]
