@@ -3,20 +3,12 @@
     <channel>
         <title>ExtractorApp</title>
         <item>
-            <title>2.1</title>
-            <pubDate>Tue, 25 Aug 2026 20:42:25 +0200</pubDate>
-            <sparkle:version>10</sparkle:version>
-            <sparkle:shortVersionString>2.1</sparkle:shortVersionString>
+            <title>2.2</title>
+            <pubDate>Wed, 30 Sep 2026 10:33:31 +0200</pubDate>
+            <sparkle:version>12</sparkle:version>
+            <sparkle:shortVersionString>2.2</sparkle:shortVersionString>
             <sparkle:minimumSystemVersion>13.5</sparkle:minimumSystemVersion>
-            <enclosure url="https://github.com/edfrutos/extractor-url-macos/releases/download/v2.1/ExtractorApp-2.1.zip" length="387551220" type="application/octet-stream" sparkle:edSignature="QsAuM4veCNae0koSuYwSd4sePrRc1m04n4ykXOo8Sw0nFoWOXj/qVFy5mdUvqv78/LTuVVk/Rc+xDMFzN2b2Bw=="/>
-        </item>
-        <item>
-            <title>1.0</title>
-            <pubDate>Thu, 20 Aug 2026 11:35:51 +0200</pubDate>
-            <sparkle:version>6</sparkle:version>
-            <sparkle:shortVersionString>1.0</sparkle:shortVersionString>
-            <sparkle:minimumSystemVersion>13.5</sparkle:minimumSystemVersion>
-            <enclosure url="https://github.com/edfrutos/extractor-url-macos/releases/download/v2.1/ExtractorApp-1.0.zip" length="77836811" type="application/octet-stream"/>
+            <enclosure url="https://github.com/edfrutos/extractor-url-macos/releases/download/v2.2/ExtractorApp-2.2.zip" length="387605591" type="application/octet-stream" sparkle:edSignature="GO9QUXlaQhgi8jqyqnLtoFPP7d+43WcuNvRSQgA8fxMxjDNowzrK0rlYog2wcwhuGmwxMZw+Dhlpaupdp6J3DQ=="/>
         </item>
     </channel>
 </rss>
