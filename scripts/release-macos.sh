@@ -46,6 +46,17 @@ set -euo pipefail
 # ── Configuración ──────────────────────────────────────────────────────────
 NOTARY_PROFILE="${NOTARY_PROFILE:-ExtractorApp-Notary}"
 DEVELOPER_TEAM_ID="${DEVELOPER_TEAM_ID:-V29BTBRY6G}"
+# SHA-1 del certificado Developer ID Application a usar, NUNCA por nombre:
+# el Keychain de este Mac tiene dos certificados distintos con el mismo
+# common name "Developer ID Application: Eugenio de Frutos Sanchez
+# (V29BTBRY6G)" (uno de validez normal de 5 años, otro reciente de ~4 meses
+# generado más tarde) — codesign no puede desambiguar por nombre y falla
+# con "ambiguous" en cualquier firmado manual (detectado en el intento de
+# release 2.2, 2026-09-29). El hash fija sin ambigüedad cuál usar,
+# independientemente de cuál elija automáticamente `xcodebuild
+# -exportArchive` (el re-sellado final de cada función de re-firma
+# sobrescribe esa firma inicial de todas formas).
+CODESIGN_IDENTITY="${CODESIGN_IDENTITY:-68EB89B63EB50E9229ED253962950A8D9D13EBF0}"
 GITHUB_REPO="edfrutos/extractor-url-macos"
 SCHEME="ExtractorApp"
 
@@ -226,12 +237,7 @@ _resign_bundled_python() {
 		return 0
 	fi
 
-	local identity
-	identity="$(codesign -dv --verbose=4 "${app_path}" 2>&1 | sed -n 's/^Authority=//p' | head -1)"
-	if [[ -z "${identity}" ]]; then
-		echo "Error: no se pudo determinar la identidad de firma Developer ID del .app exportado." >&2
-		exit 1
-	fi
+	local identity="${CODESIGN_IDENTITY}"
 
 	echo "Re-firmando el runtime Python embebido con hardened runtime (identidad: ${identity})…"
 
@@ -267,12 +273,7 @@ _resign_bundled_chromium() {
 		return 0
 	fi
 
-	local identity
-	identity="$(codesign -dv --verbose=4 "${app_path}" 2>&1 | sed -n 's/^Authority=//p' | head -1)"
-	if [[ -z "${identity}" ]]; then
-		echo "Error: no se pudo determinar la identidad de firma Developer ID del .app exportado." >&2
-		exit 1
-	fi
+	local identity="${CODESIGN_IDENTITY}"
 
 	local chromium_dir
 	chromium_dir="$(find "${local_browsers}" -maxdepth 1 -type d -name "chromium-*" | head -1)"
