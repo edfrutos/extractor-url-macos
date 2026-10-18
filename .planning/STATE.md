@@ -1,10 +1,10 @@
 ---
 gsd_state_version: 1.0
-milestone: v8.0
+milestone: (ninguno activo — v2.2 publicado fuera de este tracking)
 milestone_name: (nombre por definir)
 status: complete
-last_updated: "2026-08-28T00:00:00.000Z"
-last_activity: 2026-08-28 -- Sin trabajo nuevo. Se propuso un release 2.2 de validacion y el usuario lo DESCARTO: no hay cambios de cara al usuario desde v2.1 (solo scripts/pipeline y docs), un 2.2 empujaria un auto-update vacio via Sparkle. Se validara el pipeline endurecido y SC4/SC6 en el proximo release con feature/fix real. Registrado en Current focus + Session Continuity (commit 5286ea5). --- (2026-08-27) v8.0 / Fase 23 CERRADA: SC1 (882MB), SC2 (v2.1 notarizado+stapled, cero Mach-O sin hardened runtime), SC3 (--clipboard vs pbcopy real), SC5 ya resuelto. Pipeline endurecido (af48439), tagging arreglado (cc1af03). pytest 67/67, pylint 10.00/10, mypy limpio.
+last_updated: "2026-10-18T00:00:00.000Z"
+last_activity: 2026-10-18 -- Sesion de "revisa el estado del repo". Se detecto que origin/main tenia 6 commits (f49a41f..6c52f4b) no reflejados aqui: release v2.2 (30-sep-2026, chore(release) 0255c82) con fix de cache/TTL de Playwright en core.py (f49a41f), ajustes de accesibilidad/HIG en SwiftUI (5f937cd), resolucion de assets del preview HTML contra la URL real (d65e38e), pineo de identidad Developer ID por hash en release-macos.sh (afda183) y icono de app nuevo (6c52f4b). Ninguno de estos commits tiene SUMMARY/fase en .planning -- se hicieron fuera de este flujo de tracking. Se hizo `git pull --ff-only` (sin conflictos) y se commiteo un WIP que estaba sin commitear en Services/PythonBridge.swift+RuntimeUpdater.swift (movidos a Models/Services/, terminacion de proceso escalonada SIGINT->SIGTERM->SIGKILL, limite configurable de stdout, logging debug opcional) como 0b6b26c. --- (2026-08-28) Sin trabajo nuevo. Se propuso un release 2.2 de validacion y el usuario lo DESCARTO entonces: no habia cambios de cara al usuario desde v2.1. Ese 2.2 descartado NO es el mismo que el v2.2 real publicado despues (30-sep) con fixes reales. --- (2026-08-27) v8.0 / Fase 23 CERRADA: SC1 (882MB), SC2 (v2.1 notarizado+stapled, cero Mach-O sin hardened runtime), SC3 (--clipboard vs pbcopy real), SC5 ya resuelto. Pipeline endurecido (af48439), tagging arreglado (cc1af03). pytest 67/67, pylint 10.00/10, mypy limpio.
 progress:
   total_phases: 1
   completed_phases: 1
@@ -20,7 +20,7 @@ progress:
 See: .planning/PROJECT.md (updated 2026-08-25)
 
 **Core value:** Convertir páginas web en Markdown útil y limpio de forma fiable, repetible y sin depender de servicios externos.
-**Current focus:** v6.0, v7.0 y **v8.0 completos y cerrados**. No hay milestone activo ni backlog de funcionalidad nueva. Un release `2.2` de pura validación se descartó explícitamente (2026-08-28) — no hay cambios de cara al usuario desde `v2.1`. El pipeline endurecido y SC4/SC6 se validarán en el próximo release que lleve una feature o fix real.
+**Current focus:** v6.0, v7.0 y v8.0 completos y cerrados. Un **v2.2 real** se publicó el 2026-09-30 (`0255c82`, tras `f49a41f`/`5f937cd`/`d65e38e`/`afda183`, más el icono nuevo en `6c52f4b`) con fixes de caché/TTL de Playwright, accesibilidad/HIG en SwiftUI, resolución de assets del preview y pineo de identidad de firma — **fuera de este flujo de tracking** (sin research/plan/SUMMARY en `.planning/phases/`). No hay milestone GSD activo. Pendiente de esta sesión (2026-10-18): confirmar si SC4 (rollout en appcast) y SC6 (bug Info.plist Xcode 27) de la Fase 23 se validaron en este v2.2 — no hay registro de ello.
 
 ## Current Position
 
@@ -89,7 +89,11 @@ Decisiones relevantes para v6.0:
 
 ### Pending Todos
 
-Nada activo — v8.0 cerrado. Ítems que reaparecen cuando se lance el próximo release real:
+- **Nuevo (2026-10-18)**: confirmar contra el `.app` real de `v2.2` si SC4 (`<sparkle:phasedRolloutInterval>` en `appcast.xml`) y SC6 (bug `CFBundleIdentifier`/Xcode 27 beta) quedaron validados — el `appcast.xml` de `v2.2` en `origin/main` no tiene `phasedRolloutInterval`, así que SC4 sigue sin ejercitarse salvo que se confirme lo contrario.
+- **Nuevo (2026-10-18)**: documentar retroactivamente (o al menos resumir) el v2.2 real (`f49a41f`..`6c52f4b`) en `ROADMAP.md`/`MILESTONES.md` — se publicó sin pasar por este flujo de research/plan/SUMMARY.
+- **Nuevo (2026-10-18)**: verificar en Xcode real (no se puede en este sandbox Linux) que `PythonBridge.swift`/`RuntimeUpdater.swift` compilan tras moverse a `Models/Services/` y correr `PythonBridgeTests.swift` — commiteado como `0b6b26c` sin build local.
+
+Ítems previos que reaparecen cuando se lance el próximo release real:
 
 - **SC4 (MAINT-04, condicional)**: si el release usa `ROLLOUT_INTERVAL_SECONDS`, confirmar `<sparkle:phasedRolloutInterval>` en el `appcast.xml` resultante.
 - **SC6 (MAINT-06, condicional)**: durante el build, vigilar si reaparece el bug de `Info.plist` de Xcode 27 beta (`CFBundleIdentifier` con un log de Sparkle) — ver Blockers/Concerns.
@@ -135,7 +139,10 @@ Todos y Blockers/Concerns.
 
 ## Session Continuity
 
-Last session: 2026-08-28T00:00:00Z
+Last session: 2026-10-18T00:00:00Z
+Stopped at (2026-10-18): sesión de auditoría de estado del repo (sin milestone activo). `main` local estaba 6 commits detrás de `origin/main` (v2.2 real, publicado 2026-09-30, fuera de este tracking); se hizo `git pull --ff-only` sin conflictos. Había un WIP sin commitear (`PythonBridge.swift`/`RuntimeUpdater.swift` movidos a `Models/Services/`, con terminación de proceso escalonada y límite de stdout) — se revisó, se confirmó que el proyecto usa grupos sincronizados de Xcode (el movimiento no requiere tocar `project.pbxproj`) y se commiteó como `0b6b26c`. No se pudo compilar/testear en este sandbox Linux — pendiente verificación en Xcode real. Quedan abiertos: confirmar SC4/SC6 contra v2.2, y decidir si documentar v2.2 retroactivamente en ROADMAP/MILESTONES. También quedan sin decisión los directorios nuevos sin trackear (`.agents/`, `.augment/`, `.claude/`, `.trae/`, `skills/`, `skills-lock.json`) — parecen config de herramientas, no se tocaron.
+
+Sesión previa: 2026-08-28T00:00:00Z
 Stopped at (2026-08-28): sesión de seguimiento sin trabajo de código. Se propuso lanzar un release `2.2` de validación del pipeline; el usuario lo descartó (sin cambios de cara al usuario desde `v2.1`). Documentación de planificación repasada y consistente; repo limpio y en sync. Commit `5286ea5`. Sin milestone activo — nada pendiente hasta que haya una feature/fix real que shippear.
 
 Sesión previa: 2026-08-27T00:00:00Z
