@@ -43,9 +43,22 @@
 		7B5C0001FDAB1D900884317 /* ExtractorAppTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ExtractorAppTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		C51F44011A2B3C4D5E6F7A01 /* Exceptions for "ExtractorApp" folder in "ExtractorApp" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 694A971A2FDAB1D900884317 /* ExtractorApp */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		694A971D2FDAB1D900884317 /* ExtractorApp */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				C51F44011A2B3C4D5E6F7A01 /* Exceptions for "ExtractorApp" folder in "ExtractorApp" target */,
+			);
 			path = ExtractorApp;
 			sourceTree = "<group>";
 		};
@@ -229,6 +242,7 @@
 		};
 		C51F43FDD6135E95AF9108CD /* Bundle Playwright Chromium */ = {
 			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
 			buildActionMask = 2147483647;
 			files = (
 			);
