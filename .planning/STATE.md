@@ -92,7 +92,7 @@ Decisiones relevantes para v6.0:
 - ~~Documentar retroactivamente el v2.2 real (`f49a41f`..`6c52f4b`) en `ROADMAP.md`/`MILESTONES.md`~~ — **HECHO 2026-10-18**: añadido como v9.0 en ambos ficheros, marcado explícitamente como sin fase/REQ-IDs formales (trabajo hecho fuera de este flujo GSD).
 - ~~Verificar en Xcode real que `PythonBridge.swift`/`RuntimeUpdater.swift` compilan tras moverse a `Models/Services/` (commit `0b6b26c`)~~ — **CERRADO 2026-10-18**: confirmado por el usuario con un build real en Xcode (captura de la app funcionando, diálogo de Sparkle "You're up to date! ExtractorApp 2.2") que ya incluía `0b6b26c`. No se corrió explícitamente `PythonBridgeTests.swift` en ese build, pero el build compiló y la app arrancó sin errores.
 
-- ~~Confirmar build limpio en Xcode real de `6ba4cc8` + `68f4d44` + `3a24cec` (fixes de build/Swift 6)~~ — **CERRADO 2026-10-18**: confirmado por el usuario, build limpio sin alertas. Queda opcional: comprobar si "Enable Dead Code Stripping" se guardó (`project.pbxproj` no contiene `DEAD_CODE_STRIPPING`; puede ser el valor por defecto).
+- ~~Confirmar build limpio en Xcode real de `6ba4cc8` + `68f4d44` + `3a24cec` (fixes de build/Swift 6)~~ — **CERRADO 2026-10-18**: confirmado por el usuario, build limpio sin alertas. "Enable Dead Code Stripping" no se había guardado (Build Settings mostraba "No" por defecto); activado en `567ee3f` a nivel de proyecto y verificado por el usuario con build limpio y la app funcionando.
 - ~~Pushear `0b6b26c`..`523556d`~~ — **HECHO 2026-10-18**.
 
 Ítems previos que reaparecen cuando se lance el próximo release real:
