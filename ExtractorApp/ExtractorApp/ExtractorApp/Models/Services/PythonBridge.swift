@@ -1,17 +1,22 @@
 import Foundation
 import SwiftUI
+import Darwin
 
 /// Puente Foundation.Process() que ejecuta el CLI Python de forma asíncrona.
 ///
 /// - Captura stdout/stderr con readabilityHandler en background DispatchQueue
 ///   para evitar deadlock con buffers grandes (trafilatura produce mucho texto).
 /// - Timeout Swift real: si el proceso no termina en `timeout + 5` segundos,
-///   se mata y se lanza ExtractionError.timeout.
+///   se envían señales escalonadas hasta forzar su finalización.
 /// - Task.detached en el call-site (ExtractionViewModel) garantiza que
 ///   el MainActor no se bloquea en ningún momento.
 final class PythonBridge {
     @AppStorage("pythonPath") var pythonPath: String = ""
     @AppStorage("scriptPath") var scriptPath: String = ""
+
+    // Debug y límites configurables
+    @AppStorage("pythonBridgeDebug") var debugLogging: Bool = false
+    @AppStorage("pythonBridgeMaxStdoutBytes") var maxStdoutBytes: Int = 5 * 1024 * 1024 // 5 MB por defecto
 
     enum PathSource: Equatable { case bundle, userDefaults }
 
@@ -25,6 +30,7 @@ final class PythonBridge {
     ///   - selector:  Selector CSS opcional.
     ///   - timeout:   Segundos máximos de espera para el script Python (por defecto 15).
     ///               Swift añade 5 s de margen antes de forzar terminación.
+    ///               Timeout Swift real: si el proceso no termina en `timeout + 5` segundos, se envían señales escalonadas hasta forzar su finalización.
     /// - Throws: `ExtractionError` tipado.
     /// - Returns: `ExtractionResult` con los datos extraídos.
     func run(
@@ -83,11 +89,25 @@ final class PythonBridge {
         case .userDefaults:
             let scriptDir = URL(fileURLWithPath: scriptFile)
                 .deletingLastPathComponent().path
-            let venvBin = scriptDir + "/.venv/bin"
-            env["VIRTUAL_ENV"] = scriptDir + "/.venv"
-            env["PATH"] = venvBin + ":" + (env["PATH"] ?? "/usr/bin:/bin:/usr/local/bin")
+            let venvDir = scriptDir + "/.venv"
+            let venvBin = venvDir + "/bin"
+            if FileManager.default.fileExists(atPath: venvDir) {
+                env["VIRTUAL_ENV"] = venvDir
+                env["PATH"] = venvBin + ":" + (env["PATH"] ?? "/usr/bin:/bin:/usr/local/bin")
+            }
             process.currentDirectoryURL = URL(fileURLWithPath: scriptDir)
         }
+
+        if debugLogging {
+            let argsPreview = ([pythonExec] + (process.arguments ?? [])).joined(separator: " ")
+            print("[PythonBridge] Launching: \(argsPreview)")
+            if paths.source == .bundle {
+                print("[PythonBridge] PYTHONPATH=\(env["PYTHONPATH"] ?? "")")
+            } else {
+                print("[PythonBridge] VIRTUAL_ENV=\(env["VIRTUAL_ENV"] ?? "(none)") PATH prefix=\(env["PATH"]?.split(separator: ":").first ?? "")")
+            }
+        }
+
         process.environment = env
 
         let stdoutPipe = Pipe()
@@ -112,7 +132,10 @@ final class PythonBridge {
         // múltiples closures sin warnings de captura de var concurrente.
         let collector = IOCollector()
 
-        let (stdout, _) = try await withCheckedThrowingContinuation {
+        // Snapshot actor-isolated settings for use inside Sendable closures
+        let maxStdoutBytesLimit = self.maxStdoutBytes
+
+        let (stdout, stderr) = try await withCheckedThrowingContinuation {
             (cont: CheckedContinuation<(Data, Data), Error>) in
 
             let queue = DispatchQueue(
@@ -123,11 +146,25 @@ final class PythonBridge {
             // Timeout de seguridad Swift: termina el proceso si excede límite.
             queue.asyncAfter(deadline: .now() + .seconds(timeout + 5)) {
                 guard process.isRunning else { return }
-                process.terminate()
-                if collector.tryFinish() {
-                    stdoutPipe.fileHandleForReading.readabilityHandler = nil
-                    stderrPipe.fileHandleForReading.readabilityHandler = nil
-                    cont.resume(throwing: ExtractionError.timeout)
+                // Intento escalonado: SIGINT -> SIGTERM -> SIGKILL
+                process.interrupt()
+                // Espera breve
+                queue.asyncAfter(deadline: .now() + .milliseconds(300)) {
+                    if process.isRunning {
+                        process.terminate()
+                    }
+                    queue.asyncAfter(deadline: .now() + .milliseconds(300)) {
+                        if process.isRunning {
+                            kill(process.processIdentifier, SIGKILL)
+                        }
+                        if collector.tryFinish() {
+                            stdoutPipe.fileHandleForReading.readabilityHandler = nil
+                            stderrPipe.fileHandleForReading.readabilityHandler = nil
+                            try? stdoutPipe.fileHandleForReading.close()
+                            try? stderrPipe.fileHandleForReading.close()
+                            cont.resume(throwing: ExtractionError.timeout)
+                        }
+                    }
                 }
             }
 
@@ -138,10 +175,24 @@ final class PythonBridge {
                     if collector.tryFinish() {
                         stdoutPipe.fileHandleForReading.readabilityHandler = nil
                         stderrPipe.fileHandleForReading.readabilityHandler = nil
+                        try? stdoutPipe.fileHandleForReading.close()
+                        try? stderrPipe.fileHandleForReading.close()
                         cont.resume(returning: collector.result())
                     }
                 } else {
                     collector.appendOut(chunk)
+                    if collector.outSize() > maxStdoutBytesLimit {
+                        // Exceso de salida: abortar
+                        if collector.tryFinish() {
+                            stdoutPipe.fileHandleForReading.readabilityHandler = nil
+                            stderrPipe.fileHandleForReading.readabilityHandler = nil
+                            try? stdoutPipe.fileHandleForReading.close()
+                            try? stderrPipe.fileHandleForReading.close()
+                            let info = NSError(domain: "PythonBridge.Output", code: 2, userInfo: [NSLocalizedDescriptionKey: "La salida del proceso supera el límite configurado (\(maxStdoutBytesLimit) bytes)"])
+                            cont.resume(throwing: ExtractionError.jsonDecodeFailed(underlying: info))
+                        }
+                        return
+                    }
                 }
             }
 
@@ -149,6 +200,14 @@ final class PythonBridge {
                 let chunk = handle.availableData
                 guard !chunk.isEmpty else { return }
                 collector.appendErr(chunk)
+            }
+        }
+
+        if debugLogging {
+            print("[PythonBridge] stdout size=\(stdout.count) bytes, stderr size=\(stderr.count) bytes")
+            if stderr.count > 0 {
+                let preview = String(data: stderr.prefix(2048), encoding: .utf8) ?? "(binario)"
+                print("[PythonBridge] stderr preview:\n\(preview)")
             }
         }
 
@@ -163,7 +222,12 @@ final class PythonBridge {
         do {
             result = try JSONDecoder().decode(ExtractionResult.self, from: stdout)
         } catch {
-            throw ExtractionError.jsonDecodeFailed(underlying: error)
+            let stderrSnippet = String(data: stderr.prefix(4096), encoding: .utf8) ?? ""
+            let wrapped = NSError(domain: "PythonBridge.JSON", code: 1, userInfo: [
+                NSLocalizedDescriptionKey: "Fallo al decodificar JSON",
+                "stderr": stderrSnippet
+            ])
+            throw ExtractionError.jsonDecodeFailed(underlying: wrapped)
         }
 
         guard result.isSuccess else {
@@ -260,6 +324,7 @@ extension PythonBridge {
             return nil
         }
         process.waitUntilExit()
+        guard process.terminationStatus == 0 else { return nil }
 
         let data = pipe.fileHandleForReading.readDataToEndOfFile()
         guard let output = String(data: data, encoding: .utf8)?
@@ -277,19 +342,22 @@ extension PythonBridge {
 /// Usa NSLock para seguridad de hilos real; `@unchecked Sendable` porque el
 /// compilador no puede verificar esa seguridad a través del NSLock, pero
 /// las cuatro mutaciones de estado están protegidas por él.
+@preconcurrency
 private final class IOCollector: @unchecked Sendable {
     private let lock = NSLock()
     private var outData = Data()
     private var errData = Data()
     private var done = false
+    private var outCount: Int = 0
 
-    func appendOut(_ chunk: Data) {
+    nonisolated func appendOut(_ chunk: Data) {
         lock.lock()
         outData.append(chunk)
+        outCount += chunk.count
         lock.unlock()
     }
 
-    func appendErr(_ chunk: Data) {
+    nonisolated func appendErr(_ chunk: Data) {
         lock.lock()
         errData.append(chunk)
         lock.unlock()
@@ -305,10 +373,16 @@ private final class IOCollector: @unchecked Sendable {
     }
 
     /// Devuelve el par (stdout, stderr) acumulado.
-    func result() -> (Data, Data) {
+    nonisolated func result() -> (Data, Data) {
         lock.lock()
         defer { lock.unlock() }
         return (outData, errData)
+    }
+
+    nonisolated func outSize() -> Int {
+        lock.lock()
+        defer { lock.unlock() }
+        return outCount
     }
 }
 
