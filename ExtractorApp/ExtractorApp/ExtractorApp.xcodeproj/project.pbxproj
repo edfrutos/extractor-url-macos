@@ -187,10 +187,10 @@
 				};
 			};
 			buildConfigurationList = 694A97162FDAB1D900884317 /* Build configuration list for PBXProject "ExtractorApp" */;
-			developmentRegion = en;
+			developmentRegion = es;
 			hasScannedForEncodings = 0;
 			knownRegions = (
-				en,
+				es,
 				Base,
 			);
 			mainGroup = 694A97122FDAB1D900884317;
