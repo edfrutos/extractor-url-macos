@@ -90,7 +90,7 @@ Decisiones relevantes para v6.0:
 ### Pending Todos
 
 - **Nuevo (2026-10-18)**: confirmar contra el `.app` real de `v2.2` si SC4 (`<sparkle:phasedRolloutInterval>` en `appcast.xml`) y SC6 (bug `CFBundleIdentifier`/Xcode 27 beta) quedaron validados — el `appcast.xml` de `v2.2` en `origin/main` no tiene `phasedRolloutInterval`, así que SC4 sigue sin ejercitarse salvo que se confirme lo contrario.
-- **Nuevo (2026-10-18)**: documentar retroactivamente (o al menos resumir) el v2.2 real (`f49a41f`..`6c52f4b`) en `ROADMAP.md`/`MILESTONES.md` — se publicó sin pasar por este flujo de research/plan/SUMMARY.
+- ~~Documentar retroactivamente el v2.2 real (`f49a41f`..`6c52f4b`) en `ROADMAP.md`/`MILESTONES.md`~~ — **HECHO 2026-10-18**: añadido como v9.0 en ambos ficheros, marcado explícitamente como sin fase/REQ-IDs formales (trabajo hecho fuera de este flujo GSD).
 - **Nuevo (2026-10-18)**: verificar en Xcode real (no se puede en este sandbox Linux) que `PythonBridge.swift`/`RuntimeUpdater.swift` compilan tras moverse a `Models/Services/` y correr `PythonBridgeTests.swift` — commiteado como `0b6b26c` sin build local.
 
 Ítems previos que reaparecen cuando se lance el próximo release real:

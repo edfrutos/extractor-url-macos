@@ -165,3 +165,27 @@ si un release usa `ROLLOUT_INTERVAL_SECONDS`) y SC6 (vigilar el bug de
 - Fase 23 — Verificación de release real y cierre de deuda técnica ✅ Complete
 
 **Phases:** 1 (23) | **Requirements:** MAINT-01→03, MAINT-05 (validados) · MAINT-04, MAINT-06 (diferidos-condicionales)
+
+---
+
+## v9.0 — Release real v2.2 ✅ (2026-09-30, documentado retroactivamente el 2026-10-18)
+
+**Goal:** No hubo goal definido de antemano — este trabajo se hizo y se
+publicó **fuera de este flujo GSD** (sin research/plan/SUMMARY en
+`.planning/`). Se documenta aquí retroactivamente tras detectar, en
+una sesión de auditoría del repo, que `origin/main` tenía 6 commits
+que la copia local y `STATE.md`/`ROADMAP.md` no reflejaban.
+
+**Shipped:**
+- Fix de envenenamiento de caché entre `js_mode` + TTL/reuso de la instancia de Playwright (`f49a41f`, `core.py`/`extractor_url.py`)
+- Ajustes de accesibilidad y HIG en SwiftUI — `ContentView`, `HistoryView`, `SettingsView` (`5f937cd`)
+- El preview/export HTML resuelve assets contra la URL real, no relativa (`d65e38e`, `ExtractionViewModel.swift`)
+- `scripts/release-macos.sh` pinea la identidad Developer ID por hash en vez de por nombre (`afda183`)
+- Icono de la app actualizado (`6c52f4b`)
+- **Release público publicado**: [v2.2](https://github.com/edfrutos/extractor-url-macos/releases/tag/v2.2) (`0255c82`, `appcast.xml` con `sparkle:version` 12 / `shortVersionString` 2.2, 2026-09-30)
+
+**Fases:** Ninguna — sin fase formal, sin `SUMMARY.md`. Ver detalle de commits en `ROADMAP.md` → v9.0.
+
+**Phases:** 0 (sin fases GSD) | **Requirements:** sin REQ-IDs (trabajo retroactivo)
+
+**Pendiente de confirmar:** SC4 (rollout en appcast — el `appcast.xml` publicado no tiene `phasedRolloutInterval`) y SC6 (bug `Info.plist`/Xcode 27 beta) de la Fase 23/v8.0, nunca verificados contra este release. Ver `STATE.md` → Pending Todos.

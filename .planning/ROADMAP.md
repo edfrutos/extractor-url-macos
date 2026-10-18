@@ -699,3 +699,54 @@ release público `v2.1`; pipeline endurecido (`af48439`) y tagging
 arreglado (`cc1af03`). SC4 (rollout en appcast) y SC6 (bug Info.plist
 Xcode 27) quedan como criterios condicionales a un release futuro — no
 bloquean el cierre. Ver `.planning/phases/23-verificacion-release-real/23-01-SUMMARY.md`.
+
+## v9.0 — Release real v2.2 (documentado retroactivamente)
+
+## Overview
+
+Este milestone **no se planificó en este flujo GSD** — no hay
+research/plan previos ni fases en `.planning/phases/`. El trabajo se
+hizo y se publicó directamente (release público `v2.2`, 2026-09-30)
+sin pasar por `.planning/`. Se reconstruye y documenta aquí
+retroactivamente el 2026-10-18, al auditar el estado del repo y
+encontrar que `origin/main` tenía 6 commits que la copia local no
+reflejaba en `STATE.md`/`ROADMAP.md`.
+
+Sin fase formal ni `SUMMARY.md` — el detalle vive en los propios
+commits (mensajes + diffs), listados abajo.
+
+### Checklist v9.0
+
+- [x] **Commits del release v2.2** — fixes reales de caché/Playwright, accesibilidad SwiftUI, preview HTML, firma de release, icono de app. Publicado como GitHub Release `v2.2` el 2026-09-30. (completed 2026-09-30, documentado 2026-10-18)
+
+### Trabajo incluido (sin fase/requirements formales)
+
+**Commits** (orden cronológico, `f49a41f`..`6c52f4b`):
+
+1. `f49a41f` — fix(core): corrige envenenamiento de caché entre `js_mode` y añade TTL/reuso de la instancia de Playwright (`core.py`, `extractor_url.py`, `tests/test_flag_js.py`, `tests/test_js_fallback.py`).
+2. `5f937cd` — fix(macos-ui): ajustes de accesibilidad y HIG en `ContentView.swift`, `HistoryView.swift`, `SettingsView.swift`.
+3. `d65e38e` — fix(macos-preview): el preview/export HTML resuelve assets contra la URL real (`ExtractionViewModel.swift`).
+4. `afda183` — fix(release): `scripts/release-macos.sh` pinea la identidad Developer ID por hash en vez de por nombre.
+5. `0255c82` — chore(release): bump a `v2.2` (`project.pbxproj`, `appcast.xml`).
+6. `6c52f4b` — feat(macos-ui): icono de la app actualizado (todo el `AppIcon.appiconset`).
+
+**Publicado**: GitHub Release `v2.2` (`appcast.xml` → `sparkle:version` 12, `sparkle:shortVersionString` 2.2, 2026-09-30T10:33:31+02:00), sin `sparkle:phasedRolloutInterval`.
+
+**Pendiente de confirmar** (abierto en `STATE.md` → Pending Todos, 2026-10-18):
+- SC4 de la Fase 23/v8.0 (`<sparkle:phasedRolloutInterval>` en el appcast si se usa `ROLLOUT_INTERVAL_SECONDS`) — el `appcast.xml` publicado de `v2.2` **no** tiene ese campo, así que probablemente sigue sin ejercitarse.
+- SC6 de la Fase 23/v8.0 (bug sospechado de `Info.plist` con Xcode 27 beta) — sin registro de si reapareció durante este build.
+- No hay checkpoint humano ni resultados de `pytest`/`pylint`/`mypy` registrados para estos commits en `.planning/`.
+
+**UI hint**: sí — cambios visibles en `ContentView`/`HistoryView`/`SettingsView` y el icono de la app.
+
+### Estado v9.0
+
+| Trabajo | Plans Complete | Status | Completed |
+|-------|----------------|--------|-----------|
+| Release v2.2 (6 commits, sin fase formal) | n/a — sin plan GSD | ✅ Shippeado | 2026-09-30 |
+
+**v9.0 documentado retroactivamente (2026-10-18), no "cerrado" en el
+sentido GSD habitual** — no hubo Success Criteria definidos de
+antemano para este trabajo, así que no hay nada que verificar contra
+ellos más allá de los dos ítems pendientes (SC4/SC6 de la Fase 23)
+heredados de v8.0. Ver `STATE.md` → Pending Todos.
