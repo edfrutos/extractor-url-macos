@@ -430,7 +430,7 @@ struct ContentView: View {
                     }
                 }
                 if vm.isPythonPathError {
-                    Button("Abrir Preferencias…") {
+                    Button("Abrir Ajustes…") {
                         // macOS 14+ renombró el selector a `showSettingsWindow:`;
                         // `showPreferencesWindow:` dejó de responder. Se intenta
                         // el nuevo y se cae al antiguo para macOS 13.

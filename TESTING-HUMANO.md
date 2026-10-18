@@ -3,7 +3,7 @@
 Guía de verificación manual de la interfaz. Cubre todos los estados visibles, animaciones, validaciones y flujos de exportación. Ejecutar con la app compilada en Xcode (esquema Release o Debug).
 
 > La sección 2 se actualizó para v3.0 (Fases 8-10, Standalone App): con el
-> runtime Python embebido en el bundle, Preferencias ya no exige configurar
+> runtime Python embebido en el bundle, Ajustes ya no exige configurar
 > rutas manualmente. Los prerequisitos de venv de abajo solo aplican si se va
 > a probar explícitamente el override manual (2C en adelante).
 
@@ -36,13 +36,13 @@ Guía de verificación manual de la interfaz. Cubre todos los estados visibles, 
 
 ---
 
-## 2. Configuración de Preferencias
+## 2. Configuración de Ajustes
 
-**Pasos:** Menú `ExtractorApp › Preferencias…` o `⌘,`
+**Pasos:** Menú `ExtractorApp › Ajustes…` o `⌘,`
 
 ### 2-0. Modo de operación (Fase 10 — nuevo)
 
-**Pasos:** Abrir Preferencias en una instalación limpia (sin overrides previos en `UserDefaults`, build con bundle Python compilado — Fase 8 ejecutada).
+**Pasos:** Abrir Ajustes en una instalación limpia (sin overrides previos en `UserDefaults`, build con bundle Python compilado — Fase 8 ejecutada).
 
 | # | Qué comprobar | Resultado esperado |
 |---|---------------|--------------------|
@@ -78,7 +78,7 @@ Guía de verificación manual de la interfaz. Cubre todos los estados visibles, 
 
 ### 2C. Ruta Python y script válidas (override activo)
 
-**Pasos:** Pulsar Examinar (📁) en ambos campos → seleccionar el Python del venv y `extractor_url.py`.
+**Pasos:** Pulsar "Elegir…" en ambos campos → seleccionar el Python del venv y `extractor_url.py`.
 
 | # | Qué comprobar | Resultado esperado |
 |---|---------------|--------------------|
@@ -110,7 +110,7 @@ Guía de verificación manual de la interfaz. Cubre todos los estados visibles, 
 
 ### 2F. Persistencia
 
-**Pasos:** Cerrar Preferencias, volver a abrirlas.
+**Pasos:** Cerrar Ajustes, volver a abrirlos.
 
 | # | Qué comprobar | Resultado esperado |
 |---|---------------|--------------------|
@@ -216,17 +216,17 @@ Repetir la extracción de la misma URL con cada formato del picker principal.
 |---|---------------|--------------------|
 | 6A.1 | Result card — header | Icono `exclamationmark.triangle.fill` naranja + "Error" |
 | 6A.2 | Result card — contenido | Icono triángulo naranja + "Error de extraccion" en bold + mensaje descriptivo en caption |
-| 6A.3 | Botón "Abrir Preferencias" | No aparece (el error no es de ruta Python) |
+| 6A.3 | Botón "Abrir Ajustes" | No aparece (el error no es de ruta Python) |
 
 ### 6B. Error de ruta Python
 
-**Pasos:** Ir a Preferencias, borrar la ruta del intérprete Python, volver a ContentView y extraer.
+**Pasos:** Ir a Ajustes, borrar la ruta del intérprete Python, volver a ContentView y extraer.
 
 | # | Qué comprobar | Resultado esperado |
 |---|---------------|--------------------|
 | 6B.1 | Mensaje error | Describe que Python no se encuentra en la ruta configurada |
-| 6B.2 | Botón "Abrir Preferencias" | Aparece como link bajo el mensaje de error |
-| 6B.3 | Pulsar "Abrir Preferencias" | Abre la ventana de Preferencias |
+| 6B.2 | Botón "Abrir Ajustes" | Aparece como link bajo el mensaje de error |
+| 6B.3 | Pulsar "Abrir Ajustes" | Abre la ventana de Ajustes |
 
 ---
 
@@ -309,7 +309,7 @@ Con resultado exitoso cargado (preview visible, `contentReady = true`):
 | 11.1 | URL sin scheme (`example.com`) | Error explícito de Python CLI — no cuelga |
 | 11.2 | URL con espacios | Campo URL los acepta; el CLI reporta error explícito |
 | 11.3 | Pulsar Extraer dos veces rápido | La segunda pulsación es ignorada (`isExtracting` guard) |
-| 11.4 | Cerrar Preferencias con rutas a medias | ContentView no crashea; si faltan rutas, el error de extracción lo indica |
+| 11.4 | Cerrar Ajustes con rutas a medias | ContentView no crashea; si faltan rutas, el error de extracción lo indica |
 | 11.5 | URL que devuelve página vacía | `ExtractionError.emptyOutput` visible en result card |
 | 11.6 | Timeout = 0 | El ViewModel usa el fallback de 15 s |
 
@@ -359,18 +359,18 @@ representativa contra un build firmado/notarizado, ver `RELEASING.md`).
 Marcar todos antes de declarar v2.0 apta para distribución:
 
 - [ ] Todos los estados de ContentView verificados (vacío, extrayendo, resultado, error)
-- [ ] Preferencias: validación reactiva de badges funcionando
-- [ ] Preferencias: "Verificar configuración" muestra versión Python real
+- [ ] Ajustes: validación reactiva de badges funcionando
+- [ ] Ajustes: "Verificar configuración" muestra versión Python real
 - [ ] Exportación MD, HTML y PDF generan archivos correctos y legibles
 - [ ] Dark mode sin colores rotos ni artefactos visuales
 - [ ] Animaciones de apertura y botón Extraer fluidas
 - [ ] Sin cuelgues durante extracción (ventana responde)
 - [ ] Redimensionado sin roturas de layout
-- [ ] Botón "Abrir Preferencias" aparece solo en errores de ruta Python
+- [ ] Botón "Abrir Ajustes" aparece solo en errores de ruta Python
 
 ### Checklist v3.0 — Fase 10 (UX Zero-Config)
 
-- [ ] Instalación limpia (sin overrides): extrae contenido sin abrir Preferencias
+- [ ] Instalación limpia (sin overrides): extrae contenido sin abrir Ajustes
 - [ ] Badge "Usando Python incluido (Python X.X.X)" visible con la versión real del bundle
 - [ ] Sección "Configuración avanzada" colapsada por defecto en modo bundle
 - [ ] Configurar override manual válido → badge cambia a "Usando configuración manual"

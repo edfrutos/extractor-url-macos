@@ -115,7 +115,7 @@ siempre (canal por defecto/estable). Con él:
 - El GitHub Release se marca `--prerelease` y su título/notas incluyen
   `(beta)`, para que quede claro navegando la lista de releases a mano.
 - Solo las apps cuyo usuario haya activado "Recibir actualizaciones beta"
-  en Preferencias verán y podrán instalar esta versión — el resto sigue
+  en Ajustes verán y podrán instalar esta versión — el resto sigue
   viendo únicamente el canal estable, sin cambios.
 
 **Usa un `MARKETING_VERSION` distinto para cada beta** (ej. `1.1-beta.1`,
@@ -246,7 +246,7 @@ del release de la app, para no mezclar sus ciclos de vida) y el
 `git add/commit/push` de `runtime-manifest.json`, igual que el appcast:
 revísalos y ejecútalos a mano.
 
-**Cómo lo aplica la app:** desde Preferencias → "Dependencias del motor"
+**Cómo lo aplica la app:** desde Ajustes → "Dependencias del motor"
 → "Buscar actualización" (solo visible en modo bundle). La app descarga
 el zip, **verifica su SHA-256** contra el manifiesto, lo extrae a
 `~/Library/Application Support/ExtractorApp/python-packages-override/<version>/`,
