@@ -147,7 +147,7 @@ final class SettingsViewModel: ObservableObject {
             // aplica el resultado si seguimos en modo bundle.
             Task.detached { [weak self] in
                 let version = PythonBridge.bundledPythonVersion()
-                await MainActor.run {
+                await MainActor.run { [weak self] in
                     guard let self, case .bundle = self.operatingMode else { return }
                     self.operatingMode = .bundle(version: version)
                 }
@@ -198,7 +198,7 @@ final class SettingsViewModel: ObservableObject {
         Task.detached { [weak self] in
             do {
                 let applied = try await RuntimeUpdater.checkAndApplyUpdate()
-                await MainActor.run {
+                await MainActor.run { [weak self] in
                     guard let self else { return }
                     if let applied {
                         self.runtimeUpdateState = .updated(version: applied)
@@ -207,7 +207,7 @@ final class SettingsViewModel: ObservableObject {
                     }
                 }
             } catch {
-                await MainActor.run {
+                await MainActor.run { [weak self] in
                     guard let self else { return }
                     self.runtimeUpdateState = .failed(message: error.localizedDescription)
                 }

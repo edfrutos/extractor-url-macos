@@ -280,7 +280,7 @@ extension PythonBridge {
     /// Ruta al intérprete Python universal embebido en el bundle.
     /// Devuelve nil si el binario no existe o no es ejecutable
     /// (p.ej. en un build de desarrollo antes de ejecutar bundle-python.sh).
-    static func bundledPythonPath() -> String? {
+    nonisolated static func bundledPythonPath() -> String? {
         guard let resourcePath = Bundle.main.resourcePath else { return nil }
         let path = resourcePath + "/python/bin/python3.13"
         guard FileManager.default.isExecutableFile(atPath: path) else { return nil }
@@ -308,7 +308,7 @@ extension PythonBridge {
     /// de versión (p.ej. "3.13.14"). Bloqueante — llamar desde un contexto
     /// en background (ver SettingsViewModel.refreshOperatingMode()).
     /// Devuelve nil si el bundle no está disponible o el proceso falla.
-    static func bundledPythonVersion() -> String? {
+    nonisolated static func bundledPythonVersion() -> String? {
         guard let path = bundledPythonPath() else { return nil }
 
         let process = Process()
