@@ -24,3 +24,11 @@ xcuserdata/
 
 # Recurso de icono de carpeta de macOS
 Icon?
+
+# Config/caché de gestor de skills por agente (no es código del proyecto)
+.agents/
+.augment/
+.claude/
+.trae/
+skills/
+skills-lock.json
