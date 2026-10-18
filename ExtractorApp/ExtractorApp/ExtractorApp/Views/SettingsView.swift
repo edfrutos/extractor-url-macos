@@ -2,16 +2,49 @@ import SwiftUI
 
 // MARK: - SettingsView
 
+/// Ventana de Ajustes con pestañas en la barra (convención macOS):
+/// General para el uso normal y Avanzado para el override manual de rutas.
 struct SettingsView: View {
+
+    private enum Tab: Hashable {
+        case general
+        case advanced
+    }
 
     @StateObject private var vm = SettingsViewModel()
 
-    @State private var verificationResult: String? = nil
-    @State private var isVerifying: Bool = false
+    // Fase 10/UX-03: si ya hay un override activo (o el bundle no está
+    // disponible), abrir directamente en Avanzado para que el usuario vea
+    // de inmediato lo que está pasando. Solo la primera vez.
+    @State private var selectedTab: Tab = .general
+    @State private var didSetInitialTab: Bool = false
 
-    // MARK: Sección avanzada (Fase 10: colapsada por defecto en modo bundle)
-    @State private var advancedExpanded: Bool = false
-    @State private var didSetInitialAdvancedState: Bool = false
+    var body: some View {
+        TabView(selection: $selectedTab) {
+            GeneralSettingsTab(vm: vm)
+                .tabItem { Label("General", systemImage: "gearshape") }
+                .tag(Tab.general)
+
+            AdvancedSettingsTab(vm: vm)
+                .tabItem { Label("Avanzado", systemImage: "wrench.and.screwdriver") }
+                .tag(Tab.advanced)
+        }
+        .frame(width: 520, height: 440)
+        .onAppear {
+            guard !didSetInitialTab else { return }
+            didSetInitialTab = true
+            if !vm.isBundleMode {
+                selectedTab = .advanced
+            }
+        }
+    }
+}
+
+// MARK: - GeneralSettingsTab
+
+private struct GeneralSettingsTab: View {
+
+    @ObservedObject var vm: SettingsViewModel
 
     var body: some View {
         Form {
@@ -44,160 +77,95 @@ struct SettingsView: View {
                     Text("Dependencias del motor")
                 }
             }
+        }
+        .formStyle(.grouped)
+    }
+}
 
-            // MARK: Configuración avanzada (colapsable, opcional)
-            // DisclosureGroup nativo — mismo componente que optionsCard en
-            // ContentView, en vez de un Button+chevron a mano: mantiene la
-            // app coherente y expone a VoiceOver el trait de
-            // expandido/colapsado que un Button normal no comunica.
+// MARK: - AdvancedSettingsTab
+
+private struct AdvancedSettingsTab: View {
+
+    @ObservedObject var vm: SettingsViewModel
+
+    @State private var verificationResult: String? = nil
+    @State private var isVerifying: Bool = false
+    @State private var showPathsHelp: Bool = false
+
+    var body: some View {
+        Form {
+            // MARK: Rutas de ejecución
             Section {
-                DisclosureGroup(isExpanded: $advancedExpanded) {
-                    VStack(alignment: .leading, spacing: 16) {
-                        // MARK: Rutas de ejecución
-                        VStack(alignment: .leading, spacing: 8) {
-                            Label("Rutas de ejecución", systemImage: "terminal")
-                                .font(.headline)
+                PathInputRow(
+                    label: "Intérprete Python",
+                    helpText: "Intérprete Python nativo del Mac (no Rosetta). Selecciona el ejecutable del entorno virtual.",
+                    placeholder: "/ruta/al/.venv/bin/python",
+                    path: $vm.pythonPath,
+                    validation: vm.pythonValidation,
+                    onPick: { vm.pickPythonPath() }
+                )
 
-                            PathInputRow(
-                                label: "Intérprete Python",
-                                helpText: "Intérprete Python nativo del Mac (no Rosetta). Selecciona el ejecutable del entorno virtual.",
-                                placeholder: "/ruta/al/.venv/bin/python",
-                                path: $vm.pythonPath,
-                                validation: vm.pythonValidation,
-                                onPick: { vm.pickPythonPath() }
-                            )
-
-                            PathInputRow(
-                                label: "Script extractor_url.py",
-                                helpText: "Ruta absoluta al fichero extractor_url.py",
-                                placeholder: "/ruta/al/extractor_url.py",
-                                path: $vm.scriptPath,
-                                validation: vm.scriptValidation,
-                                onPick: { vm.pickScriptPath() }
-                            )
-                        }
-
-                        Divider()
-
-                        // MARK: Verificación
-                        VStack(alignment: .leading, spacing: 8) {
-                            Label("Verificación", systemImage: "checkmark.seal")
-                                .font(.headline)
-
-                            Button("Verificar configuración") {
-                                Task { await verifyConfiguration() }
-                            }
-                            .buttonStyle(.bordered)
-                            .disabled(isVerifying || vm.pythonPath.isEmpty)
-
-                            if isVerifying {
-                                HStack(spacing: 6) {
-                                    ProgressView()
-                                        .scaleEffect(0.7)
-                                        .controlSize(.mini)
-                                    Text("Comprobando intérprete…")
-                                        .font(.caption)
-                                        .foregroundStyle(.secondary)
-                                }
-                            }
-
-                            if let result = verificationResult {
-                                Text(result)
-                                    .font(.caption)
-                                    .monospaced()
-                                    .foregroundStyle(
-                                        result.lowercased().contains("error")
-                                            ? Color.red
-                                            : Color.secondary
-                                    )
-                                    .padding(.horizontal, 8)
-                                    .padding(.vertical, 4)
-                                    .background(Color(.textBackgroundColor))
-                                    .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
-                            }
-                        }
-
-                        // MARK: Advertencias (condicional)
-                        if vm.pythonValidation.helpText != nil || vm.scriptValidation.helpText != nil {
-                            Divider()
-                            VStack(alignment: .leading, spacing: 8) {
-                                Label("Advertencias", systemImage: "exclamationmark.triangle")
-                                    .font(.headline)
-                                ValidationSummaryView(
-                                    pythonValidation: vm.pythonValidation,
-                                    scriptValidation: vm.scriptValidation
-                                )
-                            }
-                        }
-
-                        Divider()
-
-                        // MARK: Ayuda
-                        VStack(alignment: .leading, spacing: 8) {
-                            Label("Ayuda", systemImage: "info.circle")
-                                .font(.headline)
-
-                            Text("Usar el Python nativo de la arquitectura del Mac (no Rosetta).")
-                                .font(.callout)
-                                .foregroundStyle(.secondary)
-
-                            Text("/Users/usuario/proyectos/extractor-url/.venv/bin/python")
-                                .font(.caption)
-                                .monospaced()
-                                .foregroundStyle(.secondary)
-
-                            if vm.pythonValidation != .valid || vm.scriptValidation != .valid {
-                                HStack(alignment: .top, spacing: 8) {
-                                    Image(systemName: "exclamationmark.triangle.fill")
-                                        .foregroundStyle(.orange)
-                                        .font(.caption)
-                                    Text("Configura ambas rutas correctamente para poder extraer contenido.")
-                                        .font(.caption)
-                                        .foregroundStyle(.secondary)
-                                }
-                                .padding(.horizontal, 8)
-                                .padding(.vertical, 6)
-                                .background(Color.orange.opacity(0.08))
-                                .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
-                            }
-
-                            Divider()
-
-                            helpRow(
-                                icon: "1.circle.fill",
-                                title: "Activar el entorno virtual",
-                                body: "Abre Terminal y ejecuta: source /ruta/proyecto/.venv/bin/activate"
-                            )
-                            helpRow(
-                                icon: "2.circle.fill",
-                                title: "Localizar el intérprete",
-                                body: "Ejecuta 'which python' en Terminal con el venv activo para obtener la ruta exacta."
-                            )
-                            helpRow(
-                                icon: "3.circle.fill",
-                                title: "Localizar el script",
-                                body: "Selecciona el archivo extractor_url.py dentro de la carpeta del proyecto."
-                            )
-                        }
+                PathInputRow(
+                    label: "Script extractor_url.py",
+                    helpText: "Ruta absoluta al fichero extractor_url.py",
+                    placeholder: "/ruta/al/extractor_url.py",
+                    path: $vm.scriptPath,
+                    validation: vm.scriptValidation,
+                    onPick: { vm.pickScriptPath() }
+                )
+            } header: {
+                // La ayuda vive en un popover (botón "?"), no en el propio
+                // formulario: los ajustes de macOS se mantienen escuetos.
+                HStack {
+                    Text("Rutas de ejecución")
+                    Spacer()
+                    Button {
+                        showPathsHelp.toggle()
+                    } label: {
+                        Image(systemName: "questionmark.circle")
                     }
-                    .padding(.top, 8)
-                } label: {
-                    Text("Configuración avanzada")
+                    .buttonStyle(.borderless)
+                    .help("Cómo localizar el intérprete y el script")
+                    .popover(isPresented: $showPathsHelp, arrowEdge: .bottom) {
+                        PathsHelpView()
+                    }
                 }
             } footer: {
                 Text("Override manual de rutas para desarrollo o instalaciones no estándar. No es necesario para el uso normal — la app funciona con el Python incluido.")
             }
+
+            // MARK: Verificación
+            Section {
+                HStack(spacing: 8) {
+                    Button("Verificar configuración") {
+                        Task { await verifyConfiguration() }
+                    }
+                    .disabled(isVerifying || vm.pythonPath.isEmpty)
+
+                    if isVerifying {
+                        ProgressView()
+                            .controlSize(.small)
+                        Text("Comprobando intérprete…")
+                            .foregroundStyle(.secondary)
+                    }
+                }
+
+                if let result = verificationResult {
+                    Text(result)
+                        .font(.callout)
+                        .monospaced()
+                        .textSelection(.enabled)
+                        .foregroundStyle(
+                            result.lowercased().contains("error")
+                                ? Color.red
+                                : Color.secondary
+                        )
+                }
+            } header: {
+                Text("Verificación")
+            }
         }
         .formStyle(.grouped)
-        .frame(width: 520, alignment: .top)
-        .onAppear {
-            // Solo la primera vez: si ya hay un override activo (o el bundle
-            // no está disponible), abrir la sección avanzada de entrada para
-            // que el usuario vea de inmediato lo que está pasando (UX-03).
-            guard !didSetInitialAdvancedState else { return }
-            didSetInitialAdvancedState = true
-            advancedExpanded = !vm.isBundleMode
-        }
     }
 
     // MARK: - Verify Configuration
@@ -258,8 +226,37 @@ struct SettingsView: View {
             isVerifying = false
         }
     }
+}
 
-    // MARK: - Help Row
+// MARK: - PathsHelpView
+
+/// Ayuda del override manual, mostrada en un popover desde la pestaña Avanzado.
+private struct PathsHelpView: View {
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("Usa el Python nativo de la arquitectura del Mac (no Rosetta).")
+                .font(.callout)
+
+            helpRow(
+                icon: "1.circle.fill",
+                title: "Activar el entorno virtual",
+                body: "Abre Terminal y ejecuta: source /ruta/proyecto/.venv/bin/activate"
+            )
+            helpRow(
+                icon: "2.circle.fill",
+                title: "Localizar el intérprete",
+                body: "Ejecuta 'which python' en Terminal con el venv activo para obtener la ruta exacta."
+            )
+            helpRow(
+                icon: "3.circle.fill",
+                title: "Localizar el script",
+                body: "Selecciona el archivo extractor_url.py dentro de la carpeta del proyecto."
+            )
+        }
+        .padding(16)
+        .frame(width: 340)
+    }
 
     @ViewBuilder
     private func helpRow(icon: String, title: String, body: String) -> some View {
@@ -276,6 +273,7 @@ struct SettingsView: View {
                 Text(body)
                     .font(.caption)
                     .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
             }
         }
     }
@@ -294,28 +292,19 @@ private struct PathInputRow: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
-            HStack(spacing: 8) {
-                Image(systemName: "chevron.right.2")
-                    .font(.system(size: 11, weight: .medium))
+            VStack(alignment: .leading, spacing: 2) {
+                Text(label)
+                Text(helpText)
+                    .font(.caption)
                     .foregroundStyle(.secondary)
-
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(label)
-                        .font(.subheadline)
-                        .fontWeight(.medium)
-                        .foregroundStyle(.primary)
-                    Text(helpText)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-
-                Spacer()
-
-                validationBadge(validation: validation, path: path)
             }
 
             HStack(spacing: 8) {
-                TextField(placeholder, text: $path)
+                // labelsHidden + prompt: dentro de un Form agrupado, el título
+                // de un TextField se pinta como etiqueta a la izquierda (el
+                // placeholder acababa ahí, partido en dos líneas).
+                TextField(label, text: $path, prompt: Text(placeholder))
+                    .labelsHidden()
                     .font(.system(.body, design: .monospaced))
                     .textFieldStyle(.roundedBorder)
 
@@ -324,98 +313,27 @@ private struct PathInputRow: View {
                     onPick()
                 }
                 .help("Seleccionar archivo con el panel de Finder")
-                .buttonStyle(.bordered)
-                .controlSize(.small)
             }
+
+            validationStatus
         }
         .padding(.vertical, 4)
     }
 
-    // MARK: Validation Badge (Capsule)
-
+    // Estado bajo el campo con un SF Symbol coloreado (convención macOS),
+    // en vez de una cápsula de color junto al título.
     @ViewBuilder
-    private func validationBadge(validation: PathValidationState, path: String) -> some View {
-        switch validation {
-        case .valid:
-            Capsule()
-                .fill(Color.green.opacity(0.15))
-                .frame(height: 22)
-                .overlay(
-                    Label("OK", systemImage: "checkmark")
-                        .font(.caption2)
-                        .foregroundStyle(.green)
-                        .padding(.horizontal, 8)
-                )
-                .fixedSize()
-
-        case .notFound:
-            Capsule()
-                .fill(Color.red.opacity(0.15))
-                .frame(height: 22)
-                .overlay(
-                    Label("No encontrado", systemImage: "xmark")
-                        .font(.caption2)
-                        .foregroundStyle(.red)
-                        .padding(.horizontal, 8)
-                )
-                .fixedSize()
-
-        case .notExecutable:
-            Capsule()
-                .fill(Color.orange.opacity(0.15))
-                .frame(height: 22)
-                .overlay(
-                    Label("Sin permisos", systemImage: "lock")
-                        .font(.caption2)
-                        .foregroundStyle(.orange)
-                        .padding(.horizontal, 8)
-                )
-                .fixedSize()
-
-        case .empty:
-            EmptyView()
-        }
-    }
-}
-
-// MARK: - ValidationSummaryView
-
-private struct ValidationSummaryView: View {
-
-    let pythonValidation: PathValidationState
-    let scriptValidation: PathValidationState
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            if let msg = pythonValidation.helpText {
-                HStack(alignment: .top, spacing: 8) {
-                    Image(systemName: pythonValidation.systemImageName)
-                        .foregroundStyle(pythonValidation.color)
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("Intérprete Python")
-                            .fontWeight(.medium)
-                        Text(msg)
-                            .foregroundStyle(.secondary)
-                    }
-                }
-                .font(.callout)
+    private var validationStatus: some View {
+        if validation != .empty {
+            Label {
+                Text(validation.helpText ?? "Ruta válida")
+                    .foregroundStyle(.secondary)
+            } icon: {
+                Image(systemName: validation.systemImageName)
+                    .foregroundStyle(validation.color)
             }
-
-            if let msg = scriptValidation.helpText {
-                HStack(alignment: .top, spacing: 8) {
-                    Image(systemName: scriptValidation.systemImageName)
-                        .foregroundStyle(scriptValidation.color)
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("Script extractor_url.py")
-                            .fontWeight(.medium)
-                        Text(msg)
-                            .foregroundStyle(.secondary)
-                    }
-                }
-                .font(.callout)
-            }
+            .font(.caption)
         }
-        .padding(.vertical, 4)
     }
 }
 
@@ -463,9 +381,9 @@ private struct OperatingModeRow: View {
         case .bundle:
             return "No necesitas configurar nada — la extracción funciona de serie."
         case .override:
-            return "Sobrescribiendo el Python incluido con la ruta manual de Configuración avanzada."
+            return "Sobrescribiendo el Python incluido con la ruta manual de la pestaña Avanzado."
         case .unavailable:
-            return "Configura una ruta manual en Configuración avanzada para poder extraer contenido."
+            return "Configura una ruta manual en la pestaña Avanzado para poder extraer contenido."
         }
     }
 

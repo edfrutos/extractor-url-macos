@@ -430,20 +430,29 @@ struct ContentView: View {
                     }
                 }
                 if vm.isPythonPathError {
-                    Button("Abrir Ajustes…") {
-                        // macOS 14+ renombró el selector a `showSettingsWindow:`;
-                        // `showPreferencesWindow:` dejó de responder. Se intenta
-                        // el nuevo y se cae al antiguo para macOS 13.
-                        if !NSApp.sendAction(
-                            Selector(("showSettingsWindow:")), to: nil, from: nil
-                        ) {
-                            NSApp.sendAction(
-                                Selector(("showPreferencesWindow:")), to: nil, from: nil
-                            )
+                    if #available(macOS 14, *) {
+                        // API oficial para abrir la escena Settings.
+                        SettingsLink {
+                            Text("Abrir Ajustes…")
                         }
+                        .buttonStyle(.link)
+                        .font(.caption)
+                    } else {
+                        // macOS 13 no tiene SettingsLink: selector de AppKit.
+                        // Se intenta `showSettingsWindow:` y se cae a
+                        // `showPreferencesWindow:` por compatibilidad.
+                        Button("Abrir Ajustes…") {
+                            if !NSApp.sendAction(
+                                Selector(("showSettingsWindow:")), to: nil, from: nil
+                            ) {
+                                NSApp.sendAction(
+                                    Selector(("showPreferencesWindow:")), to: nil, from: nil
+                                )
+                            }
+                        }
+                        .buttonStyle(.link)
+                        .font(.caption)
                     }
-                    .buttonStyle(.link)
-                    .font(.caption)
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)

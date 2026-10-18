@@ -40,41 +40,39 @@ Guía de verificación manual de la interfaz. Cubre todos los estados visibles, 
 
 **Pasos:** Menú `ExtractorApp › Ajustes…` o `⌘,`
 
-### 2-0. Modo de operación (Fase 10 — nuevo)
+### 2-0. Pestaña General — modo de operación (Fase 10)
 
 **Pasos:** Abrir Ajustes en una instalación limpia (sin overrides previos en `UserDefaults`, build con bundle Python compilado — Fase 8 ejecutada).
 
 | # | Qué comprobar | Resultado esperado |
 |---|---------------|--------------------|
-| 2-0.1 | Sección "Modo de operación" | Visible arriba del todo, antes de cualquier campo de ruta |
+| 2-0.1 | Ventana | Barra de herramientas con dos pestañas: "General" y "Avanzado"; se abre en General |
 | 2-0.2 | Badge | Icono `checkmark.seal.fill` verde + "Usando Python incluido (Python 3.13.14)" (versión real del intérprete bundleado) |
 | 2-0.3 | Subtítulo | "No necesitas configurar nada — la extracción funciona de serie." |
-| 2-0.4 | Sección "Configuración avanzada" | Colapsada por defecto (solo se ve la cabecera "Mostrar ▾") |
-| 2-0.5 | Sin bundle compilado (build de desarrollo, antes de Fase 8) | Badge naranja "Python no disponible" + sección avanzada auto-expandida |
+| 2-0.4 | Resto de General | Secciones "Actualizaciones" (toggle beta con subtítulo gris) y "Dependencias del motor" |
+| 2-0.5 | Sin bundle compilado (build de desarrollo, antes de Fase 8) | Badge naranja "Python no disponible" y la ventana se abre directamente en la pestaña Avanzado |
 
-### 2A. Configuración avanzada — rutas vacías
+### 2A. Pestaña Avanzado — rutas vacías
 
-**Pasos:** Pulsar la cabecera "Configuración avanzada" para expandirla.
+**Pasos:** Pulsar la pestaña "Avanzado".
 
 | # | Qué comprobar | Resultado esperado |
 |---|---------------|--------------------|
-| 2A.1 | Campos de ruta | Ambos vacíos, sin badge visible (`.empty` → `EmptyView`) |
+| 2A.1 | Campos de ruta | Ambos vacíos, con el placeholder gris dentro del campo y sin estado debajo (`.empty`) |
 | 2A.2 | Botón "Verificar configuración" | Deshabilitado (requiere pythonPath no vacío) |
-| 2A.3 | Sección "Advertencias" | No aparece (se muestra solo cuando hay rutas inválidas) |
-| 2A.4 | Banner naranja en "Ayuda" | Visible: "Configura ambas rutas correctamente para poder extraer contenido" |
-| 2A.5 | Pasos de ayuda | 3 filas numeradas (1 activar venv, 2 which python, 3 localizar script) con icono de acento |
-| 2A.6 | Badge "Modo de operación" | Sigue en verde bundle — las rutas de override vacías no lo afectan |
+| 2A.3 | Pie de "Rutas de ejecución" | Texto gris explicando que el override es opcional |
+| 2A.4 | Botón "?" en la cabecera "Rutas de ejecución" | Abre un popover con la nota de Python nativo y 3 pasos numerados (1 activar venv, 2 which python, 3 localizar script) |
+| 2A.5 | Badge "Modo de operación" (pestaña General) | Sigue en verde bundle — las rutas de override vacías no lo afectan |
 
 ### 2B. Ruta Python inválida
 
-**Pasos:** Con la sección avanzada expandida, escribir `/ruta/falsa/python` en el campo Intérprete Python.
+**Pasos:** En la pestaña Avanzado, escribir `/ruta/falsa/python` en el campo Intérprete Python.
 
 | # | Qué comprobar | Resultado esperado |
 |---|---------------|--------------------|
-| 2B.1 | Badge validación Python | Cápsula roja "No encontrado" con icono ✕ aparece inmediatamente (reactividad `didSet`) |
-| 2B.2 | Sección "Advertencias" | Aparece con mensaje descriptivo para el intérprete |
-| 2B.3 | Campo script | Sin cambios independientes |
-| 2B.4 | Badge "Modo de operación" | Sigue en verde bundle — un override inválido no lo cambia (fallback silencioso) |
+| 2B.1 | Estado bajo el campo Python | Icono ✕ rojo + "Archivo no encontrado en la ruta indicada." aparece inmediatamente (reactividad `didSet`) |
+| 2B.2 | Campo script | Sin cambios independientes |
+| 2B.3 | Badge "Modo de operación" | Sigue en verde bundle — un override inválido no lo cambia (fallback silencioso) |
 
 ### 2C. Ruta Python y script válidas (override activo)
 
@@ -83,9 +81,9 @@ Guía de verificación manual de la interfaz. Cubre todos los estados visibles, 
 | # | Qué comprobar | Resultado esperado |
 |---|---------------|--------------------|
 | 2C.1 | NSOpenPanel | Se abre con el Finder para seleccionar archivo |
-| 2C.2 | Badge tras selección | Cápsula verde "OK" con icono ✓ en ambos campos |
-| 2C.3 | Sección "Advertencias" | Desaparece si el script también es válido |
-| 2C.4 | Badge "Modo de operación" | Cambia a azul "Usando configuración manual" en cuanto ambas rutas son válidas |
+| 2C.2 | Estado tras selección | Icono ✓ verde + "Ruta válida" bajo ambos campos |
+| 2C.3 | Badge "Modo de operación" | Cambia a azul "Usando configuración manual" en cuanto ambas rutas son válidas |
+| 2C.4 | Reabrir Ajustes con el override activo | Se abre directamente en la pestaña Avanzado |
 
 ### 2D. Borrar el override → vuelve a bundle
 
@@ -94,8 +92,7 @@ Guía de verificación manual de la interfaz. Cubre todos los estados visibles, 
 | # | Qué comprobar | Resultado esperado |
 |---|---------------|--------------------|
 | 2D.1 | Badge "Modo de operación" | Vuelve inmediatamente al verde "Usando Python incluido (Python 3.13.14)" — criterio de éxito #4 de la Fase 10 |
-| 2D.2 | Banner naranja "Ayuda" | Reaparece (rutas de override vacías otra vez) |
-| 2D.3 | Sección "Advertencias" | No visible (campos vacíos → `.empty`, no `.notFound`) |
+| 2D.2 | Estado bajo los campos | Desaparece (campos vacíos → `.empty`, no `.notFound`) |
 
 ### 2E. Verificación del intérprete
 
@@ -103,9 +100,9 @@ Guía de verificación manual de la interfaz. Cubre todos los estados visibles, 
 
 | # | Qué comprobar | Resultado esperado |
 |---|---------------|--------------------|
-| 2E.1 | Durante la verificación | Spinner mini + texto "Comprobando intérprete..." |
+| 2E.1 | Durante la verificación | Spinner pequeño + texto "Comprobando intérprete…" |
 | 2E.2 | Botón durante verificación | Deshabilitado |
-| 2E.3 | Resultado correcto | Texto monospaced con `Python 3.x.x` sobre fondo `textBackgroundColor` |
+| 2E.3 | Resultado correcto | Texto monospaced seleccionable con `Python 3.x.x` |
 | 2E.4 | Resultado con error | Texto en rojo comenzando por "Error:" |
 
 ### 2F. Persistencia
@@ -372,7 +369,7 @@ Marcar todos antes de declarar v2.0 apta para distribución:
 
 - [ ] Instalación limpia (sin overrides): extrae contenido sin abrir Ajustes
 - [ ] Badge "Usando Python incluido (Python X.X.X)" visible con la versión real del bundle
-- [ ] Sección "Configuración avanzada" colapsada por defecto en modo bundle
+- [ ] Ajustes se abre en la pestaña General en modo bundle (Avanzado si hay override o no hay bundle)
 - [ ] Configurar override manual válido → badge cambia a "Usando configuración manual"
 - [ ] Borrar el override → badge vuelve a "Usando Python incluido" sin reiniciar la app
 
