@@ -345,10 +345,10 @@ extension PythonBridge {
 @preconcurrency
 private final class IOCollector: @unchecked Sendable {
     private let lock = NSLock()
-    private var outData = Data()
-    private var errData = Data()
-    private var done = false
-    private var outCount: Int = 0
+    private nonisolated(unsafe) var outData = Data()
+    private nonisolated(unsafe) var errData = Data()
+    private nonisolated(unsafe) var done = false
+    private nonisolated(unsafe) var outCount: Int = 0
 
     nonisolated func appendOut(_ chunk: Data) {
         lock.lock()

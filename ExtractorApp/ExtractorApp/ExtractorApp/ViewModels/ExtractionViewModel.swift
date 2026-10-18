@@ -65,16 +65,18 @@ final class ExtractionViewModel: ObservableObject {
                     selector: selector,
                     timeout: timeoutValue
                 )
-                await MainActor.run {
-                    self?.resultContent = result?.content
-                    self?.pageTitle = result?.title
-                    self?.sourceURL = result?.url
-                    self?.isExtracting = false
+                await MainActor.run { [weak self] in
+                    guard let self else { return }
+                    self.resultContent = result?.content
+                    self.pageTitle = result?.title
+                    self.sourceURL = result?.url
+                    self.isExtracting = false
                 }
             } catch {
-                await MainActor.run {
-                    self?.handleError(error)
-                    self?.isExtracting = false
+                await MainActor.run { [weak self] in
+                    guard let self else { return }
+                    self.handleError(error)
+                    self.isExtracting = false
                 }
             }
         }
