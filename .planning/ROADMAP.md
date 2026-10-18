@@ -678,9 +678,9 @@ un `pbcopy` real). El usuario decidió explícitamente agruparlos en una
   1. Un release real completo (`scripts/release-macos.sh <version>`) se ejecuta de principio a fin; el tamaño del `.app` Release/archivado (con strip) queda medido y documentado en `RELEASING.md` junto a la cifra de 886MB (Debug) ya existente. — **HECHO 2026-08-27**: `.app` notarizado de v2.1 = **882 MB** (~387 MB comprimido), medido del release ya publicado; documentado en `RELEASING.md` §3.5. El strip no adelgaza (peso dominado por Chrome for Testing).
   2. La notarización real con Chromium embebido se confirma exitosa (`notarytool submit --wait` completa sin errores) y `_resign_bundled_chromium()` funciona end-to-end con Developer ID real — tiempo real medido y documentado (Paso 6 diferido del checkpoint de la Fase 17). — **VERIFICADO 2026-08-27** contra el release público `v2.1`: `spctl` → `Notarized Developer ID`, `stapler validate` OK, `codesign --deep --strict` OK, cero Mach-O sin hardened runtime (Chromium incluido). Binario público correcto; residual no bloqueante = probar el pipeline *scriptado* (con `af48439`) en el próximo release.
   3. `--clipboard` se prueba contra un `pbcopy` real en el Mac (Fase 19 solo lo verificó con `subprocess.run` mockeado, sin `pbcopy` disponible en el sandbox). — **HECHO 2026-08-27**: `--clipboard` copia a `pbcopy` real (`pbpaste` devuelve el contenido) y es aditivo con `-o` (fichero de 142 B *y* portapapeles).
-  4. Si se usa `ROLLOUT_INTERVAL_SECONDS` en este release, se confirma que `<sparkle:phasedRolloutInterval>` aparece en el `appcast.xml` resultante con el valor esperado (Fase 20) — opcional, solo si el usuario decide probar un rollout real en este release.
+  4. Si se usa `ROLLOUT_INTERVAL_SECONDS` en este release, se confirma que `<sparkle:phasedRolloutInterval>` aparece en el `appcast.xml` resultante con el valor esperado (Fase 20) — opcional, solo si el usuario decide probar un rollout real en este release. — **CERRADO 2026-10-18** contra `v2.2`: el `appcast.xml` publicado no tiene `phasedRolloutInterval` → no se usó `ROLLOUT_INTERVAL_SECONDS` en ese release. Condición no disparada; sigue condicional al primer release que sí lo use.
   5. Decisión tomada (commitear o no) sobre `scripts/setup-sparkle-local.sh`, pendiente desde el checkpoint de la Fase 16. — **Resuelto**: ya está trackeado desde `5c3d663` (cierre de la Fase 16); la decisión efectiva fue "sí".
-  6. Si el bug sospechado de Xcode 27.0 beta GOLD (corrupción de `Info.plist` con una clave `CFBundleIdentifier` conteniendo un log interno de Sparkle) reaparece durante este build, se documenta como confirmado; si no reaparece, se anota que no se repitió.
+  6. Si el bug sospechado de Xcode 27.0 beta GOLD (corrupción de `Info.plist` con una clave `CFBundleIdentifier` conteniendo un log interno de Sparkle) reaparece durante este build, se documenta como confirmado; si no reaparece, se anota que no se repitió. — **CERRADO 2026-10-18**: confirmado por el usuario que no reapareció durante el build/release de `v2.2`.
 
 **Plans**:
 
@@ -692,13 +692,15 @@ un `pbcopy` real). El usuario decidió explícitamente agruparlos en una
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 23. Verificación de release real y cierre de deuda técnica | 23-01 informal · SC1✓ SC2✓ SC3✓ SC5✓ · SC4/SC6 diferidos-condicionales | ✅ Complete | 2026-08-27 |
+| 23. Verificación de release real y cierre de deuda técnica | 23-01 informal · SC1✓ SC2✓ SC3✓ SC4✓ SC5✓ SC6✓ | ✅ Complete | 2026-08-27 (SC4/SC6 cerrados 2026-10-18) |
 
 **v8.0 cerrado (2026-08-27).** SC1/SC2/SC3/SC5 verificados contra el
 release público `v2.1`; pipeline endurecido (`af48439`) y tagging
 arreglado (`cc1af03`). SC4 (rollout en appcast) y SC6 (bug Info.plist
-Xcode 27) quedan como criterios condicionales a un release futuro — no
-bloquean el cierre. Ver `.planning/phases/23-verificacion-release-real/23-01-SUMMARY.md`.
+Xcode 27) quedaron como criterios condicionales a un release futuro —
+**cerrados el 2026-10-18** contra el release real `v2.2` (ver v9.0 más
+abajo): SC4 no se disparó (ese release no usó `ROLLOUT_INTERVAL_SECONDS`),
+SC6 confirmado que no reapareció. Ver `.planning/phases/23-verificacion-release-real/23-01-SUMMARY.md`.
 
 ## v9.0 — Release real v2.2 (documentado retroactivamente)
 
@@ -732,10 +734,11 @@ commits (mensajes + diffs), listados abajo.
 
 **Publicado**: GitHub Release `v2.2` (`appcast.xml` → `sparkle:version` 12, `sparkle:shortVersionString` 2.2, 2026-09-30T10:33:31+02:00), sin `sparkle:phasedRolloutInterval`.
 
-**Pendiente de confirmar** (abierto en `STATE.md` → Pending Todos, 2026-10-18):
-- SC4 de la Fase 23/v8.0 (`<sparkle:phasedRolloutInterval>` en el appcast si se usa `ROLLOUT_INTERVAL_SECONDS`) — el `appcast.xml` publicado de `v2.2` **no** tiene ese campo, así que probablemente sigue sin ejercitarse.
-- SC6 de la Fase 23/v8.0 (bug sospechado de `Info.plist` con Xcode 27 beta) — sin registro de si reapareció durante este build.
-- No hay checkpoint humano ni resultados de `pytest`/`pylint`/`mypy` registrados para estos commits en `.planning/`.
+**SC4/SC6 de la Fase 23/v8.0, cerrados el 2026-10-18 contra este release:**
+- **SC4**: el `appcast.xml` publicado de `v2.2` no tiene `phasedRolloutInterval` → `ROLLOUT_INTERVAL_SECONDS` no se usó en este release. Condición no disparada; sigue condicional al primer release que sí lo use.
+- **SC6**: confirmado por el usuario que el bug sospechado de `Info.plist`/Xcode 27 beta **no reapareció** durante este build/release.
+
+**Pendiente**: no hay checkpoint humano ni resultados de `pytest`/`pylint`/`mypy` registrados para estos commits en `.planning/`.
 
 **UI hint**: sí — cambios visibles en `ContentView`/`HistoryView`/`SettingsView` y el icono de la app.
 
@@ -745,8 +748,9 @@ commits (mensajes + diffs), listados abajo.
 |-------|----------------|--------|-----------|
 | Release v2.2 (6 commits, sin fase formal) | n/a — sin plan GSD | ✅ Shippeado | 2026-09-30 |
 
-**v9.0 documentado retroactivamente (2026-10-18), no "cerrado" en el
-sentido GSD habitual** — no hubo Success Criteria definidos de
-antemano para este trabajo, así que no hay nada que verificar contra
-ellos más allá de los dos ítems pendientes (SC4/SC6 de la Fase 23)
-heredados de v8.0. Ver `STATE.md` → Pending Todos.
+**v9.0 documentado y cerrado el 2026-10-18.** No hubo Success Criteria
+definidos de antemano para este trabajo (es retroactivo), pero sirvió
+para cerrar los dos criterios condicionales que quedaban abiertos de
+la Fase 23/v8.0: SC4 (no disparado — este release no usó
+`ROLLOUT_INTERVAL_SECONDS`) y SC6 (confirmado que no reapareció).
+Ningún criterio queda abierto en v8.0 ni en v9.0.

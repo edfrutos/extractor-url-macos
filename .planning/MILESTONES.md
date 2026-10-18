@@ -156,10 +156,11 @@ alcance.
 - `pytest` 67/67 · `pylint` 10.00/10 · `mypy` limpio (sandbox, código
   Python puro).
 
-**Diferido-condicional** (criterios "si/cuando un release futuro haga X",
-no bloqueos): SC4 (`<sparkle:phasedRolloutInterval>` en el appcast, solo
-si un release usa `ROLLOUT_INTERVAL_SECONDS`) y SC6 (vigilar el bug de
-`Info.plist` de Xcode 27 beta, solo observable durante un build nuevo).
+**Diferido-condicional, cerrado el 2026-10-18 contra el release real `v2.2`**
+(ver v9.0 más abajo): SC4 (`<sparkle:phasedRolloutInterval>` en el appcast)
+no se disparó — `v2.2` no usó `ROLLOUT_INTERVAL_SECONDS`, sigue
+condicional al primer release que lo use. SC6 (bug `Info.plist` de
+Xcode 27 beta) confirmado que no reapareció durante ese build.
 
 **Fases:**
 - Fase 23 — Verificación de release real y cierre de deuda técnica ✅ Complete
@@ -188,4 +189,4 @@ que la copia local y `STATE.md`/`ROADMAP.md` no reflejaban.
 
 **Phases:** 0 (sin fases GSD) | **Requirements:** sin REQ-IDs (trabajo retroactivo)
 
-**Pendiente de confirmar:** SC4 (rollout en appcast — el `appcast.xml` publicado no tiene `phasedRolloutInterval`) y SC6 (bug `Info.plist`/Xcode 27 beta) de la Fase 23/v8.0, nunca verificados contra este release. Ver `STATE.md` → Pending Todos.
+**Cierra, contra este release, los dos criterios condicionales de la Fase 23/v8.0 (2026-10-18):** SC4 — el `appcast.xml` publicado no tiene `phasedRolloutInterval` → no se usó `ROLLOUT_INTERVAL_SECONDS`, condición no disparada, sigue condicional al primer release que lo use. SC6 — confirmado por el usuario que el bug de `Info.plist`/Xcode 27 beta no reapareció durante este build.
