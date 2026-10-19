@@ -134,3 +134,31 @@ def test_extract_formatted_content_no_amplia_selector_inexistente(
     )
 
     assert result is None
+
+
+@pytest.mark.parametrize(
+    "url", ["https://example.com", "http://example.com", "HTTPS://example.com", "example.com"]
+)
+def test_url_scheme_error_acepta_http_https_y_sin_esquema(url: str) -> None:
+    assert core.url_scheme_error(url) is None
+
+
+@pytest.mark.parametrize("url", ["httpd://edefrutos.me", "ftp://example.com"])
+def test_url_scheme_error_rechaza_esquemas_no_soportados(url: str) -> None:
+    message = core.url_scheme_error(url)
+
+    assert message is not None
+    assert url.split("://", 1)[0] in message
+
+
+def test_fetch_raw_con_esquema_invalido_no_hace_peticion(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    def _fail_get(*_args: object, **_kwargs: object) -> None:
+        raise AssertionError("no debería llegar a la red")
+
+    monkeypatch.setattr(core._HTTP_SESSION, "get", _fail_get)
+
+    assert core._fetch_raw("httpd://edefrutos.me", use_cache=False) is None
+    assert "Esquema de URL no soportado" in capsys.readouterr().err

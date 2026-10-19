@@ -24,6 +24,7 @@ from core import (
     _fetch_raw,
     _extract_title,
     record_history_entry,
+    url_scheme_error,
     PlaywrightSession,
 )
 
@@ -330,12 +331,17 @@ def _success_payload(  # pylint: disable=too-many-arguments,too-many-positional-
     }
 
 
+def _error_message_for(url: str) -> str:
+    """Mensaje de error para una URL fallida: específico si el esquema es inválido."""
+    return url_scheme_error(url) or _EXTRACTION_ERROR_MESSAGE
+
+
 def _error_payload(url: str) -> dict[str, Any]:
     """Construye el payload JSON de una extracción fallida (--json/--batch)."""
     return {
         "status": "error",
         "url": url,
-        "error_message": _EXTRACTION_ERROR_MESSAGE,
+        "error_message": _error_message_for(url),
     }
 
 
@@ -463,7 +469,7 @@ def main() -> None:
             record_history_entry(
                 _history_entry(
                     args.url, args.type, args.selector, "error",
-                    error_message=_EXTRACTION_ERROR_MESSAGE,
+                    error_message=_error_message_for(args.url),
                 )
             )
             if args.json:
@@ -547,7 +553,7 @@ def _run_batch(args: argparse.Namespace) -> None:
                 record_history_entry(
                     _history_entry(
                         url, args.type, args.selector, "error",
-                        error_message=_EXTRACTION_ERROR_MESSAGE,
+                        error_message=_error_message_for(url),
                     )
                 )
                 print(json.dumps(_error_payload(url), ensure_ascii=False))

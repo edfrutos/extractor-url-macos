@@ -32,9 +32,24 @@ _NOISE_TAGS = [
 ]
 
 _USER_AGENT = (
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
-    "(KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 "
+    "(KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
 )
+
+# Cabeceras de un navegador real: un User-Agent aislado (y antiguo) es una
+# señal típica de bot para las protecciones tipo Akamai/Cloudflare.
+_REQUEST_HEADERS = {
+    "User-Agent": _USER_AGENT,
+    "Accept": (
+        "text/html,application/xhtml+xml,application/xml;q=0.9,"
+        "image/avif,image/webp,*/*;q=0.8"
+    ),
+    "Accept-Language": "es-ES,es;q=0.9,en;q=0.8",
+}
+
+# Códigos con los que un sitio suele bloquear clientes HTTP "no navegador".
+# Ante ellos se reintenta con Chromium headless (salvo js_mode="off").
+_BLOCKED_STATUS_CODES = frozenset({401, 403})
 
 # Selectores CSS para detectar el contenido principal, por orden de prioridad
 _MAIN_SELECTORS = [
@@ -135,6 +150,37 @@ _HTTP_SESSION = _create_retry_session()
 # Descarga
 # ---------------------------------------------------------------------------
 
+_EXPLICIT_SCHEME_RE = re.compile(r"^([A-Za-z][A-Za-z0-9+.-]*)://")
+
+
+def url_scheme_error(url: str) -> Optional[str]:
+    """Devuelve un mensaje de error si la URL declara un esquema no soportado.
+
+    Sin esquema explícito (``example.com``) no es un error: _fetch_raw()
+    antepone ``https://``. Con un esquema distinto de http/https (p. ej. la
+    errata ``httpd://``) se falla explícito en vez de pedir
+    ``https://httpd://...``, que acaba en un error de red confuso.
+    """
+    match = _EXPLICIT_SCHEME_RE.match(url.strip())
+    if match is None or match.group(1).lower() in ("http", "https"):
+        return None
+    return (
+        f"Esquema de URL no soportado: '{match.group(1)}://'. "
+        "Usa http:// o https://."
+    )
+
+
+def _normalize_url(url: str) -> Optional[str]:
+    """Antepone ``https://`` si falta el esquema; None (con aviso) si es inválido."""
+    scheme_error = url_scheme_error(url)
+    if scheme_error is not None:
+        print(scheme_error, file=sys.stderr)
+        return None
+    if not url.lower().startswith(("http://", "https://")):
+        return "https://" + url
+    return url
+
+
 def _fetch_raw(
     url: str,
     timeout: int = 15,
@@ -153,8 +199,10 @@ def _fetch_raw(
     cacheada de una ejecución anterior no debe anular el efecto explícito
     del flag) pero conserva la escritura al final, igual que siempre.
     """
-    if not url.startswith(("http://", "https://")):
-        url = "https://" + url
+    normalized_url = _normalize_url(url)
+    if normalized_url is None:
+        return None
+    url = normalized_url
 
     # Lógica de caché
     cache_key = hashlib.sha256(url.encode()).hexdigest()
@@ -176,26 +224,7 @@ def _fetch_raw(
 
     # Lógica de descarga
     try:
-        response = _HTTP_SESSION.get(
-            url,
-            headers={"User-Agent": _USER_AGENT},
-            timeout=timeout,
-        )
-        response.raise_for_status()
-        response.encoding = response.apparent_encoding
-        html_text = response.text
-        final_url = response.url
-
-        # Fallback JS (Fase 11) + control manual (Fase 15): "force" renderiza
-        # siempre, "off" nunca, "auto" deja decidir a la heurística.
-        if js_mode == "force":
-            rendered = _fetch_via_playwright(url, timeout, session=session)
-            if rendered is not None:
-                html_text = rendered
-        elif js_mode != "off" and _looks_insufficient(html_text):
-            rendered = _fetch_via_playwright(url, timeout, session=session)
-            if rendered is not None:
-                html_text = rendered
+        html_text, final_url = _download(url, timeout, js_mode, session)
 
         # Guardar en caché si la descarga fue exitosa. Solo en js_mode="auto":
         # "force"/"off" no deben poder envenenar la caché que lee el modo
@@ -216,6 +245,46 @@ def _fetch_raw(
     except Exception as e:  # pylint: disable=broad-exception-caught
         print(f"Error inesperado: {e}", file=sys.stderr)
         return None
+
+
+def _download(
+    url: str,
+    timeout: int,
+    js_mode: str,
+    session: Optional["PlaywrightSession"],
+) -> tuple[str, str]:
+    """Descarga `url` y devuelve (html_text, url_final), con fallback a Chromium.
+
+    Fallback JS (Fase 11) + control manual (Fase 15): "force" renderiza
+    siempre, "off" nunca, "auto" deja decidir a la heurística. Además, si la
+    descarga directa recibe un 401/403 (bloqueo anti-bots), se reintenta con
+    Chromium headless salvo en "off". Propaga RequestException si no hay
+    forma de obtener la página.
+    """
+    try:
+        response = _HTTP_SESSION.get(url, headers=_REQUEST_HEADERS, timeout=timeout)
+        response.raise_for_status()
+    except requests.exceptions.HTTPError as error:
+        status = error.response.status_code if error.response is not None else None
+        if js_mode == "off" or status not in _BLOCKED_STATUS_CODES:
+            raise
+        print(
+            f"HTTP {status} en la descarga directa de '{url}'; "
+            "reintentando con navegador headless.",
+            file=sys.stderr,
+        )
+        rendered = _fetch_via_playwright(url, timeout, session=session)
+        if rendered is None:
+            raise
+        return rendered, url
+
+    response.encoding = response.apparent_encoding
+    html_text = response.text
+    if js_mode == "force" or (js_mode != "off" and _looks_insufficient(html_text)):
+        rendered = _fetch_via_playwright(url, timeout, session=session)
+        if rendered is not None:
+            html_text = rendered
+    return html_text, response.url
 
 
 def _parse_html(html_text: str) -> BeautifulSoup:
@@ -267,22 +336,33 @@ class PlaywrightSession:
     def __init__(self) -> None:
         self._playwright = None
         self._browser = None
+        self._launch_failed = False
 
     def _ensure_browser(self):
         if self._browser is not None:
             return self._browser
+        if self._launch_failed:
+            # Ya falló una vez: no reintentar el lanzamiento en cada URL del batch.
+            return None
         try:
             from playwright.sync_api import sync_playwright  # pylint: disable=import-outside-toplevel
         except ImportError:
             return None
-        self._playwright = sync_playwright().start()
-        self._browser = self._playwright.chromium.launch()
+        if self._playwright is None:
+            self._playwright = sync_playwright().start()
+        try:
+            self._browser = self._playwright.chromium.launch()
+        except Exception:
+            self._launch_failed = True
+            raise
         return self._browser
 
     def new_page(self):
         """Crea una página en el browser compartido, o None si no disponible."""
         browser = self._ensure_browser()
-        return browser.new_page() if browser is not None else None
+        if browser is None:
+            return None
+        return browser.new_page(user_agent=_USER_AGENT)
 
     def close(self) -> None:
         """Cierra el browser y detiene Playwright, si se llegaron a lanzar."""
@@ -296,6 +376,22 @@ class PlaywrightSession:
 
     def __exit__(self, *_exc_info: object) -> None:
         self.close()
+
+
+def _render_page(page, url: str, timeout: int) -> Optional[str]:
+    """Navega a `url` y devuelve el HTML; None si el servidor responde con error.
+
+    Sin comprobar el estado, una página de bloqueo ("Access Denied", 403) se
+    devolvería como si fuera el contenido de la web.
+    """
+    response = page.goto(url, timeout=timeout * 1000, wait_until="networkidle")
+    if response is not None and response.status >= 400:
+        print(
+            f"El navegador headless también recibió HTTP {response.status} de '{url}'.",
+            file=sys.stderr,
+        )
+        return None
+    return page.content()
 
 
 def _fetch_via_playwright(
@@ -317,12 +413,14 @@ def _fetch_via_playwright(
         return None
 
     if session is not None:
-        page = session.new_page()
-        if page is None:
-            return None
+        page = None
         try:
-            page.goto(url, timeout=timeout * 1000, wait_until="networkidle")
-            return page.content()
+            # new_page() lanza Chromium en el primer uso: si el binario falta o
+            # no arranca, debe degradar igual que un fallo de render, no abortar.
+            page = session.new_page()
+            if page is None:
+                return None
+            return _render_page(page, url, timeout)
         except PlaywrightError as e:
             print(
                 f"Playwright no disponible o falló el render de '{url}': {e}",
@@ -330,15 +428,15 @@ def _fetch_via_playwright(
             )
             return None
         finally:
-            page.close()
+            if page is not None:
+                page.close()
 
     try:
         with sync_playwright() as p:
             browser = p.chromium.launch()
             try:
-                page = browser.new_page()
-                page.goto(url, timeout=timeout * 1000, wait_until="networkidle")
-                return page.content()
+                page = browser.new_page(user_agent=_USER_AGENT)
+                return _render_page(page, url, timeout)
             finally:
                 browser.close()
     except PlaywrightError as e:

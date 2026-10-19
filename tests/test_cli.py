@@ -624,3 +624,30 @@ def test_clipboard_no_interfiere_con_salida_json(
     output = json.loads(capsys.readouterr().out)
     assert output["status"] == "success"
     assert output["content"] == "contenido"
+
+
+def test_main_json_de_error_explica_esquema_no_soportado(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+    tmp_path: Path,
+) -> None:
+    """Una errata en el esquema (httpd://) devuelve un error_message específico."""
+    _use_tmp_history(monkeypatch, tmp_path)
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        ["extractor_url.py", "httpd://edefrutos.me", "--json"],
+    )
+    monkeypatch.setattr(
+        extractor_url,
+        "extract_formatted_content",
+        lambda *_args, **_kwargs: None,
+    )
+
+    with pytest.raises(SystemExit, match="1"):
+        extractor_url.main()
+
+    output = json.loads(capsys.readouterr().out)
+    assert output["status"] == "error"
+    assert "httpd://" in output["error_message"]
+    assert "https://" in output["error_message"]

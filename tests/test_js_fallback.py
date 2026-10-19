@@ -140,3 +140,112 @@ def test_fetch_raw_no_llama_a_playwright_con_html_estatico_suficiente(
     assert result is not None
     returned_html, _ = result
     assert returned_html == html_rico
+
+
+# ---------------------------------------------------------------------------
+# Regresión — Chromium que no arranca dentro de una PlaywrightSession
+# ---------------------------------------------------------------------------
+
+
+def test_fetch_via_playwright_con_sesion_degrada_si_chromium_no_arranca(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    playwright_api = pytest.importorskip("playwright.sync_api")
+    launches: list[int] = []
+
+    def _launch_fallido(_self: core.PlaywrightSession) -> None:
+        launches.append(1)
+        raise playwright_api.Error("Executable doesn't exist")
+
+    monkeypatch.setattr(core.PlaywrightSession, "new_page", _launch_fallido)
+
+    result = core._fetch_via_playwright(
+        "https://example.com", 5, session=core.PlaywrightSession(),
+    )
+
+    assert result is None
+    assert launches == [1]
+
+
+def test_playwright_session_no_reintenta_un_lanzamiento_fallido() -> None:
+    session = core.PlaywrightSession()
+    session._launch_failed = True  # pylint: disable=protected-access
+
+    # Con el fallo ya registrado, devuelve None sin volver a lanzar Chromium.
+    assert session.new_page() is None
+
+
+# ---------------------------------------------------------------------------
+# Bloqueo anti-bots — 401/403 en la descarga directa reintenta con Chromium
+# ---------------------------------------------------------------------------
+
+
+class _ForbiddenResponse(_FakeResponse):
+    """Respuesta 403 que lanza HTTPError como requests real."""
+
+    status_code = 403
+
+    def raise_for_status(self) -> None:
+        raise core.requests.exceptions.HTTPError(
+            "403 Client Error: Forbidden", response=self,  # type: ignore[arg-type]
+        )
+
+
+def test_fetch_raw_reintenta_con_playwright_ante_403(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(
+        core._HTTP_SESSION, "get", lambda url, **_kw: _ForbiddenResponse("", url),
+    )
+    monkeypatch.setattr(
+        core, "_fetch_via_playwright", lambda _url, _timeout, **_kw: "<p>renderizado</p>",
+    )
+
+    result = core._fetch_raw("https://example.com/bloqueada", use_cache=False)
+
+    assert result == ("<p>renderizado</p>", "https://example.com/bloqueada")
+
+
+def test_fetch_raw_ante_403_falla_si_playwright_tampoco_puede(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    monkeypatch.setattr(
+        core._HTTP_SESSION, "get", lambda url, **_kw: _ForbiddenResponse("", url),
+    )
+    monkeypatch.setattr(core, "_fetch_via_playwright", lambda _url, _timeout, **_kw: None)
+
+    assert core._fetch_raw("https://example.com/bloqueada", use_cache=False) is None
+    assert "403" in capsys.readouterr().err
+
+
+def test_fetch_raw_ante_403_con_js_off_no_usa_playwright(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    def _no_deberia_llamarse(*_args: object, **_kwargs: object) -> str:
+        raise AssertionError("js_mode='off' no debe lanzar Chromium")
+
+    monkeypatch.setattr(
+        core._HTTP_SESSION, "get", lambda url, **_kw: _ForbiddenResponse("", url),
+    )
+    monkeypatch.setattr(core, "_fetch_via_playwright", _no_deberia_llamarse)
+
+    assert core._fetch_raw("https://example.com/bloqueada", use_cache=False, js_mode="off") is None
+
+
+class _FakePage:
+    def __init__(self, status: int) -> None:
+        self._status = status
+
+    def goto(self, *_args: object, **_kwargs: object) -> object:
+        return type("Resp", (), {"status": self._status})()
+
+    def content(self) -> str:
+        return "<html>Access Denied</html>"
+
+
+def test_render_page_descarta_paginas_de_error_http() -> None:
+    assert core._render_page(_FakePage(403), "https://example.com", 5) is None
+    assert core._render_page(_FakePage(200), "https://example.com", 5) == (
+        "<html>Access Denied</html>"
+    )
