@@ -3,12 +3,15 @@
     <channel>
         <title>ExtractorApp</title>
         <item>
-            <title>2.2</title>
-            <pubDate>Wed, 30 Sep 2026 10:33:31 +0200</pubDate>
-            <sparkle:version>12</sparkle:version>
-            <sparkle:shortVersionString>2.2</sparkle:shortVersionString>
+            <title>2.3</title>
+            <pubDate>Mon, 19 Oct 2026 17:29:29 +0200</pubDate>
+            <sparkle:version>13</sparkle:version>
+            <sparkle:shortVersionString>2.3</sparkle:shortVersionString>
             <sparkle:minimumSystemVersion>13.5</sparkle:minimumSystemVersion>
-            <enclosure url="https://github.com/edfrutos/extractor-url-macos/releases/download/v2.2/ExtractorApp-2.2.zip" length="387605591" type="application/octet-stream" sparkle:edSignature="GO9QUXlaQhgi8jqyqnLtoFPP7d+43WcuNvRSQgA8fxMxjDNowzrK0rlYog2wcwhuGmwxMZw+Dhlpaupdp6J3DQ=="/>
+            <enclosure url="https://github.com/edfrutos/extractor-url-macos/releases/download/v2.3/ExtractorApp-2.3.zip" length="388977215" type="application/octet-stream" sparkle:edSignature="sst08A/icCb+IpTVrz5GV9lEteYcSR4zbVwALhHAsGGDGzlXVFeqpjVQq4YV2rWfmNmSFw3xJXKrbWKTf/cCBA=="/>
+            <sparkle:deltas>
+                <enclosure url="https://github.com/edfrutos/extractor-url-macos/releases/download/v2.3/ExtractorApp13-10.delta" sparkle:deltaFrom="10" length="2598930" type="application/octet-stream" sparkle:deltaFromSparkleExecutableSize="977808" sparkle:deltaFromSparkleLocales="de,he,ar,el,ja,fa,uk" sparkle:edSignature="4iwRgvmljypPs0s8oeH+oZaRAFqW0spWgFKBuGLG/XYjXEdDhCeFXifq8DcdxTpikqeOrU/D61APGza31kXsAA=="/>
+            </sparkle:deltas>
         </item>
     </channel>
 </rss>
