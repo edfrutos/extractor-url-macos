@@ -651,3 +651,66 @@ def test_main_json_de_error_explica_esquema_no_soportado(
     assert output["status"] == "error"
     assert "httpd://" in output["error_message"]
     assert "https://" in output["error_message"]
+
+
+# ---------------------------------------------------------------------------
+# --file: archivo HTML local
+# ---------------------------------------------------------------------------
+
+
+def test_file_convierte_archivo_local_a_json(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+    tmp_path: Path,
+) -> None:
+    _use_tmp_history(monkeypatch, tmp_path)
+    page = tmp_path / "pagina.html"
+    page.write_text(
+        "<html><head><title>Local</title></head><body><article>"
+        "<h1>Hola</h1><p>" + "Texto de prueba. " * 20 + "</p></article></body></html>",
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(
+        sys, "argv",
+        ["extractor_url.py", "--file", str(page), "--type", "markdown", "--json"],
+    )
+
+    with pytest.raises(SystemExit, match="0"):
+        extractor_url.main()
+
+    output = json.loads(capsys.readouterr().out)
+    assert output["status"] == "success"
+    assert output["url"] == page.as_uri()
+    assert output["title"] == "Local"
+    assert "Texto de prueba" in output["content"]
+
+
+def test_file_y_url_a_la_vez_falla_explicito(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path,
+) -> None:
+    monkeypatch.setattr(
+        sys, "argv",
+        ["extractor_url.py", "https://example.com", "--file", str(tmp_path / "x.html")],
+    )
+
+    with pytest.raises(SystemExit, match="2"):
+        extractor_url.main()
+
+
+def test_file_inexistente_devuelve_error_json(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+    tmp_path: Path,
+) -> None:
+    _use_tmp_history(monkeypatch, tmp_path)
+    monkeypatch.setattr(
+        sys, "argv",
+        ["extractor_url.py", "--file", str(tmp_path / "no-existe.html"), "--json"],
+    )
+
+    with pytest.raises(SystemExit, match="1"):
+        extractor_url.main()
+
+    captured = capsys.readouterr()
+    assert json.loads(captured.out)["status"] == "error"
+    assert "No se pudo leer el archivo" in captured.err

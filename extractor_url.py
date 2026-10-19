@@ -14,6 +14,7 @@ import sys
 import threading
 import tkinter as tk
 from datetime import datetime, timezone
+from pathlib import Path
 from tkinter import filedialog, messagebox, ttk
 from typing import Any, Optional, Union
 
@@ -352,7 +353,15 @@ def _build_parser() -> argparse.ArgumentParser:
         "url",
         nargs="?",
         default=None,
-        help="URL de la página web (opcional si se usa --gui)",
+        help="URL de la página web (opcional si se usa --gui o --file)",
+    )
+    parser.add_argument(
+        "-f",
+        "--file",
+        metavar="RUTA",
+        default=None,
+        help="Archivo HTML local a convertir en vez de una URL (p. ej. una "
+        "página guardada desde el navegador)",
     )
     parser.add_argument(
         "-t",
@@ -443,6 +452,14 @@ def main() -> None:
             sys.exit(2)
         _run_batch(args)
         return
+
+    if args.file is not None:
+        if args.url is not None:
+            print("Error: usa una URL o --file, no ambos.", file=sys.stderr)
+            sys.exit(2)
+        # El resto del flujo (tipos, título, historial, JSON) trata el archivo
+        # como una URL file://, que core._fetch_raw() lee del disco.
+        args.url = Path(args.file).expanduser().resolve().as_uri()
 
     if args.gui or args.url is None:
         _run_gui()

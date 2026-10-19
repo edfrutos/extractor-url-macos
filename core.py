@@ -15,11 +15,12 @@ import time
 import unicodedata
 from pathlib import Path
 from typing import Optional, Union
-from urllib.parse import urljoin
+from urllib.parse import urljoin, urlparse
+from urllib.request import url2pathname
 
 import requests
 import trafilatura
-from bs4 import BeautifulSoup, Comment, FeatureNotFound, Tag
+from bs4 import BeautifulSoup, Comment, FeatureNotFound, Tag, UnicodeDammit
 from markdownify import markdownify as md_convert
 from requests.adapters import HTTPAdapter
 from soupsieve import SelectorSyntaxError
@@ -162,12 +163,56 @@ def url_scheme_error(url: str) -> Optional[str]:
     ``https://httpd://...``, que acaba en un error de red confuso.
     """
     match = _EXPLICIT_SCHEME_RE.match(url.strip())
-    if match is None or match.group(1).lower() in ("http", "https"):
+    if match is None or match.group(1).lower() in ("http", "https", "file"):
         return None
     return (
         f"Esquema de URL no soportado: '{match.group(1)}://'. "
-        "Usa http:// o https://."
+        "Usa http://, https:// o file:// (archivo HTML local)."
     )
+
+
+# Comentario que añaden Chrome/Safari/Edge al "Guardar página como…".
+_SAVED_FROM_RE = re.compile(r"<!--\s*saved from url=\(\d+\)(\S+?)\s*-->", re.IGNORECASE)
+
+
+def _original_page_url(html_text: str) -> Optional[str]:
+    """URL original de una página guardada en disco, si el HTML la declara.
+
+    Se usa como base para resolver enlaces e imágenes relativos: con la
+    ruta file:// apuntarían al disco en vez de a la web de origen.
+    """
+    soup = _parse_html(html_text)
+    candidates = [
+        soup.find("link", rel="canonical"),
+        soup.find("meta", attrs={"property": "og:url"}),
+    ]
+    for tag in candidates:
+        if isinstance(tag, Tag):
+            value = tag.get("href") or tag.get("content")
+            if isinstance(value, str) and value.startswith(("http://", "https://")):
+                return value
+    match = _SAVED_FROM_RE.search(html_text)
+    if match and match.group(1).startswith(("http://", "https://")):
+        return match.group(1)
+    return None
+
+
+def _read_local_html(file_uri: str) -> Optional[tuple[str, str]]:
+    """Lee un archivo HTML local (URI file://) y devuelve (html_text, url_base).
+
+    La codificación se detecta como haría un navegador (meta charset, BOM…)
+    para no romper páginas guardadas en Latin-1 u otras codificaciones.
+    """
+    path = Path(url2pathname(urlparse(file_uri).path))
+    try:
+        data = path.read_bytes()
+    except OSError as error:
+        print(f"No se pudo leer el archivo '{path}': {error}", file=sys.stderr)
+        return None
+    html_text = UnicodeDammit(data, is_html=True).unicode_markup
+    if html_text is None:
+        html_text = data.decode("utf-8", errors="replace")
+    return html_text, _original_page_url(html_text) or file_uri
 
 
 def _normalize_url(url: str) -> Optional[str]:
@@ -199,6 +244,11 @@ def _fetch_raw(
     cacheada de una ejecución anterior no debe anular el efecto explícito
     del flag) pero conserva la escritura al final, igual que siempre.
     """
+    if url.lower().startswith("file://"):
+        # Archivo local: sin red, caché ni Playwright (una página guardada
+        # ya es el HTML final).
+        return _read_local_html(url)
+
     normalized_url = _normalize_url(url)
     if normalized_url is None:
         return None

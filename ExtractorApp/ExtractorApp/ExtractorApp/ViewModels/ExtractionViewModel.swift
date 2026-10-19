@@ -98,6 +98,25 @@ final class ExtractionViewModel: ObservableObject {
         }
     }
 
+    /// Elige un archivo HTML local y lo extrae como URL file:// — el CLI lo
+    /// lee del disco, así que tipos, título, historial y export funcionan igual.
+    func openLocalHTML() async {
+        let panel = NSOpenPanel()
+        panel.allowedContentTypes = [.html]
+        panel.allowsMultipleSelection = false
+        panel.canChooseDirectories = false
+        panel.message = "Elige una página HTML guardada desde el navegador"
+
+        let response = await withCheckedContinuation {
+            (continuation: CheckedContinuation<NSApplication.ModalResponse, Never>) in
+            panel.begin { continuation.resume(returning: $0) }
+        }
+        guard response == .OK, let fileURL = panel.url else { return }
+
+        urlString = fileURL.absoluteString
+        extract()
+    }
+
     // MARK: - Error formatting
 
     private func handleError(_ error: Error) {

@@ -127,6 +127,18 @@ struct ContentView: View {
                     .onSubmit { vm.extract() }
                     .disabled(vm.isExtracting)
                     .accessibilityLabel("URL a extraer")
+
+                // Alternativa para webs que bloquean el acceso automatizado:
+                // guardar la página desde el navegador y convertir el archivo.
+                Button {
+                    Task { await vm.openLocalHTML() }
+                } label: {
+                    Label("Abrir HTML…", systemImage: "doc.text")
+                        .font(.subheadline)
+                }
+                .buttonStyle(.borderless)
+                .disabled(vm.isExtracting)
+                .help("Convertir un archivo HTML local, p. ej. una página guardada desde el navegador")
             }
             .padding(.horizontal, 12)
             .padding(.vertical, 10)

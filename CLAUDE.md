@@ -30,6 +30,7 @@ python extractor_url.py https://example.com --type html      # HTML completo
 python extractor_url.py https://example.com --type markdown  # estructura Markdown
 python extractor_url.py https://example.com --type markdown --selector article
 python extractor_url.py https://example.com -o salida.txt    # guardar en archivo
+python extractor_url.py --file pagina.html --type markdown   # HTML local (página guardada)
 python extractor_url.py https://example.com --no-images      # sin imágenes en el resultado
 python extractor_url.py https://example.com --no-links       # enlaces aplanados (solo texto)
 python extractor_url.py https://example.com --clipboard      # copia el resultado (macOS, pbcopy)

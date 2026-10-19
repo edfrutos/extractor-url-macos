@@ -36,6 +36,7 @@ python extractor_url.py https://example.com --type html      # HTML completo
 python extractor_url.py https://example.com --type markdown  # estructura Markdown
 python extractor_url.py https://example.com --type markdown --selector article
 python extractor_url.py https://example.com -o salida.txt    # guardar en archivo
+python extractor_url.py --file pagina.html --type markdown   # HTML local (página guardada)
 python extractor_url.py https://example.com --json           # contrato JSON (usado por la app Swift)
 python extractor_url.py                                      # GUI tkinter
 python extractor_url.py --gui                                # GUI tkinter (explícito)
@@ -50,6 +51,8 @@ gestiona la UI, el filesystem y la exportación.
 
 - Campo URL, selector de tipo (text/html/markdown), selector CSS y timeout
   configurables desde la interfaz.
+- Botón «Abrir HTML…» para convertir un archivo HTML local (p. ej. una página
+  guardada desde el navegador cuando la web bloquea el acceso automatizado).
 - Extracción asíncrona (`Task.detached`) sin bloquear la ventana; progreso y
   errores visibles inline.
 - Preview del Markdown renderizado en `WKWebView`.

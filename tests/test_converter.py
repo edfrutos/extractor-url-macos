@@ -162,3 +162,88 @@ def test_fetch_raw_con_esquema_invalido_no_hace_peticion(
 
     assert core._fetch_raw("httpd://edefrutos.me", use_cache=False) is None
     assert "Esquema de URL no soportado" in capsys.readouterr().err
+
+
+# ---------------------------------------------------------------------------
+# Archivo HTML local (file://)
+# ---------------------------------------------------------------------------
+
+
+def test_fetch_raw_lee_archivo_local_sin_red(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path,
+) -> None:
+    def _fail_get(*_args: object, **_kwargs: object) -> None:
+        raise AssertionError("un archivo local no debe tocar la red")
+
+    monkeypatch.setattr(core._HTTP_SESSION, "get", _fail_get)
+    page = tmp_path / "pagina.html"
+    page.write_text(_fixture_text("sample_selector.html"), encoding="utf-8")
+
+    result = core._fetch_raw(page.as_uri())
+
+    assert result is not None
+    html_text, base_url = result
+    assert "Contenido objetivo" in html_text
+    assert base_url == page.as_uri()
+
+
+def test_fetch_raw_archivo_local_usa_url_original_como_base(tmp_path: Path) -> None:
+    page = tmp_path / "guardada.html"
+    page.write_text(
+        "<!-- saved from url=(0027)https://example.com/articulo -->\n"
+        "<html><body><a href='/otra'>x</a></body></html>",
+        encoding="utf-8",
+    )
+
+    result = core._fetch_raw(page.as_uri())
+
+    assert result is not None
+    assert result[1] == "https://example.com/articulo"
+
+
+def test_original_page_url_prefiere_canonical() -> None:
+    html = (
+        '<html><head><link rel="canonical" href="https://example.com/canon">'
+        '<meta property="og:url" content="https://example.com/og"></head></html>'
+    )
+    assert core._original_page_url(html) == "https://example.com/canon"
+
+
+def test_fetch_raw_archivo_local_detecta_latin1(tmp_path: Path) -> None:
+    page = tmp_path / "latin1.html"
+    page.write_bytes(
+        '<html><head><meta charset="iso-8859-1"></head><body>Educación</body></html>'
+        .encode("latin-1")
+    )
+
+    result = core._fetch_raw(page.as_uri())
+
+    assert result is not None
+    assert "Educación" in result[0]
+
+
+def test_fetch_raw_archivo_inexistente_devuelve_none(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str],
+) -> None:
+    assert core._fetch_raw((tmp_path / "no-existe.html").as_uri()) is None
+    assert "No se pudo leer el archivo" in capsys.readouterr().err
+
+
+def test_markdown_desde_archivo_local_resuelve_enlaces_contra_url_original(
+    tmp_path: Path,
+) -> None:
+    page = tmp_path / "pagina.html"
+    page.write_text(
+        _fixture_text("sample_selector.html").replace(
+            "<head>", '<head><link rel="canonical" href="https://example.com/base/">', 1,
+        ),
+        encoding="utf-8",
+    )
+
+    markdown = core.extract_formatted_content(
+        page.as_uri(), return_type="markdown_structure", selector="#target",
+    )
+
+    assert isinstance(markdown, str)
+    assert "# Contenido objetivo" in markdown
+    assert "https://example.com/guia" in markdown
