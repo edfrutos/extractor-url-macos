@@ -231,12 +231,33 @@ final class PythonBridge {
         }
 
         guard result.isSuccess else {
-            throw ExtractionError.extractionFailed(
-                message: result.errorMessage ?? "Error desconocido"
-            )
+            // error_message del JSON es genérico ("No se pudo extraer…"); la
+            // causa real (HTTP 403, timeout, DNS…) solo llega por stderr.
+            var message = result.errorMessage ?? "Error desconocido"
+            if let detail = Self.stderrSummary(stderr) {
+                message += "\nDetalle: \(detail)"
+            }
+            throw ExtractionError.extractionFailed(message: message)
         }
 
         return result
+    }
+
+    /// Primeras líneas útiles de stderr (sin líneas vacías ni los recuadros
+    /// ASCII de Playwright), recortadas para caber en la UI; nil si no hay nada.
+    nonisolated static func stderrSummary(_ data: Data, maxLength: Int = 400) -> String? {
+        guard let text = String(data: data.prefix(8192), encoding: .utf8) else { return nil }
+        let boxCharacters = CharacterSet(charactersIn: "╔╗╚╝║═")
+        let lines = text
+            .split(whereSeparator: \.isNewline)
+            .map { $0.trimmingCharacters(in: .whitespaces) }
+            .filter { line in
+                guard let first = line.unicodeScalars.first else { return false }
+                return !boxCharacters.contains(first)
+            }
+        guard !lines.isEmpty else { return nil }
+        let summary = lines.prefix(2).joined(separator: " · ")
+        return summary.count > maxLength ? String(summary.prefix(maxLength)) + "…" : summary
     }
 
     // MARK: - Convenience

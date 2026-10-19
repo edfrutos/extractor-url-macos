@@ -152,6 +152,9 @@ struct ContentView: View {
                     Text("Markdown").tag("markdown")
                 }
                 .pickerStyle(.segmented)
+                // "Tipo" se conserva como etiqueta de accesibilidad (VoiceOver),
+                // pero visualmente ya la cubre el texto "Formato:" de al lado.
+                .labelsHidden()
                 .disabled(vm.isExtracting)
                 .fixedSize()
 
@@ -288,7 +291,7 @@ struct ContentView: View {
                 Spacer()
 
                 if vm.resultContent != nil && !vm.isExtracting {
-                    Text(vm.outputType.uppercased())
+                    Text((vm.resultOutputType ?? vm.outputType).uppercased())
                         .font(.system(size: 10, weight: .bold, design: .monospaced))
                         .foregroundStyle(.secondary)
                         .padding(.horizontal, 7)
@@ -336,16 +339,33 @@ struct ContentView: View {
                     Task { await vm.export() }
                 } label: {
                     HStack(spacing: 6) {
-                        Image(systemName: "square.and.arrow.down")
-                            .font(.system(size: 13, weight: .semibold))
+                        if vm.isExporting {
+                            // Reconversión a Markdown en curso (ver markdownForExport).
+                            ProgressView()
+                                .controlSize(.small)
+                        } else {
+                            Image(systemName: "square.and.arrow.down")
+                                .font(.system(size: 13, weight: .semibold))
+                        }
                         Text("Exportar")
                             .font(.system(size: 13, weight: .semibold))
                     }
                 }
                 .buttonStyle(.borderedProminent)
                 .accessibilityLabel("Exportar contenido")
-                .disabled(!vm.contentReady)
+                .disabled(!vm.contentReady || vm.isExporting)
                 .animation(.easeInOut(duration: 0.2), value: vm.contentReady)
+                .alert(
+                    "No se pudo exportar",
+                    isPresented: Binding(
+                        get: { vm.exportErrorMessage != nil },
+                        set: { if !$0 { vm.exportErrorMessage = nil } }
+                    )
+                ) {
+                    Button("Aceptar", role: .cancel) {}
+                } message: {
+                    Text(vm.exportErrorMessage ?? "")
+                }
             }
             .padding(.horizontal, 14)
             .padding(.bottom, 10)

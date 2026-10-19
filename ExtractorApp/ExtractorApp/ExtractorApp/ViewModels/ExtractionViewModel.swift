@@ -23,6 +23,11 @@ final class ExtractionViewModel: ObservableObject {
     @Published var exportFormat: String = "markdown" // "markdown" | "html" | "pdf" (D-14)
     @Published var pageTitle: String? = nil           // Phase 6 — poblado al decodificar ExtractionResult
     @Published var sourceURL: String? = nil           // URL real extraída — para <base href> en el preview/export HTML
+    // Tipo con el que se extrajo `resultContent`. El picker `outputType` puede
+    // cambiar después de extraer; preview y export deben usar el tipo real.
+    @Published var resultOutputType: String? = nil
+    @Published var isExporting: Bool = false
+    @Published var exportErrorMessage: String? = nil
 
     // Phase 6 (D-01): proveedor del WKWebView visible — registrado desde WebPreviewView.makeNSView
     var webViewProvider: (() -> WKWebView?)? = nil
@@ -30,11 +35,18 @@ final class ExtractionViewModel: ObservableObject {
     // D-05: computada, no @Published — se deriva de resultContent + outputType
     var htmlForPreview: String? {
         guard let content = resultContent else { return nil }
-        return generateHTML(content: content, outputType: outputType, sourceURL: sourceURL)
+        return generateHTML(
+            content: content,
+            outputType: resultOutputType ?? outputType,
+            sourceURL: sourceURL
+        )
     }
 
     // MARK: - Private
     private let bridge = PythonBridge()
+    // Parámetros de la última extracción, para reconvertir a Markdown al exportar.
+    private var lastSelector: String? = nil
+    private var lastTimeout: Int = 15
 
     // MARK: - Actions
 
@@ -46,6 +58,7 @@ final class ExtractionViewModel: ObservableObject {
         errorMessage = nil
         resultContent = nil
         sourceURL = nil
+        resultOutputType = nil
         isPythonPathError = false
         contentReady = false  // D-10
         isExtracting = true
@@ -56,6 +69,8 @@ final class ExtractionViewModel: ObservableObject {
             ? nil
             : selectorCSS.trimmingCharacters(in: .whitespaces)
         let timeoutValue = timeout > 0 ? timeout : 15  // D-12: fallback a 15
+        lastSelector = selector
+        lastTimeout = timeoutValue
 
         Task.detached(priority: .userInitiated) { [weak self] in
             do {
@@ -70,6 +85,7 @@ final class ExtractionViewModel: ObservableObject {
                     self.resultContent = result?.content
                     self.pageTitle = result?.title
                     self.sourceURL = result?.url
+                    self.resultOutputType = type
                     self.isExtracting = false
                 }
             } catch {
@@ -233,7 +249,15 @@ final class ExtractionViewModel: ObservableObject {
     /// D-11/D-12: NSSavePanel async vía withCheckedContinuation.
     @MainActor
     func exportMarkdown() async {
-        guard let content = resultContent else { return }
+        guard var content = resultContent else { return }
+
+        // Un resultado extraído como texto o HTML no es Markdown: guardarlo
+        // tal cual producía un .md con HTML en bruto. Se reconvierte pidiendo
+        // la misma URL en Markdown (la descarga suele salir de la caché).
+        if resultOutputType != "markdown" {
+            guard let markdown = await markdownForExport() else { return }
+            content = markdown
+        }
 
         let panel = NSSavePanel()
         // PITFALL 2: UTType de "md" puede no estar declarado — nunca force-unwrap
@@ -254,10 +278,38 @@ final class ExtractionViewModel: ObservableObject {
         }
     }
 
+    /// Extrae de nuevo la última URL en Markdown; nil (con `exportErrorMessage`) si falla.
+    @MainActor
+    private func markdownForExport() async -> String? {
+        guard let url = sourceURL ?? (urlString.isEmpty ? nil : urlString) else { return nil }
+        isExporting = true
+        defer { isExporting = false }
+        do {
+            let result = try await bridge.run(
+                url: url,
+                outputType: "markdown",
+                selector: lastSelector,
+                timeout: lastTimeout
+            )
+            guard let markdown = result.content, !markdown.isEmpty else {
+                exportErrorMessage = "La conversión a Markdown no devolvió contenido."
+                return nil
+            }
+            return markdown
+        } catch {
+            exportErrorMessage = "No se pudo convertir a Markdown: \(error.localizedDescription)"
+            return nil
+        }
+    }
+
     @MainActor
     func exportHTML() async {
         guard let content = resultContent else { return }
-        let html = generateHTML(content: content, outputType: outputType, sourceURL: sourceURL)
+        let html = generateHTML(
+            content: content,
+            outputType: resultOutputType ?? outputType,
+            sourceURL: sourceURL
+        )
 
         let panel = NSSavePanel()
         panel.allowedContentTypes = [.html]
