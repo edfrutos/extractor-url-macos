@@ -76,7 +76,8 @@ El script:
 4. Empaqueta a `.zip` con `ditto` (nunca `zip`/`unzip` genéricos — rompen la firma de código, ver Troubleshooting).
 5. Notariza (`notarytool submit --wait`) y graba el ticket al `.app` (`stapler staple`) — en ese orden, antes de crear el `.zip` final.
 6. Guarda el `.zip` en el histórico local `.build-cache/release/archive/` (necesario para que `generate_appcast` genere delta updates) y genera `appcast.xml`.
-7. Publica el `.zip` como asset de un GitHub Release nuevo. `gh release
+   Después lo depura: deja el item nuevo más los items del `appcast.xml` ya publicado en la raíz del repo (con sus URLs correctas), y nunca items del histórico local con URLs inventadas bajo el tag nuevo. Aborta si el item nuevo referencia un fichero que no existe.
+7. Publica el `.zip` **y los `.delta`** que referencia el item nuevo como assets de un GitHub Release nuevo. `gh release
    create` crea el tag `vX.Y` sobre el HEAD actual de `origin` — que
    **aún no** incluye el commit `chore(release): vX.Y` (ese va en el paso
    manual siguiente).

@@ -76,6 +76,11 @@ CHANNEL="${2:-}"
 # establecido). Ej: ROLLOUT_INTERVAL_SECONDS=86400 scripts/release-macos.sh 1.2
 ROLLOUT_INTERVAL_SECONDS="${ROLLOUT_INTERVAL_SECONDS:-}"
 
+# Build number del release en curso (lo fija _bump_version) y ficheros que
+# hay que subir al GitHub Release (los fija _finalize_appcast).
+NEW_BUILD=""
+RELEASE_ASSETS=()
+
 # ── Validaciones previas ───────────────────────────────────────────────────
 # Fallan pronto y explícito — nunca a medio pipeline con secretos a medias.
 _preflight_checks() {
@@ -146,6 +151,7 @@ _bump_version() {
 	local current_build
 	current_build="$(grep -o 'CURRENT_PROJECT_VERSION = [0-9]*;' "${PBXPROJ}" | head -1 | grep -o '[0-9]*')"
 	local next_build=$((current_build + 1))
+	NEW_BUILD="${next_build}"
 
 	echo "Actualizando versión: MARKETING_VERSION=${VERSION}, CURRENT_PROJECT_VERSION=${next_build}"
 
@@ -452,9 +458,85 @@ _archive_and_generate_appcast() {
 	fi
 }
 
+# ── Depurar appcast + lista de assets ─────────────────────────────────────
+# generate_appcast aplica --download-url-prefix (el tag NUEVO) a todos los
+# zips del histórico local que no estén en el appcast de ARCHIVE_DIR, y
+# referencia deltas que _publish_release no subía. Bug real en v2.3: el
+# appcast publicaba items 2.1/1.0 con URLs inexistentes bajo v2.3/ y un
+# ExtractorApp13-10.delta que nunca se subió (Sparkle cae al zip completo,
+# pero tras un 404). Solución:
+#   - El appcast final = item NUEVO (sparkle:version == NEW_BUILD) + items
+#     del appcast.xml ya publicado en la raíz del repo (URLs correctas, y
+#     conserva el item estable cuando se publica una beta).
+#   - Se suben todos los ficheros que referencia el item nuevo (zip +
+#     deltas), comprobando que existen en ARCHIVE_DIR y que su URL cuelga
+#     del tag nuevo.
+_finalize_appcast() {
+	local assets_file
+	assets_file="$(mktemp)"
+
+	python3 - "${ARCHIVE_DIR}/appcast.xml" "${PROJECT_DIR}/appcast.xml" \
+		"${NEW_BUILD}" "https://github.com/${GITHUB_REPO}/releases/download/v${VERSION}/" \
+		"${ARCHIVE_DIR}" "${assets_file}" <<'PY'
+import os
+import re
+import sys
+
+generated, published, build, prefix, archive_dir, assets_out = sys.argv[1:]
+item_re = re.compile(r"[ \t]*<item>.*?</item>\n?", re.S)
+version_re = re.compile(r"<sparkle:version>([^<]*)</sparkle:version>")
+
+
+def version_of(item):
+    match = version_re.search(item)
+    return match.group(1).strip() if match else None
+
+
+text = open(generated, encoding="utf-8").read()
+new_items = [i for i in item_re.findall(text) if version_of(i) == build]
+if len(new_items) != 1:
+    sys.exit(f"Error: el appcast generado no tiene un único item con build {build}.")
+new_item = new_items[0]
+
+old_items = []
+if os.path.exists(published):
+    old_text = open(published, encoding="utf-8").read()
+    old_items = [i for i in item_re.findall(old_text) if version_of(i) != build]
+
+assets = []
+for url in re.findall(r'<enclosure url="([^"]+)"', new_item):
+    if not url.startswith(prefix):
+        sys.exit(f"Error: el item nuevo apunta fuera del tag del release: {url}")
+    name = url[len(prefix):]
+    if not os.path.isfile(os.path.join(archive_dir, name)):
+        sys.exit(f"Error: el appcast referencia {name}, que no está en {archive_dir}.")
+    assets.append(name)
+
+if not assets:
+    sys.exit("Error: el item nuevo no referencia ningún fichero a publicar.")
+
+head = text[: item_re.search(text).start()]
+tail = text[text.rfind("</item>") + len("</item>"):].lstrip("\n")
+body = new_item.rstrip("\n") + "\n" + "".join(i.rstrip("\n") + "\n" for i in old_items)
+with open(generated, "w", encoding="utf-8") as fh:
+    fh.write(head + body + tail)
+with open(assets_out, "w", encoding="utf-8") as fh:
+    fh.write("\n".join(assets) + "\n")
+PY
+
+	RELEASE_ASSETS=()
+	local name
+	while IFS= read -r name; do
+		[[ -n "${name}" ]] && RELEASE_ASSETS+=("${ARCHIVE_DIR}/${name}")
+	done <"${assets_file}"
+	rm -f "${assets_file}"
+
+	echo "Appcast depurado. Assets a publicar:"
+	printf '  %s\n' "${RELEASE_ASSETS[@]}"
+}
+
 # ── Publicar en GitHub Releases ────────────────────────────────────────────
 _publish_release() {
-	local zip_path="${ARCHIVE_DIR}/${SCHEME}-${VERSION}.zip"
 	local title="${SCHEME} ${VERSION}"
 	local notes="Release ${VERSION}"
 	local gh_flags=()
@@ -469,7 +551,9 @@ _publish_release() {
 	# Ver el comentario sobre "${array[@]+"${array[@]}"}" en
 	# _archive_and_generate_appcast() — mismo bug real de bash 3.2 con
 	# arrays vacíos bajo `set -u`.
-	gh release create "v${VERSION}" "${zip_path}" \
+	# RELEASE_ASSETS (zip + deltas) nunca está vacío: _finalize_appcast
+	# aborta si el item nuevo no referencia ningún fichero existente.
+	gh release create "v${VERSION}" "${RELEASE_ASSETS[@]}" \
 		--repo "${GITHUB_REPO}" \
 		--title "${title}" \
 		--notes "${notes}" \
@@ -489,6 +573,7 @@ _resign_bundled_python
 _resign_bundled_chromium
 _notarize_and_staple
 _archive_and_generate_appcast
+_finalize_appcast
 _publish_release
 
 cp "${ARCHIVE_DIR}/appcast.xml" "${PROJECT_DIR}/appcast.xml"
