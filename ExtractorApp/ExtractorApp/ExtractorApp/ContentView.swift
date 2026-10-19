@@ -55,6 +55,22 @@ struct ContentView: View {
         }
     }
 
+    /// Binding para los Picker segmentados: en macOS, NSSegmentedControl escribe
+    /// la selección durante la actualización de la vista y publicar ahí dispara
+    /// "Publishing changes from within view updates is not allowed". Se difiere
+    /// la escritura al siguiente ciclo del main loop.
+    private func deferredBinding<T: Equatable>(
+        _ keyPath: ReferenceWritableKeyPath<ExtractionViewModel, T>
+    ) -> Binding<T> {
+        Binding(
+            get: { vm[keyPath: keyPath] },
+            set: { newValue in
+                guard vm[keyPath: keyPath] != newValue else { return }
+                DispatchQueue.main.async { vm[keyPath: keyPath] = newValue }
+            }
+        )
+    }
+
     // MARK: - Hero Section
 
     private var heroSection: some View {
@@ -158,7 +174,7 @@ struct ContentView: View {
                     .foregroundStyle(.secondary)
                     .fixedSize()
 
-                Picker("Tipo", selection: $vm.outputType) {
+                Picker("Tipo", selection: deferredBinding(\.outputType)) {
                     Text("Texto").tag("text")
                     Text("HTML").tag("html")
                     Text("Markdown").tag("markdown")
@@ -335,7 +351,7 @@ struct ContentView: View {
                     .foregroundStyle(.secondary)
                     .fixedSize()
 
-                Picker("", selection: $vm.exportFormat) {
+                Picker("", selection: deferredBinding(\.exportFormat)) {
                     Text("Markdown").tag("markdown")
                     Text("HTML").tag("html")
                     Text("PDF").tag("pdf")
