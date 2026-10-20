@@ -1,7 +1,7 @@
 ---
 phase: 24-spike-python-sandbox
 type: checkpoint-humano
-status: parte-a-ok
+status: complete
 created: "2026-10-20"
 ---
 
@@ -48,6 +48,8 @@ Todo en el Terminal, desde la carpeta del proyecto, en el Mac.
    y el historial, y anota lo que falle.
 
 ## Parte B — Validación en App Store Connect (sin enviar a revisión)
+
+> **Hecha 2026-10-20: OK.** Build 2.3 (13) en TestFlight. Ver `24-01-SUMMARY.md`.
 
 1. **App ID** — [developer.apple.com → Identifiers](https://developer.apple.com/account/resources/identifiers/list) → **+** → App IDs → App →
    plataforma macOS, *Explicit*: `com.edefrutos.ExtractorApp.appstore`,
