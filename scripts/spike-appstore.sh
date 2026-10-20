@@ -116,9 +116,6 @@ INFO="${APP}/Contents/Info.plist"
 "${PLISTBUDDY}" -c "Delete :ITSAppUsesNonExemptEncryption" "${INFO}" 2>/dev/null || true
 "${PLISTBUDDY}" -c "Add :ITSAppUsesNonExemptEncryption bool false" "${INFO}"
 
-# App Store Connect rechaza ficheros con el atributo de cuarentena.
-xattr -cr "${APP}"
-
 # ── 4. Entitlements del .app ─────────────────────────────────────────────────
 APP_ENTITLEMENTS="${OUT_DIR}/app.entitlements"
 cp "${APP_ENTITLEMENTS_SRC}" "${APP_ENTITLEMENTS}"
@@ -127,6 +124,10 @@ if [[ "${MODE}" == "package" ]]; then
 	"${PLISTBUDDY}" -c "Add :com.apple.developer.team-identifier string ${TEAM_ID}" "${APP_ENTITLEMENTS}"
 	cp "${PROVISIONING_PROFILE}" "${APP}/Contents/embedded.provisionprofile"
 fi
+
+# App Store Connect rechaza ficheros con el atributo de cuarentena (error 91109).
+# Se limpia ya con todo copiado: el perfil recién descargado también lo trae.
+xattr -cr "${APP}"
 
 # ── 5. Firma de dentro a fuera ───────────────────────────────────────────────
 echo "Firmando con: ${IDENTITY}"
@@ -189,6 +190,12 @@ if ! codesign -d --entitlements - "${python_bin}" 2>/dev/null | grep -q 'com.app
 	exit 1
 fi
 echo "Intérprete con app-sandbox + inherit: OK"
+
+if xattr -lr "${APP}" | grep -q 'com.apple.quarantine'; then
+	echo "Error: quedan ficheros con com.apple.quarantine en el .app." >&2
+	exit 1
+fi
+echo "Sin atributo de cuarentena: OK"
 echo "Tamaño del .app: $(du -sh "${APP}" | cut -f1)"
 
 if [[ "${MODE}" == "local" ]]; then
