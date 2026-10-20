@@ -11,9 +11,9 @@ JS en la variante App Store vía `WKWebView`; app gratuita. Ver
 
 ### SBX — Python embebido bajo App Sandbox (Phase 24)
 
-- [ ] **SBX-01**: Un build con App Sandbox activado lanza el intérprete Python embebido (firmado con `app-sandbox` + `inherit`) y completa una extracción de una URL estática.
+- [x] **SBX-01**: Un build con App Sandbox activado lanza el intérprete Python embebido (firmado con `app-sandbox` + `inherit`) y completa una extracción de una URL estática.
 - [ ] **SBX-02**: El código nativo del runtime Python (intérprete, `.so`, `.dylib`) está en una ubicación del bundle que firma y valida correctamente; la decisión (`Resources` vs `Frameworks`/`Helpers`) queda documentada con evidencia.
-- [ ] **SBX-03**: El bundle App Store no contiene `_tkinter` ni Tcl/Tk.
+- [x] **SBX-03**: El bundle App Store no contiene `_tkinter` ni Tcl/Tk.
 - [ ] **SBX-04**: El `.app` del spike pasa la validación de App Store Connect (`xcodebuild -exportArchive` método App Store + validación/subida) sin enviarse a revisión.
 
 ### MASBUILD — Variante de build App Store (Phase 25)

@@ -1,7 +1,7 @@
 ---
 phase: 24-spike-python-sandbox
 type: checkpoint-humano
-status: pending
+status: parte-a-ok
 created: "2026-10-20"
 ---
 
@@ -10,6 +10,8 @@ created: "2026-10-20"
 Todo en el Terminal, desde la carpeta del proyecto, en el Mac.
 
 ## Parte A — Prueba local con sandbox (no requiere nada de Apple)
+
+> **Hecha 2026-10-20: OK.** Ver «Resultado de la Parte A» en `24-01-PLAN.md`.
 
 1. Genera la variante con sandbox a partir del `.app` de v2.3:
 
