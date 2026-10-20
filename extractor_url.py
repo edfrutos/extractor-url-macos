@@ -12,11 +12,19 @@ import json
 import subprocess
 import sys
 import threading
-import tkinter as tk
 from datetime import datetime, timezone
 from pathlib import Path
-from tkinter import filedialog, messagebox, ttk
 from typing import Any, Optional, Union
+
+# La variante App Store embebe Python sin tkinter (Tcl/Tk provoca rechazos en
+# App Review): la CLI debe funcionar igual y solo la GUI exige tkinter.
+try:
+    import tkinter as tk
+    from tkinter import filedialog, messagebox, ttk
+except ImportError:
+    _TKINTER_AVAILABLE = False
+else:
+    _TKINTER_AVAILABLE = True
 
 from bs4 import BeautifulSoup, FeatureNotFound
 
@@ -300,6 +308,13 @@ class _ExtractorGui:  # pylint: disable=too-few-public-methods
 
 def _run_gui() -> None:
     """Inicia la interfaz gráfica tkinter."""
+    if not _TKINTER_AVAILABLE:
+        print(
+            "Error: la interfaz gráfica requiere tkinter, que no está disponible "
+            "en este Python. Usa la CLI con una URL o --file.",
+            file=sys.stderr,
+        )
+        sys.exit(1)
     _ExtractorGui().run()
 
 

@@ -76,6 +76,11 @@ rm -rf "${OUT_DIR}"
 mkdir -p "${OUT_DIR}"
 ditto "${SRC_APP}" "${APP}"
 
+# Los scripts del .app de origen pueden ser anteriores a los cambios de la
+# variante App Store (p. ej. el import opcional de tkinter): se usan los del repo.
+echo "Copiando core.py y extractor_url.py del repo…"
+cp "${PROJECT_DIR}/core.py" "${PROJECT_DIR}/extractor_url.py" "${APP}/Contents/Resources/scripts/"
+
 # ── 2. Quitar lo incompatible con la App Store ──────────────────────────────
 echo "Quitando Playwright/Chromium…"
 find "${PY}/lib/python-packages" -maxdepth 1 \( -iname 'playwright*' -o -iname 'greenlet*' -o -iname 'pyee*' \) \

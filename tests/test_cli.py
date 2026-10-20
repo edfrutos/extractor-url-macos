@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import builtins
 import json
+import os
+import subprocess
 import sys
 from pathlib import Path
 from typing import NoReturn
@@ -714,3 +716,56 @@ def test_file_inexistente_devuelve_error_json(
     captured = capsys.readouterr()
     assert json.loads(captured.out)["status"] == "error"
     assert "No se pudo leer el archivo" in captured.err
+
+
+# ---------------------------------------------------------------------------
+# Python sin tkinter (variante App Store)
+# ---------------------------------------------------------------------------
+
+_REPO_DIR = Path(__file__).resolve().parent.parent
+# Simula un Python sin tkinter: un None en sys.modules hace que el import falle.
+_RUN_WITHOUT_TKINTER = (
+    "import runpy, sys; sys.modules['tkinter'] = None; "
+    "sys.argv = ['extractor_url.py', *sys.argv[1:]]; "
+    "runpy.run_path('extractor_url.py', run_name='__main__')"
+)
+
+
+def _run_without_tkinter(
+    tmp_path: Path, *arguments: str,
+) -> subprocess.CompletedProcess[str]:
+    return subprocess.run(
+        [sys.executable, "-c", _RUN_WITHOUT_TKINTER, *arguments],
+        cwd=_REPO_DIR,
+        env={**os.environ, "HOME": str(tmp_path)},
+        capture_output=True,
+        text=True,
+        timeout=60,
+        check=False,
+    )
+
+
+def test_cli_funciona_sin_tkinter(tmp_path: Path) -> None:
+    page = tmp_path / "pagina.html"
+    page.write_text(
+        "<html><head><title>Sin Tk</title></head><body><article>"
+        "<p>" + "Texto sin tkinter. " * 20 + "</p></article></body></html>",
+        encoding="utf-8",
+    )
+
+    result = _run_without_tkinter(
+        tmp_path, "--file", str(page), "--type", "markdown", "--json", "--no-js",
+    )
+
+    assert result.returncode == 0, result.stderr
+    output = json.loads(result.stdout)
+    assert output["status"] == "success"
+    assert "Texto sin tkinter" in output["content"]
+
+
+def test_gui_sin_tkinter_falla_con_mensaje_claro(tmp_path: Path) -> None:
+    result = _run_without_tkinter(tmp_path, "--gui")
+
+    assert result.returncode == 1
+    assert "requiere tkinter" in result.stderr
+
