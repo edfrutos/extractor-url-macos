@@ -97,39 +97,20 @@ Convertir páginas web en Markdown útil y limpio de forma fiable, repetible y s
 
 ### Out of Scope
 
-- App Store o distribución comercial — no es el objetivo. La distribución pública de v7.0 es vía web (GitHub Releases o similar), no Mac App Store — decisión explícita del usuario al definir v7.0, mantiene esta línea sin cambios.
+- ~~App Store o distribución comercial~~ — **entra en alcance en v11.0** (2026-10-20) como segunda variante; la distribución Developer ID/Sparkle se mantiene.
+- Ver `REQUIREMENTS.md` → Out of Scope (v11.0) para lo excluido de la variante App Store.
 
 ## Context
 
 El proyecto tiene dos capas: el motor Python (`core.py` + `extractor_url.py`) y la app nativa SwiftUI (`ExtractorApp/`). La app lanza el motor vía `Foundation.Process()` con `--json`. v3.0 eliminó la dependencia del usuario de instalar Python y configurar rutas. v4.0 amplió el motor Python para extraer contenido de páginas que requieren JavaScript (SPAs). v5.0 añadió auto-actualización a la app SwiftUI (Sparkle). v6.0 cubrió el backlog diferido de v4.0/v5.0: historial y cola de extracciones, control manual del fallback JS, canales beta de Sparkle, Playwright embebido en el bundle, y pulido técnico menor. v7.0 cubre el backlog diferido restante de v6.0: flags de filtrado de contenido CLI, rollouts por fases de Sparkle, auto-actualización del runtime Python embebido, y notarización para distribución pública vía web (no App Store).
 
-## Current Milestone: ninguno activo
+## Current Milestone: v11.0 — Mac App Store
 
-v8.0 (Fase 23) **cerrado el 2026-08-27**. Sin backlog de funcionalidad
-nueva ni milestone en curso. El siguiente hito natural, cuando el usuario
-quiera, es un release real `2.2`+ que de paso ejercitaría el pipeline
-scriptado endurecido en la Fase 23 y los criterios condicionales SC4/SC6.
-
-### v8.0 — cerrado (resumen)
-
-**Goal cumplido:** cerrar los ítems de mantenimiento/verificación
-pendientes de v6.0/v7.0. Cerrado verificando el release público `v2.1` en
-vez de lanzar uno nuevo:
-
-- SC1 — `.app` Release/notarizado = 882 MB (~387 MB zip); el strip no
-  adelgaza. En `RELEASING.md` §3.5.
-- SC2 — `v2.1` con Chromium embebido notarizado + stapled, cero Mach-O
-  sin hardened runtime (`spctl`/`stapler`/`codesign`).
-- SC3 — `--clipboard` vs `pbcopy` real, aditivo con `-o`.
-- SC5 — `setup-sparkle-local.sh` ya trackeado desde `5c3d663`.
-- Pipeline endurecido (`af48439`): firma de Chromium por descubrimiento,
-  `ditto` sin `--sequesterRsrc`, log de `notarytool`, guard bash 3.2.
-- Tagging de release arreglado (`cc1af03`): el guion impreso mueve el tag
-  al commit `chore(release)`. Aplica desde v2.2.
-- SC4 (rollout en appcast) y SC6 (bug `Info.plist` Xcode 27) quedan
-  **diferidos-condicionales** a un release futuro — no bloquean el cierre.
-
-Ver `.planning/phases/23-verificacion-release-real/23-01-SUMMARY.md`.
+Publicar ExtractorApp en la Mac App Store como **segunda variante**, sin
+retirar la distribución Developer ID + Sparkle de GitHub. La variante App
+Store corre en App Sandbox, sin Sparkle, runtime updater ni Chromium, y
+renderiza JavaScript con `WKWebView`. Gratuita. Fases 24–28; research en
+`.planning/research/APPSTORE.md`.
 
 ## Current State
 
@@ -199,6 +180,9 @@ Milestone v8.0 completado y cerrado (2026-08-27): Fase 23 (verificación de rele
 | [v7.0] Alcance = las 4 áreas restantes de `Deferred Items` de v6.0 (flags CLI, rollouts Sparkle, auto-actualización runtime, notarización distribución pública) | El usuario eligió explícitamente las 4 al preguntársele qué priorizar — no un subconjunto | Pending (definido, sin ejecutar) |
 | [v7.0] Orden de fases: flags CLI → rollouts Sparkle → auto-actualización runtime → notarización distribución pública | Propuesto por Claude de menor a mayor complejidad/incertidumbre (ninguna fase depende de una posterior) y confirmado explícitamente por el usuario, igual que el patrón de v6.0 | Pending (definido, sin ejecutar) |
 | [v7.0] "Notarización distribución pública" = web pública (GitHub Releases o similar), no Mac App Store | El App Store implica revisar App Sandbox (hoy OFF), Apple Review, metadatos en App Store Connect — mucho más grande y contradice el "Out of Scope: App Store" ya establecido del proyecto. El usuario confirmó explícitamente la opción web al preguntársele, manteniendo ese Out of Scope sin cambios | Pending (definido, sin ejecutar) |
+| [v11.0] Mac App Store como segunda variante, conviviendo con Developer ID + Sparkle | Mantiene a los usuarios actuales y sus actualizaciones; la variante App Store elimina lo incompatible con la App Store (Sparkle, runtime updater, Chromium) | Decisión del usuario 2026-10-20 |
+| [v11.0] JS en la variante App Store vía `WKWebView` oculto, no Chromium | Encaja con App Sandbox, ahorra ~780 MB, usa el motor del sistema | Decisión del usuario 2026-10-20 |
+| [v11.0] Variante App Store gratuita, sin StoreKit | Sin código de compras ni revisión adicional | Decisión del usuario 2026-10-20 |
 | [v7.0] `_strip_images`/`_strip_links` mutan el `soup` in situ (`decompose`/`unwrap`) en vez de reconstruir el árbol | Reutiliza el mismo objeto `BeautifulSoup` ya construido en cada camino (texto/HTML/Markdown con y sin selector) sin duplicar lógica de parseo — un único punto de mutación cubre los tres return types | ✓ Good (Phase 19-01) |
 | [v7.0] Camino trafilatura (Markdown sin selector) usa sus propios kwargs `include_images`/`include_links` en vez de mutar el soup | `trafilatura.extract()` opera sobre `html_text` crudo, no sobre el objeto `soup` de `core.py` — pasar sus flags nativos es más directo que reconstruir HTML desde un soup mutado solo para ese camino | ✓ Good (Phase 19-01) |
 | [v7.0] `--clipboard` vía `subprocess.run(["pbcopy"], ...)`, no una dependencia pip nueva (`pyperclip` u otra) | El proyecto es macOS-only (Constraints), `pbcopy` ya está en cualquier Mac sin instalar nada — evita añadir una dependencia al runtime bundleado (Fase 8) solo para esto, consistente con el core value "sin depender de servicios externos" | ✓ Good (Phase 19-01) |
@@ -227,4 +211,4 @@ Este documento evoluciona en transiciones de fase y límites de milestone.
 **Después de cada milestone:** revisar Core Value, auditar Out of Scope, actualizar Context.
 
 ---
-*Last updated: 2026-08-27 — v6.0, v7.0 y v8.0 completos y cerrados. Sin milestone activo. Siguiente hito natural: release real 2.2+.*
+*Last updated: 2026-10-20 — v11.0 (Mac App Store) definido: fases 24–28. v9.0/v10.0 (releases 2.2/2.3) documentados retroactivamente.*
