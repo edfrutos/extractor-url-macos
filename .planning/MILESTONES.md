@@ -190,3 +190,20 @@ que la copia local y `STATE.md`/`ROADMAP.md` no reflejaban.
 **Phases:** 0 (sin fases GSD) | **Requirements:** sin REQ-IDs (trabajo retroactivo)
 
 **Cierra, contra este release, los dos criterios condicionales de la Fase 23/v8.0 (2026-10-18):** SC4 — el `appcast.xml` publicado no tiene `phasedRolloutInterval` → no se usó `ROLLOUT_INTERVAL_SECONDS`, condición no disparada, sigue condicional al primer release que lo use. SC6 — confirmado por el usuario que el bug de `Info.plist`/Xcode 27 beta no reapareció durante este build.
+
+
+---
+
+## v10.0 — Release real v2.3 ✅ (2026-10-19, documentado el 2026-10-20)
+
+**Goal:** sin goal previo — fixes reportados por el usuario y release.
+
+**Shipped:**
+- Extracción robusta: esquemas inválidos con mensaje claro, degradación si Chromium no arranca, reintento con Chromium ante 401/403.
+- Conversión de HTML local: `--file` en la CLI y «Abrir HTML…» en la app.
+- Export Markdown convierte aunque se extrajera como texto/HTML; errores con detalle de stderr.
+- Aviso de runtime de SwiftUI corregido en los `Picker` segmentados.
+- **Release público**: [v2.3](https://github.com/edfrutos/extractor-url-macos/releases/tag/v2.3) (`8ab05bc`, `sparkle:version` 13, delta desde build 10).
+- `release-macos.sh`: sube deltas y depura el appcast (`833c24f`).
+
+**Phases:** 0 (sin fases GSD) | **Requirements:** sin REQ-IDs (trabajo retroactivo)

@@ -754,3 +754,37 @@ para cerrar los dos criterios condicionales que quedaban abiertos de
 la Fase 23/v8.0: SC4 (no disparado — este release no usó
 `ROLLOUT_INTERVAL_SECONDS`) y SC6 (confirmado que no reapareció).
 Ningún criterio queda abierto en v8.0 ni en v9.0.
+
+
+## v10.0 — Release real v2.3 (documentado retroactivamente)
+
+## Overview
+
+Como v9.0, **no se planificó en este flujo GSD**: nació de fallos
+reportados por el usuario usando la app en Xcode real (2026-10-19) y
+terminó en el release público `v2.3`. Sin fases ni `SUMMARY.md`; el
+detalle vive en los commits y en `STATE.md`.
+
+### Checklist v10.0
+
+- [x] **Release v2.3** — extracción robusta, conversión de HTML local, export Markdown real, aviso SwiftUI corregido, pipeline de release corregido. Publicado el 2026-10-19; actualización 2.2 → 2.3 por Sparkle verificada por el usuario.
+
+### Trabajo incluido (sin fase/requirements formales)
+
+1. `1d8f29f` — fix(core): extracción robusta ante esquemas inválidos, Chromium ausente y 403.
+2. `306a4d0` — fix(app): exportar Markdown convierte el contenido y se muestra el detalle de errores.
+3. `d31e1e6` — feat: convierte archivos HTML locales desde la CLI (`--file`) y la app («Abrir HTML…»).
+4. `4f40f07` — fix(app): `Picker` segmentados con escritura diferida (aviso «Publishing changes from within view updates»).
+5. `8ab05bc` — chore(release): v2.3 (`project.pbxproj` 2.3/build 13, `appcast.xml` con delta desde build 10).
+6. `833c24f` — fix(release): `release-macos.sh` sube los deltas y depura el appcast de items con URLs inexistentes.
+7. `30244ae` — chore(xcode): ajustes recomendados de Xcode 27 sin tocar `ARCHS` ni el mínimo de macOS 13.5.
+
+Incluye también el trabajo de Ajustes/i18n/build previo al release (`0b6b26c`, `6ba4cc8`, `68f4d44`, `3a24cec`, `567ee3f`, `3c9b34d`, `4c7d50c`, `e3edf0f`), documentado en `STATE.md`.
+
+**Verificación antes del release (Mac real):** XCTest 53 (3 skipped, 0 fallos) · pytest 90/90.
+
+### Estado v10.0
+
+**Cerrado el 2026-10-20.** Primer release con `release-macos.sh` de principio
+a fin sin arreglos manuales de firma/notarización (el appcast sí se corrigió
+a mano; causa arreglada en `833c24f`).
