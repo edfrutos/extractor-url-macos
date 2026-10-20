@@ -27,6 +27,7 @@ milestone se replantea antes de invertir en él.
 **Goal**: Probar, con el menor cambio posible, que el intérprete Python embebido funciona bajo App Sandbox y que App Store Connect acepta el paquete.
 **Depends on**: Phase 08 (runtime embebido), Phase 13 (pipeline de firma)
 **Requirements**: SBX-01, SBX-02, SBX-03, SBX-04
+**Plans**: 24-01-PLAN.md (spike sin tocar Xcode: `scripts/spike-appstore.sh`) + CHECKPOINT-HUMANO.md
 **Success Criteria** (what must be TRUE):
 
   1. Un build con sandbox extrae una URL estática con el Python embebido en un Mac real.
@@ -93,7 +94,7 @@ milestone se replantea antes de invertir en él.
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 24. Spike — Python embebido bajo App Sandbox | 0 | Not started | - |
+| 24. Spike — Python embebido bajo App Sandbox | 0/1 | In progress | - |
 | 25. Variante de build App Store | 0 | Not started | - |
 | 26. Renderizado JavaScript con WKWebView | 0 | Not started | - |
 | 27. Funciones de la app bajo sandbox | 0 | Not started | - |
