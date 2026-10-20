@@ -42,6 +42,7 @@ milestone se replantea antes de invertir en él.
 **Goal**: Mantener dos variantes desde el mismo código: Developer ID (sin cambios) y App Store (sandbox, sin Sparkle/runtime updater/Chromium).
 **Depends on**: Phase 24
 **Requirements**: MASBUILD-01, MASBUILD-02, MASBUILD-03, MASBUILD-04, MASBUILD-05
+**Plans**: 25-01-PLAN.md (código `#if APPSTORE`, `bundle-python.sh` por variante, entitlements, Info.plist, manifiesto) → 25-02-PLAN.md (target y esquema `ExtractorApp AppStore`, `package-appstore.sh`) + CHECKPOINT-HUMANO.md
 **Success Criteria** (what must be TRUE):
 
   1. `scripts/release-macos.sh` sigue produciendo el release Developer ID igual que en v2.3.
@@ -95,7 +96,7 @@ milestone se replantea antes de invertir en él.
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 24. Spike — Python embebido bajo App Sandbox | 1/1 | Complete | 2026-10-20 |
-| 25. Variante de build App Store | 0 | Not started | - |
+| 25. Variante de build App Store | 0/2 | Planned | - |
 | 26. Renderizado JavaScript con WKWebView | 0 | Not started | - |
 | 27. Funciones de la app bajo sandbox | 0 | Not started | - |
 | 28. App Store Connect y envío | 0 | Not started | - |
