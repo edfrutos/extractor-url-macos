@@ -1,7 +1,8 @@
 ---
 phase: 25-variante-build-appstore
 type: checkpoint-humano
-status: pending
+status: passed
+verified: "2026-10-21"
 created: "2026-10-20"
 ---
 
@@ -57,3 +58,20 @@ si lo tienes en otro sitio, añade `PROVISIONING_PROFILE=/ruta/al/perfil`.
 **Esperado:** todas las comprobaciones en OK y un `.pkg` en
 `.build-cache/appstore/`. No hace falta subirlo: el build 13 ya está usado y
 la subida real es de la Fase 28.
+
+## Resultado (2026-10-21)
+
+- **A:** OK en Xcode. Los dos avisos de los tests (XCTest para macOS 14.0 y
+  la conformidad `Decodable` de `ManifestInfo` aislada al MainActor) ya
+  existían antes y se corrigieron en `e042590`.
+- **B:** OK. «Extractor URL», sin «Buscar actualizaciones…», Ajustes solo
+  con «Modo de operación». Markdown y HTML de `example.com` y «Abrir HTML…»
+  funcionan con sandbox (el hijo lee el archivo elegido en el panel; no hace
+  falta pasar el HTML desde Swift). `ExtractorApp` y `python3.13` con
+  «Zona protegida: Sí». Al extraer no se escribe nada en el bundle (los
+  `__pycache__` presentes los crea `pip install` al compilar; el punto 5 se
+  corrigió en `e21f4d1` para comprobar solo lo escrito al usar la app).
+- **C:** OK. Todas las comprobaciones de `package-appstore.sh` pasan;
+  13 Mach-O en Resources (1 ejecutable con sandbox heredado), `.app` de
+  179 MB, `ExtractorURL-2.3-13.pkg` firmado con el instalador (mín. macOS
+  13.5). No se sube: el build 13 ya está usado.

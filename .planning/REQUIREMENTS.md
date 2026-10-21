@@ -18,11 +18,11 @@ JS en la variante App Store vía `WKWebView`; app gratuita. Ver
 
 ### MASBUILD — Variante de build App Store (Phase 25)
 
-- [ ] **MASBUILD-01**: Existe una configuración/esquema App Store con un flag de compilación propio; la variante Developer ID compila y se publica exactamente como antes.
-- [ ] **MASBUILD-02**: La variante App Store no incluye Sparkle, `RuntimeUpdater`, Chromium/Playwright ni la configuración de rutas a un Python/script externos.
-- [ ] **MASBUILD-03**: Entitlements mínimos de la variante App Store: sandbox, red cliente y ficheros elegidos por el usuario; el intérprete hijo, solo `app-sandbox` + `inherit`.
-- [ ] **MASBUILD-04**: La variante App Store incluye `PrivacyInfo.xcprivacy`, `LSApplicationCategoryType` e `ITSAppUsesNonExemptEncryption` según la documentación vigente de Apple.
-- [ ] **MASBUILD-05**: Python no escribe dentro del bundle (sin `.pyc` en tiempo de ejecución; cachés/logs en el contenedor de la app).
+- [x] **MASBUILD-01**: Existe una configuración/esquema App Store con un flag de compilación propio; la variante Developer ID compila y se publica exactamente como antes.
+- [x] **MASBUILD-02**: La variante App Store no incluye Sparkle, `RuntimeUpdater`, Chromium/Playwright ni la configuración de rutas a un Python/script externos.
+- [x] **MASBUILD-03**: Entitlements mínimos de la variante App Store: sandbox, red cliente y ficheros elegidos por el usuario; el intérprete hijo, solo `app-sandbox` + `inherit`.
+- [x] **MASBUILD-04**: La variante App Store incluye `PrivacyInfo.xcprivacy`, `LSApplicationCategoryType` e `ITSAppUsesNonExemptEncryption` según la documentación vigente de Apple.
+- [x] **MASBUILD-05**: Python no escribe dentro del bundle (sin `.pyc` en tiempo de ejecución; cachés/logs en el contenedor de la app).
 
 ### WKJS — Renderizado JavaScript con WKWebView (Phase 26)
 

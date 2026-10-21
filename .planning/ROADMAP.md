@@ -17,7 +17,7 @@ milestone se replantea antes de invertir en él.
 ### Checklist v11.0
 
 - [x] **Phase 24: Spike — Python embebido bajo App Sandbox** - Demostrar extracción estática con sandbox y validación de App Store Connect.
-- [ ] **Phase 25: Variante de build App Store** - Configuración/esquema propios con flag; exclusiones, entitlements y manifiesto de privacidad.
+- [x] **Phase 25: Variante de build App Store** - Configuración/esquema propios con flag; exclusiones, entitlements y manifiesto de privacidad.
 - [ ] **Phase 26: Renderizado JavaScript con WKWebView** - HTML renderizado por `WKWebView` → Python, con la heurística actual.
 - [ ] **Phase 27: Funciones de la app bajo sandbox** - Export, «Abrir HTML…», historial, portapapeles y errores bajo sandbox.
 - [ ] **Phase 28: App Store Connect y envío** - Certificados, ficha, privacidad, script de subida, TestFlight, aprobación.
@@ -96,7 +96,7 @@ milestone se replantea antes de invertir en él.
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 24. Spike — Python embebido bajo App Sandbox | 1/1 | Complete | 2026-10-20 |
-| 25. Variante de build App Store | 2/2 | Checkpoint humano | - |
+| 25. Variante de build App Store | 2/2 | Complete | 2026-10-21 |
 | 26. Renderizado JavaScript con WKWebView | 0 | Not started | - |
 | 27. Funciones de la app bajo sandbox | 0 | Not started | - |
 | 28. App Store Connect y envío | 0 | Not started | - |
