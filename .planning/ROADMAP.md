@@ -71,6 +71,7 @@ milestone se replantea antes de invertir en él.
 **Goal**: Que la variante App Store haga todo lo que hace hoy la app, dentro del sandbox.
 **Depends on**: Phase 25
 **Requirements**: SBXFEAT-01, SBXFEAT-02, SBXFEAT-03, SBXFEAT-04, SBXFEAT-05
+**Plans**: 27-01-PLAN.md (botón «Copiar» con `NSPasteboard`, reabrir HTML local sin permiso con `NSOpenPanel`, «Abrir Ajustes…» fuera de App Store, test de paridad de errores) + CHECKPOINT-HUMANO.md
 **Success Criteria** (what must be TRUE):
 
   1. Export MD/HTML/PDF, «Abrir HTML…», historial y portapapeles funcionan en un Mac real con sandbox.
