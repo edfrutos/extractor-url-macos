@@ -10,7 +10,7 @@ import Foundation
 /// porqué del alcance (solo deps puras, nunca el intérprete/lxml/Chromium).
 enum RuntimeUpdater {
 
-    struct ManifestInfo: Decodable, Equatable {
+    nonisolated struct ManifestInfo: Decodable, Equatable {
         let version: String
         let downloadUrl: String
         let sha256: String
