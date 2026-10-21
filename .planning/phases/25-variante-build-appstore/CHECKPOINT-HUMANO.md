@@ -30,12 +30,18 @@ created: "2026-10-20"
    el mensaje de error.
 4. Monitor de Actividad → columna «Zona protegida»: `ExtractorApp` y
    `python3.13` deben mostrar **Sí**.
-5. Comprueba que no se escribe nada dentro de la app. Ejecuta esto en el
-   Terminal y pégame la salida, que debe ser vacía:
+5. Comprueba que no se escribe nada dentro de la app **al extraer**. Los
+   `__pycache__` que ya trae el bundle los crea `pip install` durante la
+   compilación (quedan firmados con la app); lo que importa es que no
+   aparezca ninguno nuevo al usarla. Con la app ya compilada y abierta:
 
    ```bash
-   find ~/Library/Developer/Xcode/DerivedData/ExtractorApp-*/Build/Products/Debug-appstore/ExtractorApp.app -name __pycache__ -newer ExtractorApp/ExtractorApp/ExtractorApp.xcodeproj/project.pbxproj
+   touch /tmp/antes-de-extraer
+   # … extrae una URL y abre un HTML en la app …
+   find ~/Library/Developer/Xcode/DerivedData/ExtractorApp-*/Build/Products/Debug-appstore/ExtractorApp.app -newer /tmp/antes-de-extraer
    ```
+
+   La salida debe ser vacía.
 
 ## C. Empaquetado (MASBUILD-03/04)
 
