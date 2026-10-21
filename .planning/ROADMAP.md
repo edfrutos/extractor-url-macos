@@ -57,6 +57,7 @@ milestone se replantea antes de invertir en él.
 **Goal**: Recuperar la extracción de páginas con JavaScript en la variante App Store usando el motor del sistema.
 **Depends on**: Phase 25
 **Requirements**: WKJS-01, WKJS-02, WKJS-03, WKJS-04
+**Plans**: 26-01-PLAN.md (CLI: `--js-external` → `js_render_needed`; `--file` + `--base-url`; tests) → 26-02-PLAN.md (`WebRenderer` con `WKWebView`, orquestación en `ExtractionViewModel`, aviso de degradación) + CHECKPOINT-HUMANO.md
 **Success Criteria** (what must be TRUE):
 
   1. La CLI acepta HTML renderizado + URL de origen, con tests (pytest).
