@@ -1,3 +1,4 @@
+import AppKit
 import XCTest
 @testable import ExtractorApp
 
@@ -134,5 +135,58 @@ final class ViewModelTests: XCTestCase {
             "http://example.com"
         )
         XCTAssertNil(ExtractionViewModel.webURL(from: ""))
+    }
+
+    // MARK: - Fase 27
+
+    func testCopyResultPutsContentOnPasteboard() {
+        let pasteboard = NSPasteboard(name: NSPasteboard.Name("ExtractorAppTests-\(UUID().uuidString)"))
+        defer { pasteboard.releaseGlobally() }
+        let vm = ExtractionViewModel()
+        vm.resultContent = "# Citas"
+        vm.resultOutputType = "markdown"
+
+        vm.copyResult(to: pasteboard)
+
+        XCTAssertEqual(pasteboard.string(forType: .string), "# Citas")
+        XCTAssertNil(pasteboard.string(forType: .html))
+        XCTAssertTrue(vm.didCopy)
+    }
+
+    func testCopyResultAlsoCopiesHTMLType_whenExtractedAsHTML() {
+        let pasteboard = NSPasteboard(name: NSPasteboard.Name("ExtractorAppTests-\(UUID().uuidString)"))
+        defer { pasteboard.releaseGlobally() }
+        let vm = ExtractionViewModel()
+        vm.resultContent = "<p>Hola</p>"
+        vm.resultOutputType = "html"
+
+        vm.copyResult(to: pasteboard)
+
+        XCTAssertEqual(pasteboard.string(forType: .html), "<p>Hola</p>")
+    }
+
+    func testCopyResultIsNoopWithoutContent() {
+        let pasteboard = NSPasteboard(name: NSPasteboard.Name("ExtractorAppTests-\(UUID().uuidString)"))
+        defer { pasteboard.releaseGlobally() }
+        let vm = ExtractionViewModel()
+
+        vm.copyResult(to: pasteboard)
+
+        XCTAssertNil(pasteboard.string(forType: .string))
+        XCTAssertFalse(vm.didCopy)
+    }
+
+    func testReopenHTTPEntryFillsInputsAndExtracts() async throws {
+        let entry = try JSONDecoder().decode(HistoryEntry.self, from: Data("""
+        {"timestamp":"2026-10-21T10:00:00+00:00","url":"https://example.com","output_type":"markdown","selector":"main","status":"success","char_count":10,"title":"Example","error_message":null}
+        """.utf8))
+        let vm = ExtractionViewModel()
+
+        await vm.reopen(entry)
+
+        XCTAssertEqual(vm.urlString, "https://example.com")
+        XCTAssertEqual(vm.outputType, "markdown")
+        XCTAssertEqual(vm.selectorCSS, "main")
+        XCTAssertTrue(vm.isExtracting)
     }
 }

@@ -304,3 +304,42 @@ def test_html_renderizado_con_bom_ignora_el_charset_declarado(
     assert "Canción española con eñe" in output["content"]
     assert "€" in output["content"]
     assert output["title"] == "Canción"
+
+
+# ---------------------------------------------------------------------------
+# Paridad de errores entre variantes (SBXFEAT-05)
+# ---------------------------------------------------------------------------
+
+
+def _fail_connection(url: str, **_kwargs: Any) -> NoReturn:
+    raise requests.exceptions.ConnectionError(f"Failed to resolve '{url}'")
+
+
+@pytest.mark.parametrize(
+    "preparar, argumentos",
+    [
+        ("red", ["https://url-que-no-existe-9999.xyz"]),
+        ("selector", ["https://example.com/rica", "--selector", "#no-existe"]),
+    ],
+)
+def test_error_json_igual_con_y_sin_js_external(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+    entorno: Path,  # pylint: disable=unused-argument
+    preparar: str,
+    argumentos: list[str],
+) -> None:
+    """La app App Store (--js-external) ve el mismo error que la Developer ID."""
+    if preparar == "red":
+        monkeypatch.setattr(core._HTTP_SESSION, "get", _fail_connection)
+    else:
+        _serve(monkeypatch, _fixture_text("edefrutos_me.html"))
+
+    code_dev, dev_id = _run_cli(monkeypatch, capsys, *argumentos, "--no-cache")
+    code_mas, app_store = _run_cli(
+        monkeypatch, capsys, *argumentos, "--no-cache", "--js-external",
+    )
+
+    assert code_dev == code_mas == 1
+    assert app_store.pop("js_render_needed") is False
+    assert app_store == dev_id

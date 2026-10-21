@@ -30,6 +30,8 @@ final class ExtractionViewModel: ObservableObject {
     @Published var exportErrorMessage: String? = nil
     // Fase 26: el render con WKWebView falló y se muestra el contenido sin JS.
     @Published var renderWarning: String? = nil
+    // Fase 27: confirmación breve tras «Copiar».
+    @Published var didCopy: Bool = false
 
     // Phase 6 (D-01): proveedor del WKWebView visible — registrado desde WebPreviewView.makeNSView
     var webViewProvider: (() -> WKWebView?)? = nil
@@ -52,6 +54,8 @@ final class ExtractionViewModel: ObservableObject {
     // HTML renderizado con WKWebView en la última extracción (Fase 26): el
     // export a Markdown debe reconvertir este, no volver al HTML estático.
     private var lastRenderedPage: RenderedPage? = nil
+    // Tarea que devuelve `didCopy` a false; se cancela si se copia otra vez.
+    private var copyFeedbackTask: Task<Void, Never>? = nil
 
     /// HTML ya renderizado y la URL de la que salió.
     private struct RenderedPage {
@@ -217,20 +221,70 @@ final class ExtractionViewModel: ObservableObject {
     /// Elige un archivo HTML local y lo extrae como URL file:// — el CLI lo
     /// lee del disco, así que tipos, título, historial y export funcionan igual.
     func openLocalHTML() async {
+        guard let fileURL = await chooseHTMLFile(
+            message: "Elige una página HTML guardada desde el navegador"
+        ) else { return }
+
+        urlString = fileURL.absoluteString
+        extract()
+    }
+
+    /// Vuelve a lanzar una extracción del historial.
+    ///
+    /// Fase 27: con App Sandbox, el permiso que da el panel sobre un archivo
+    /// local solo dura la sesión. Si tras relanzar la app ya no se puede leer,
+    /// se pide elegirlo otra vez en su carpeta en vez de fallar en Python.
+    func reopen(_ entry: HistoryEntry) async {
+        outputType = entry.outputType ?? "text"
+        selectorCSS = entry.selector ?? ""
+        if let fileURL = URL(string: entry.url), fileURL.isFileURL,
+           !FileManager.default.isReadableFile(atPath: fileURL.path) {
+            guard let chosen = await chooseHTMLFile(
+                message: "Vuelve a elegir el archivo para darle permiso a la app",
+                in: fileURL.deletingLastPathComponent()
+            ) else { return }
+            urlString = chosen.absoluteString
+        } else {
+            urlString = entry.url
+        }
+        extract()
+    }
+
+    /// Panel para elegir un HTML local; nil si se cancela.
+    private func chooseHTMLFile(message: String, in directory: URL? = nil) async -> URL? {
         let panel = NSOpenPanel()
         panel.allowedContentTypes = [.html]
         panel.allowsMultipleSelection = false
         panel.canChooseDirectories = false
-        panel.message = "Elige una página HTML guardada desde el navegador"
+        panel.message = message
+        panel.directoryURL = directory
 
         let response = await withCheckedContinuation {
             (continuation: CheckedContinuation<NSApplication.ModalResponse, Never>) in
             panel.begin { continuation.resume(returning: $0) }
         }
-        guard response == .OK, let fileURL = panel.url else { return }
+        return response == .OK ? panel.url : nil
+    }
 
-        urlString = fileURL.absoluteString
-        extract()
+    // MARK: - Copiar (Fase 27)
+
+    /// Copia el resultado tal como se extrajo. `NSPasteboard` funciona igual
+    /// con App Sandbox (la CLI usa `pbcopy`, que la app no necesita).
+    func copyResult(to pasteboard: NSPasteboard = .general) {
+        guard let content = resultContent else { return }
+        pasteboard.clearContents()
+        pasteboard.setString(content, forType: .string)
+        if resultOutputType == "html" {
+            pasteboard.setString(content, forType: .html)
+        }
+
+        didCopy = true
+        copyFeedbackTask?.cancel()
+        copyFeedbackTask = Task { [weak self] in
+            try? await Task.sleep(nanoseconds: 1_500_000_000)
+            guard !Task.isCancelled else { return }
+            self?.didCopy = false
+        }
     }
 
     // MARK: - Error formatting

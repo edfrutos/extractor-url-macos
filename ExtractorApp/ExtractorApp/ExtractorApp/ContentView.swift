@@ -47,10 +47,7 @@ struct ContentView: View {
         }
         .sheet(isPresented: $showingHistory) {
             HistoryView { entry in
-                vm.urlString = entry.url
-                vm.outputType = entry.outputType ?? "text"
-                vm.selectorCSS = entry.selector ?? ""
-                vm.extract()
+                Task { await vm.reopen(entry) }
             }
         }
     }
@@ -364,6 +361,23 @@ struct ContentView: View {
                 Spacer()
 
                 Button {
+                    vm.copyResult()
+                } label: {
+                    HStack(spacing: 6) {
+                        Image(systemName: vm.didCopy ? "checkmark" : "doc.on.doc")
+                            .font(.system(size: 13, weight: .semibold))
+                        Text(vm.didCopy ? "Copiado" : "Copiar")
+                            .font(.system(size: 13, weight: .semibold))
+                    }
+                }
+                .buttonStyle(.bordered)
+                .keyboardShortcut("c", modifiers: [.command, .shift])
+                .help("Copiar el resultado al portapapeles (⇧⌘C)")
+                .accessibilityLabel(vm.didCopy ? "Copiado" : "Copiar resultado")
+                .disabled(vm.resultContent == nil || vm.isExtracting)
+                .animation(.easeInOut(duration: 0.2), value: vm.didCopy)
+
+                Button {
                     Task { await vm.export() }
                 } label: {
                     HStack(spacing: 6) {
@@ -483,6 +497,8 @@ struct ContentView: View {
                             .fixedSize(horizontal: false, vertical: true)
                     }
                 }
+                // En App Store, Ajustes no tiene rutas: el mensaje ya pide reinstalar.
+                #if !APPSTORE
                 if vm.isPythonPathError {
                     if #available(macOS 14, *) {
                         // API oficial para abrir la escena Settings.
@@ -508,6 +524,7 @@ struct ContentView: View {
                         .font(.caption)
                     }
                 }
+                #endif
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(16)
