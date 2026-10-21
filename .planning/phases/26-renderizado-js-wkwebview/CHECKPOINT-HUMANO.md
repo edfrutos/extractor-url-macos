@@ -1,7 +1,8 @@
 ---
 phase: 26-renderizado-js-wkwebview
 type: checkpoint-humano
-status: pending
+status: passed
+verified: "2026-10-21"
 created: "2026-10-21"
 ---
 
@@ -47,3 +48,20 @@ created: "2026-10-21"
 Si en B.2 las citas salen a medias o vacías, dímelo: es el riesgo del
 `WKWebView` fuera de ventana (ver `26-RESEARCH.md`) y se corrige
 metiéndolo en una ventana invisible.
+
+## Resultado (2026-10-21)
+
+- **A:** OK. Developer ID compila, los tests pasan y extrae las citas con
+  Chromium.
+- **B:** OK. En App Store salen las 10 citas con sus autores.
+  - Log: primera pasada con `--js-external` (297 bytes), `WebContent` del
+    render y segunda pasada con `--file …/Containers/com.edefrutos.ExtractorApp.appstore/Data/tmp/render-….html --base-url https://quotes.toscrape.com/js/`
+    (1328 bytes, stderr vacío).
+  - `example.com` con una sola pasada.
+  - El export a Markdown trae las citas.
+  - Una sola entrada en el historial.
+  - Las líneas `Error acquiring assertion … runningboard.assertions.webkit`
+    al cerrar el `WKWebView` son ruido del sandbox.
+- **C:** OK. Con `-webRendererForceFailure YES` sale el aviso sin error.
+- **Riesgo del `WKWebView` fuera de ventana:** no se ha dado, así que no hace
+  falta la ventana invisible.

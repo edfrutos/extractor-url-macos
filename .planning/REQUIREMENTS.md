@@ -26,10 +26,10 @@ JS en la variante App Store vía `WKWebView`; app gratuita. Ver
 
 ### WKJS — Renderizado JavaScript con WKWebView (Phase 26)
 
-- [ ] **WKJS-01**: La CLI acepta HTML ya renderizado junto con su URL de origen, y resuelve enlaces e imágenes contra esa URL; con tests.
-- [ ] **WKJS-02**: La variante App Store renderiza la página en un `WKWebView` oculto con timeout y pasa el HTML resultante a Python.
-- [ ] **WKJS-03**: El renderizado con `WKWebView` solo se usa cuando el contenido estático es insuficiente (misma heurística que hoy decide usar Chromium), respetando los modos de JS existentes.
-- [ ] **WKJS-04**: Si el renderizado falla o agota el tiempo, la extracción degrada al HTML estático con un aviso, sin abortar.
+- [x] **WKJS-01**: La CLI acepta HTML ya renderizado junto con su URL de origen, y resuelve enlaces e imágenes contra esa URL; con tests.
+- [x] **WKJS-02**: La variante App Store renderiza la página en un `WKWebView` oculto con timeout y pasa el HTML resultante a Python.
+- [x] **WKJS-03**: El renderizado con `WKWebView` solo se usa cuando el contenido estático es insuficiente (misma heurística que hoy decide usar Chromium), respetando los modos de JS existentes.
+- [x] **WKJS-04**: Si el renderizado falla o agota el tiempo, la extracción degrada al HTML estático con un aviso, sin abortar.
 
 ### SBXFEAT — Funciones de la app bajo sandbox (Phase 27)
 
