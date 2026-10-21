@@ -34,6 +34,8 @@ python extractor_url.py --file pagina.html --type markdown   # HTML local (pági
 python extractor_url.py https://example.com --no-images      # sin imágenes en el resultado
 python extractor_url.py https://example.com --no-links       # enlaces aplanados (solo texto)
 python extractor_url.py https://example.com --clipboard      # copia el resultado (macOS, pbcopy)
+python extractor_url.py https://example.com --json --js-external  # sin Playwright: avisa con js_render_needed
+python extractor_url.py --file renderizado.html --base-url https://example.com/ --type markdown  # HTML ya renderizado
 python extractor_url.py                                      # GUI tkinter
 python extractor_url.py --gui                                # GUI tkinter (explícito)
 ```

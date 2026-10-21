@@ -197,11 +197,16 @@ def _original_page_url(html_text: str) -> Optional[str]:
     return None
 
 
-def _read_local_html(file_uri: str) -> Optional[tuple[str, str]]:
+def _read_local_html(
+    file_uri: str, base_url: Optional[str] = None,
+) -> Optional[tuple[str, str]]:
     """Lee un archivo HTML local (URI file://) y devuelve (html_text, url_base).
 
     La codificación se detecta como haría un navegador (meta charset, BOM…)
     para no romper páginas guardadas en Latin-1 u otras codificaciones.
+
+    `base_url` (Fase 26) es la URL desde la que se renderizó el HTML: gana a
+    la que declare el propio documento, porque es la que se cargó de verdad.
     """
     path = Path(url2pathname(urlparse(file_uri).path))
     try:
@@ -212,7 +217,7 @@ def _read_local_html(file_uri: str) -> Optional[tuple[str, str]]:
     html_text = UnicodeDammit(data, is_html=True).unicode_markup
     if html_text is None:
         html_text = data.decode("utf-8", errors="replace")
-    return html_text, _original_page_url(html_text) or file_uri
+    return html_text, base_url or _original_page_url(html_text) or file_uri
 
 
 def _normalize_url(url: str) -> Optional[str]:
@@ -226,12 +231,13 @@ def _normalize_url(url: str) -> Optional[str]:
     return url
 
 
-def _fetch_raw(
+def _fetch_raw(  # pylint: disable=too-many-arguments,too-many-positional-arguments
     url: str,
     timeout: int = 15,
     use_cache: bool = True,
     js_mode: str = "auto",
-    session: Optional["PlaywrightSession"] = None,
+    session: Optional[RenderSession] = None,
+    base_url: Optional[str] = None,
 ) -> Optional[tuple[str, str]]:
     """Descarga una URL (con caché opcional) y devuelve (html_text, url_final).
 
@@ -243,11 +249,15 @@ def _fetch_raw(
     Un js_mode distinto de "auto" salta la LECTURA de la caché (una URL ya
     cacheada de una ejecución anterior no debe anular el efecto explícito
     del flag) pero conserva la escritura al final, igual que siempre.
+
+    Con una ExternalRenderSession (Fase 26) no se renderiza aquí: se marca
+    `session.render_needed` y se devuelve el HTML estático. Ese HTML no se
+    guarda en caché, o la siguiente lectura saltaría la heurística.
     """
     if url.lower().startswith("file://"):
         # Archivo local: sin red, caché ni Playwright (una página guardada
         # ya es el HTML final).
-        return _read_local_html(url)
+        return _read_local_html(url, base_url)
 
     normalized_url = _normalize_url(url)
     if normalized_url is None:
@@ -261,16 +271,13 @@ def _fetch_raw(
     if use_cache:
         _CACHE_DIR.mkdir(parents=True, exist_ok=True)
         if js_mode == "auto" and cache_file.exists():
-            try:
-                if time.time() - cache_file.stat().st_mtime > _CACHE_TTL_SECONDS:
-                    cache_file.unlink(missing_ok=True)
-                else:
-                    with cache_file.open("r", encoding="utf-8") as f:
-                        cached_data = json.load(f)
-                        return cached_data["html"], cached_data["final_url"]
-            except (IOError, OSError, json.JSONDecodeError):
-                # Si hay un error al leer/borrar la caché, se ignora y se procede a la descarga
-                pass
+            cached = _read_cache(cache_file)
+            if cached is not None:
+                if isinstance(session, ExternalRenderSession) and (
+                    _looks_insufficient(cached[0])
+                ):
+                    session.render_needed = True
+                return cached
 
     # Lógica de descarga
     try:
@@ -279,7 +286,10 @@ def _fetch_raw(
         # Guardar en caché si la descarga fue exitosa. Solo en js_mode="auto":
         # "force"/"off" no deben poder envenenar la caché que lee el modo
         # automático con un resultado que ignoró deliberadamente la heurística.
-        if use_cache and js_mode == "auto":
+        render_pending = (
+            isinstance(session, ExternalRenderSession) and session.render_needed
+        )
+        if use_cache and js_mode == "auto" and not render_pending:
             try:
                 with cache_file.open("w", encoding="utf-8") as f:
                     json.dump({"html": html_text, "final_url": final_url}, f)
@@ -297,11 +307,28 @@ def _fetch_raw(
         return None
 
 
+def _read_cache(cache_file: Path) -> Optional[tuple[str, str]]:
+    """Lee una entrada de caché vigente; None si caducó o no se puede leer.
+
+    Una entrada caducada se borra. Un error al leer o borrar se ignora: se
+    vuelve a descargar.
+    """
+    try:
+        if time.time() - cache_file.stat().st_mtime > _CACHE_TTL_SECONDS:
+            cache_file.unlink(missing_ok=True)
+            return None
+        with cache_file.open("r", encoding="utf-8") as f:
+            cached_data = json.load(f)
+        return cached_data["html"], cached_data["final_url"]
+    except (IOError, OSError, json.JSONDecodeError):
+        return None
+
+
 def _download(
     url: str,
     timeout: int,
     js_mode: str,
-    session: Optional["PlaywrightSession"],
+    session: Optional[RenderSession],
 ) -> tuple[str, str]:
     """Descarga `url` y devuelve (html_text, url_final), con fallback a Chromium.
 
@@ -310,13 +337,21 @@ def _download(
     descarga directa recibe un 401/403 (bloqueo anti-bots), se reintenta con
     Chromium headless salvo en "off". Propaga RequestException si no hay
     forma de obtener la página.
+
+    Con una ExternalRenderSession, un 401/403 se propaga sin pedir render:
+    reintentar con otro navegador una web que ha bloqueado al cliente no es
+    objetivo del proyecto (Fase 26).
     """
     try:
         response = _HTTP_SESSION.get(url, headers=_REQUEST_HEADERS, timeout=timeout)
         response.raise_for_status()
     except requests.exceptions.HTTPError as error:
         status = error.response.status_code if error.response is not None else None
-        if js_mode == "off" or status not in _BLOCKED_STATUS_CODES:
+        if (
+            js_mode == "off"
+            or status not in _BLOCKED_STATUS_CODES
+            or isinstance(session, ExternalRenderSession)
+        ):
             raise
         print(
             f"HTTP {status} en la descarga directa de '{url}'; "
@@ -331,9 +366,13 @@ def _download(
     response.encoding = response.apparent_encoding
     html_text = response.text
     if js_mode == "force" or (js_mode != "off" and _looks_insufficient(html_text)):
-        rendered = _fetch_via_playwright(url, timeout, session=session)
-        if rendered is not None:
-            html_text = rendered
+        if isinstance(session, ExternalRenderSession):
+            # Renderiza quien llama (WKWebView); aquí solo se avisa.
+            session.render_needed = True
+        else:
+            rendered = _fetch_via_playwright(url, timeout, session=session)
+            if rendered is not None:
+                html_text = rendered
     return html_text, response.url
 
 
@@ -345,13 +384,14 @@ def _parse_html(html_text: str) -> BeautifulSoup:
         return BeautifulSoup(html_text, "html.parser")
 
 
-def _fetch_soup(
+def _fetch_soup(  # pylint: disable=too-many-arguments
     url: str, timeout: int = 15, use_cache: bool = True, js_mode: str = "auto",
-    session: Optional["PlaywrightSession"] = None,
+    session: Optional[RenderSession] = None, *, base_url: Optional[str] = None,
 ) -> Optional[BeautifulSoup]:
     """Descarga una URL y devuelve un objeto BeautifulSoup."""
     raw = _fetch_raw(
         url, timeout=timeout, use_cache=use_cache, js_mode=js_mode, session=session,
+        base_url=base_url,
     )
     if raw is None:
         return None
@@ -426,6 +466,28 @@ class PlaywrightSession:
 
     def __exit__(self, *_exc_info: object) -> None:
         self.close()
+
+
+class ExternalRenderSession:
+    """Sesión para quien renderiza el JavaScript por su cuenta (Fase 26).
+
+    La variante App Store no lleva Chromium: renderiza con WKWebView. Con
+    esta sesión, donde se usaría Playwright solo se marca `render_needed`
+    y se sigue con el HTML estático; la app renderiza la página y vuelve a
+    pasarla con --file y --base-url. La heurística sigue estando solo aquí.
+    """
+
+    def __init__(self) -> None:
+        self.render_needed = False
+
+    def __enter__(self) -> "ExternalRenderSession":
+        return self
+
+    def __exit__(self, *_exc_info: object) -> None:
+        return None
+
+
+RenderSession = Union[PlaywrightSession, ExternalRenderSession]
 
 
 def _render_page(page, url: str, timeout: int) -> Optional[str]:
@@ -648,17 +710,23 @@ def extract_formatted_content(  # pylint: disable=too-many-arguments,too-many-po
     js_mode: str = "auto",
     no_images: bool = False,
     no_links: bool = False,
-    session: Optional["PlaywrightSession"] = None,
+    session: Optional[RenderSession] = None,
+    base_url: Optional[str] = None,
 ) -> Optional[Union[str, BeautifulSoup]]:
-    """Extrae contenido formateado de una página web."""
+    """Extrae contenido formateado de una página web.
+
+    `base_url` solo aplica a archivos locales (file://): es la URL de origen
+    de un HTML ya renderizado, contra la que se resuelven enlaces e imágenes.
+    """
     if return_type == "markdown_structure":
         return extract_html_structure_to_markdown(
             url, selector=selector, timeout=timeout, use_cache=use_cache, js_mode=js_mode,
-            no_images=no_images, no_links=no_links, session=session,
+            no_images=no_images, no_links=no_links, session=session, base_url=base_url,
         )
 
     soup = _fetch_soup(
         url, timeout=timeout, use_cache=use_cache, js_mode=js_mode, session=session,
+        base_url=base_url,
     )
     if soup is None:
         return None
@@ -666,7 +734,7 @@ def extract_formatted_content(  # pylint: disable=too-many-arguments,too-many-po
     return _format_soup_content(soup, return_type, selector, no_images, no_links)
 
 
-def extract_html_structure_to_markdown(  # pylint: disable=too-many-arguments,too-many-positional-arguments
+def extract_html_structure_to_markdown(  # pylint: disable=too-many-arguments,too-many-positional-arguments,too-many-locals
     url: str,
     selector: Optional[str] = None,
     timeout: int = 15,
@@ -674,11 +742,13 @@ def extract_html_structure_to_markdown(  # pylint: disable=too-many-arguments,to
     js_mode: str = "auto",
     no_images: bool = False,
     no_links: bool = False,
-    session: Optional["PlaywrightSession"] = None,
+    session: Optional[RenderSession] = None,
+    base_url: Optional[str] = None,
 ) -> Optional[str]:
     """Convierte el contenido principal de una URL a Markdown fiel."""
     raw = _fetch_raw(
         url, timeout=timeout, use_cache=use_cache, js_mode=js_mode, session=session,
+        base_url=base_url,
     )
     if raw is None:
         return None

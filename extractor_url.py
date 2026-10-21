@@ -34,7 +34,9 @@ from core import (
     _extract_title,
     record_history_entry,
     url_scheme_error,
+    ExternalRenderSession,
     PlaywrightSession,
+    RenderSession,
 )
 
 # Traduce el --type de la CLI (nombres cortos) al return_type de core.py.
@@ -53,7 +55,7 @@ def _lookup_title(
     timeout: int,
     use_cache: bool,
     js_mode: str = "auto",
-    session: Optional[PlaywrightSession] = None,
+    session: Optional[RenderSession] = None,
 ) -> Optional[str]:
     """Extrae el <title> de una URL ya descargada (segunda llamada = hit de caché)."""
     raw_result = _fetch_raw(
@@ -361,6 +363,51 @@ def _error_payload(url: str) -> dict[str, Any]:
     }
 
 
+def _render_pending(session: RenderSession) -> bool:
+    """¿La sesión externa marcó que la página necesita JavaScript?"""
+    return isinstance(session, ExternalRenderSession) and session.render_needed
+
+
+def _with_render_flag(
+    payload: dict[str, Any], args: argparse.Namespace, session: RenderSession,
+) -> dict[str, Any]:
+    """Añade js_render_needed al payload, solo con --js-external (Fase 26)."""
+    if args.js_external:
+        payload["js_render_needed"] = _render_pending(session)
+    return payload
+
+
+def _resolve_file_arg(args: argparse.Namespace) -> None:
+    """Valida --file/--base-url y convierte --file en una URL file://.
+
+    El resto del flujo (tipos, título, historial, JSON) trata el archivo como
+    una URL file://, que core._fetch_raw() lee del disco.
+    """
+    _check_base_url(args)
+    if args.file is None:
+        return
+    if args.url is not None:
+        print("Error: usa una URL o --file, no ambos.", file=sys.stderr)
+        sys.exit(2)
+    args.url = Path(args.file).expanduser().resolve().as_uri()
+
+
+def _check_base_url(args: argparse.Namespace) -> None:
+    """Valida --base-url: solo con --file y con esquema http/https."""
+    if args.base_url is None:
+        return
+    if args.file is None:
+        print("Error: --base-url requiere --file.", file=sys.stderr)
+        sys.exit(2)
+    if not args.base_url.lower().startswith(("http://", "https://")):
+        print(
+            f"Error: --base-url debe empezar por http:// o https:// "
+            f"('{args.base_url}').",
+            file=sys.stderr,
+        )
+        sys.exit(2)
+
+
 def _build_parser() -> argparse.ArgumentParser:
     """Construye el parser de argumentos de la CLI."""
     parser = argparse.ArgumentParser(description="Extractor de contenido web")
@@ -424,6 +471,24 @@ def _build_parser() -> argparse.ArgumentParser:
         ),
     )
     parser.add_argument(
+        "--js-external",
+        action="store_true",
+        dest="js_external",
+        help=(
+            "No usa Playwright: si la página necesita JavaScript, lo indica "
+            "en el JSON (js_render_needed) para que lo renderice quien llama"
+        ),
+    )
+    parser.add_argument(
+        "--base-url",
+        metavar="URL",
+        default=None,
+        help=(
+            "Con --file: URL de origen del HTML (p. ej. ya renderizado), "
+            "contra la que se resuelven enlaces e imágenes"
+        ),
+    )
+    parser.add_argument(
         "--no-images",
         action="store_true",
         help="Elimina las imágenes del contenido extraído",
@@ -465,16 +530,13 @@ def main() -> None:
         if not args.json:
             print("Error: --batch requiere --json.", file=sys.stderr)
             sys.exit(2)
+        if args.js_external:
+            print("Error: --js-external no admite --batch.", file=sys.stderr)
+            sys.exit(2)
         _run_batch(args)
         return
 
-    if args.file is not None:
-        if args.url is not None:
-            print("Error: usa una URL o --file, no ambos.", file=sys.stderr)
-            sys.exit(2)
-        # El resto del flujo (tipos, título, historial, JSON) trata el archivo
-        # como una URL file://, que core._fetch_raw() lee del disco.
-        args.url = Path(args.file).expanduser().resolve().as_uri()
+    _resolve_file_arg(args)
 
     if args.gui or args.url is None:
         _run_gui()
@@ -482,8 +544,14 @@ def main() -> None:
 
     content_type = _CONTENT_TYPE_MAP.get(args.type, "text")
     js_mode = _resolve_js_mode(args)
+    # URL que ven el JSON y el historial: la de origen si el HTML llega
+    # renderizado desde fuera (--base-url), no el archivo temporal.
+    display_url = args.base_url or args.url
 
-    with PlaywrightSession() as session:
+    session: RenderSession = (
+        ExternalRenderSession() if args.js_external else PlaywrightSession()
+    )
+    with session:
         # Llamada a la función importada desde core.py
         result = extract_formatted_content(
             args.url,
@@ -495,17 +563,30 @@ def main() -> None:
             no_images=args.no_images,
             no_links=args.no_links,
             session=session,
+            base_url=args.base_url,
         )
+        # Pasada provisional: quien llama renderizará la página y la volverá
+        # a pasar con --file, y esa pasada es la que deja título e historial.
+        provisional = _render_pending(session)
+        if provisional and not args.json:
+            print(
+                "La página parece necesitar JavaScript; renderízala y vuelve "
+                "a pasarla con --file y --base-url.",
+                file=sys.stderr,
+            )
 
         if result is None:
-            record_history_entry(
-                _history_entry(
-                    args.url, args.type, args.selector, "error",
-                    error_message=_error_message_for(args.url),
+            if not provisional:
+                record_history_entry(
+                    _history_entry(
+                        display_url, args.type, args.selector, "error",
+                        error_message=_error_message_for(display_url),
+                    )
                 )
-            )
             if args.json:
-                _print_json_output(_error_payload(args.url))
+                _print_json_output(
+                    _with_render_flag(_error_payload(display_url), args, session)
+                )
             sys.exit(1)
 
         result_str = result if isinstance(result, str) else str(result)
@@ -514,37 +595,52 @@ def main() -> None:
             _copy_to_clipboard(result_str)
 
         if args.json:
-            page_title = _lookup_title(
-                args.url, args.timeout, args.use_cache, js_mode=js_mode, session=session,
-            )
-            record_history_entry(
-                _history_entry(
-                    args.url, args.type, args.selector, "success",
-                    char_count=len(result_str), title=page_title,
+            page_title = None
+            if not provisional:
+                page_title = _lookup_title(
+                    args.url, args.timeout, args.use_cache, js_mode=js_mode,
+                    session=session,
                 )
-            )
+                record_history_entry(
+                    _history_entry(
+                        display_url, args.type, args.selector, "success",
+                        char_count=len(result_str), title=page_title,
+                    )
+                )
             _print_json_output(
-                _success_payload(args.url, args.selector, args.type, result_str, page_title)
+                _with_render_flag(
+                    _success_payload(
+                        display_url, args.selector, args.type, result_str, page_title,
+                    ),
+                    args,
+                    session,
+                )
             )
             return
 
-    record_history_entry(
-        _history_entry(
-            args.url, args.type, args.selector, "success",
-            char_count=len(result_str),
+    if not provisional:
+        record_history_entry(
+            _history_entry(
+                display_url, args.type, args.selector, "success",
+                char_count=len(result_str),
+            )
         )
-    )
 
-    if args.output:
-        try:
-            with open(args.output, "w", encoding="utf-8") as f:
-                f.write(result_str)
-            print(f"Contenido guardado en: {args.output}")
-        except OSError as e:
-            print(f"Error al guardar archivo: {e}", file=sys.stderr)
-            sys.exit(1)
-    else:
+    _write_output(args, result_str)
+
+
+def _write_output(args: argparse.Namespace, result_str: str) -> None:
+    """Escribe el resultado en --output o, sin él, en stdout."""
+    if not args.output:
         print(result_str)
+        return
+    try:
+        with open(args.output, "w", encoding="utf-8") as f:
+            f.write(result_str)
+        print(f"Contenido guardado en: {args.output}")
+    except OSError as e:
+        print(f"Error al guardar archivo: {e}", file=sys.stderr)
+        sys.exit(1)
 
 
 def _run_batch(args: argparse.Namespace) -> None:
