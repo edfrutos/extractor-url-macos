@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+#if !APPSTORE
 import Sparkle
 
 /// Controla qué canales de Sparkle puede ver esta instalación (Fase 16).
@@ -17,9 +18,11 @@ final class ExtractorUpdaterDelegate: NSObject, SPUUpdaterDelegate {
         UserDefaults.standard.bool(forKey: "betaChannelOptIn") ? ["beta"] : []
     }
 }
+#endif
 
 @main
 struct ExtractorAppApp: App {
+    #if !APPSTORE
     private let updaterDelegate = ExtractorUpdaterDelegate()
     private let updaterController: SPUStandardUpdaterController
 
@@ -30,16 +33,19 @@ struct ExtractorAppApp: App {
             userDriverDelegate: nil
         )
     }
+    #endif
 
     var body: some Scene {
         WindowGroup {
             ContentView()
         }
+        #if !APPSTORE
         .commands {
             CommandGroup(after: .appInfo) {
                 CheckForUpdatesView(updater: updaterController.updater)
             }
         }
+        #endif
         Settings {
             SettingsView()
         }

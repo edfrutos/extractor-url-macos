@@ -769,3 +769,49 @@ def test_gui_sin_tkinter_falla_con_mensaje_claro(tmp_path: Path) -> None:
     assert result.returncode == 1
     assert "requiere tkinter" in result.stderr
 
+
+
+# ---------------------------------------------------------------------------
+# Python no escribe junto a los scripts (bundle de solo lectura, Fase 25)
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    ("dont_write_bytecode", "expect_unchanged"), [(True, True), (False, False)],
+)
+def test_cli_no_escribe_en_el_directorio_de_scripts(
+    tmp_path: Path, dont_write_bytecode: bool, expect_unchanged: bool,
+) -> None:
+    """Con PYTHONDONTWRITEBYTECODE=1 (lo que pasa PythonBridge), el directorio
+    de scripts del bundle queda intacto; sin él, aparecería __pycache__."""
+    scripts = tmp_path / "scripts"
+    scripts.mkdir()
+    for name in ("core.py", "extractor_url.py"):
+        (scripts / name).write_bytes((_REPO_DIR / name).read_bytes())
+    page = tmp_path / "pagina.html"
+    page.write_text(
+        "<html><head><title>Bundle</title></head><body><article>"
+        "<p>" + "Texto del bundle. " * 20 + "</p></article></body></html>",
+        encoding="utf-8",
+    )
+    env = {**os.environ, "HOME": str(tmp_path / "home")}
+    env.pop("PYTHONDONTWRITEBYTECODE", None)
+    if dont_write_bytecode:
+        env["PYTHONDONTWRITEBYTECODE"] = "1"
+    before = sorted(p.name for p in scripts.rglob("*"))
+
+    result = subprocess.run(
+        [sys.executable, str(scripts / "extractor_url.py"), "--file", str(page),
+         "--type", "markdown", "--json", "--no-js"],
+        cwd=scripts,
+        env=env,
+        capture_output=True,
+        text=True,
+        timeout=60,
+        check=False,
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert json.loads(result.stdout)["status"] == "success"
+    after = sorted(p.name for p in scripts.rglob("*"))
+    assert (after == before) is expect_unchanged, after

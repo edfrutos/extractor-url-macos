@@ -22,6 +22,10 @@ created: "2026-10-20"
    - No hay «Buscar actualizaciones…».
    - Ajustes solo muestra «Modo de operación».
 3. Extrae `https://example.com` como Markdown y como HTML.
+   Después, «Abrir archivo HTML…» con una página guardada. Es la duda
+   abierta: el panel da permiso a la app, y hay que ver si `python3.13`
+   (que hereda el sandbox) también puede leer ese archivo. Si falla, pégame
+   el mensaje de error.
 4. Monitor de Actividad → columna «Zona protegida»: `ExtractorApp` y
    `python3.13` deben mostrar **Sí**.
 5. Comprueba que no se escribe nada dentro de la app. Ejecuta esto en el

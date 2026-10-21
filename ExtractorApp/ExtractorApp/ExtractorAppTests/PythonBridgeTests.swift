@@ -145,6 +145,34 @@ final class PythonBridgeTests: XCTestCase {
         }
     }
 
+    // MARK: - 4b. emptyOutput con el detalle de stderr (Fase 25)
+
+    func testEmptyOutputCarriesStderrDetail_whenScriptOnlyWritesStderr() async throws {
+        // Sin stdout y con la causa real en stderr (como el ModuleNotFoundError
+        // de la Fase 24): el error debe llevarla en `detail`.
+        let tmp = FileManager.default.temporaryDirectory
+            .appendingPathComponent("stderronly_\(UUID().uuidString).sh")
+        try "#!/bin/sh\necho 'ModuleNotFoundError: No module named bs4' >&2\nexit 1"
+            .write(to: tmp, atomically: true, encoding: .utf8)
+        try FileManager.default.setAttributes([.posixPermissions: 0o755], ofItemAtPath: tmp.path)
+        defer { try? FileManager.default.removeItem(at: tmp) }
+
+        let bridge = PythonBridge()
+        bridge.pythonPath = "/bin/sh"
+        bridge.scriptPath = tmp.path
+
+        do {
+            _ = try await bridge.run(url: "https://example.com", outputType: "text")
+            XCTFail("Debería haber lanzado ExtractionError.emptyOutput")
+        } catch let error as ExtractionError {
+            guard case .emptyOutput(let detail) = error else {
+                return XCTFail("Error incorrecto: \(error) (esperado emptyOutput)")
+            }
+            XCTAssertEqual(detail, "ModuleNotFoundError: No module named bs4")
+            XCTAssertTrue(error.errorDescription?.contains("Detalle: ModuleNotFoundError") ?? false)
+        }
+    }
+
     // MARK: - 5. jsonDecodeFailed — stdout contiene texto no-JSON
 
     func testRunThrowsJsonDecodeFailed_whenStdoutIsNotJSON() async throws {
@@ -287,7 +315,8 @@ final class PythonBridgeTests: XCTestCase {
             .processLaunchFailed(underlying: NSError(domain: "test", code: 1)),
             .extractionFailed(message: "test"),
             .jsonDecodeFailed(underlying: NSError(domain: "test", code: 2)),
-            .emptyOutput,
+            .emptyOutput(detail: nil),
+            .emptyOutput(detail: "ModuleNotFoundError"),
             .timeout,
         ]
         for error in cases {

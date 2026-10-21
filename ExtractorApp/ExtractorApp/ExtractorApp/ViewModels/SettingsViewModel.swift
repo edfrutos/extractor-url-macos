@@ -86,11 +86,13 @@ final class SettingsViewModel: ObservableObject {
         }
     }
 
+    #if !APPSTORE
     /// Opt-in a actualizaciones del canal beta de Sparkle (Fase 16).
     /// Leído directamente por `ExtractorUpdaterDelegate.allowedChannels(for:)`
     /// — no necesita refrescar nada al cambiar, Sparkle lo consulta en la
     /// siguiente comprobación (automática o manual).
     @AppStorage("betaChannelOptIn") var betaChannelOptIn: Bool = false
+    #endif
 
     // MARK: Validation state (@Published para reactividad en View)
 
@@ -101,12 +103,14 @@ final class SettingsViewModel: ObservableObject {
 
     @Published private(set) var operatingMode: PythonOperatingMode = .unavailable
 
+    #if !APPSTORE
     // MARK: Runtime update (Fase 21 — @Published para reactividad en View)
 
     @Published private(set) var runtimeUpdateState: RuntimeUpdateState = .idle
 
     /// Versión de override activa, o nil si se usa el runtime bundleado.
     var activeRuntimeVersion: String? { RuntimeUpdater.activeVersion() }
+    #endif
 
     /// `true` cuando la app opera con el Python embebido (flujo zero-config por defecto).
     var isBundleMode: Bool {
@@ -181,6 +185,7 @@ final class SettingsViewModel: ObservableObject {
         return .valid
     }
 
+    #if !APPSTORE
     // MARK: - Runtime Update (Fase 21)
 
     /// Comprueba el manifiesto remoto y aplica una actualización de
@@ -214,6 +219,7 @@ final class SettingsViewModel: ObservableObject {
             }
         }
     }
+    #endif
 
     // MARK: - NSOpenPanel File Picker
 

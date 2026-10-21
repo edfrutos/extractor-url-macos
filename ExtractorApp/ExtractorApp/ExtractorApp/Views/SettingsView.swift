@@ -4,7 +4,18 @@ import SwiftUI
 
 /// Ventana de Ajustes con pestañas en la barra (convención macOS):
 /// General para el uso normal y Avanzado para el override manual de rutas.
+/// La variante App Store (Fase 25) solo usa el Python del bundle: sin
+/// pestañas, solo el modo de operación.
 struct SettingsView: View {
+
+    #if APPSTORE
+    @StateObject private var vm = SettingsViewModel()
+
+    var body: some View {
+        GeneralSettingsTab(vm: vm)
+            .frame(width: 520, height: 200)
+    }
+    #else
 
     private enum Tab: Hashable {
         case general
@@ -38,6 +49,7 @@ struct SettingsView: View {
             }
         }
     }
+    #endif
 }
 
 // MARK: - GeneralSettingsTab
@@ -55,6 +67,7 @@ private struct GeneralSettingsTab: View {
                 Text("Modo de operación")
             }
 
+            #if !APPSTORE
             // MARK: Actualizaciones (Fase 16: opt-in a canal beta)
             Section {
                 Toggle(isOn: $vm.betaChannelOptIn) {
@@ -77,6 +90,7 @@ private struct GeneralSettingsTab: View {
                     Text("Dependencias del motor")
                 }
             }
+            #endif
         }
         .formStyle(.grouped)
     }
@@ -383,7 +397,11 @@ private struct OperatingModeRow: View {
         case .override:
             return "Sobrescribiendo el Python incluido con la ruta manual de la pestaña Avanzado."
         case .unavailable:
+            #if APPSTORE
+            return "Falta el Python incluido en la app. Vuelve a instalarla desde la App Store."
+            #else
             return "Configura una ruta manual en la pestaña Avanzado para poder extraer contenido."
+            #endif
         }
     }
 

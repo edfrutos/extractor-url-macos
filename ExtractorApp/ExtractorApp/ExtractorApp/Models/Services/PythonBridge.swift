@@ -72,18 +72,27 @@ final class PythonBridge {
                 // (o su directorio desapareció), RuntimeUpdater.activeOverridePath()
                 // devuelve nil y el comportamiento es idéntico al de antes
                 // de esta fase.
+                // La variante App Store no descarga dependencias (guideline
+                // 2.5.2): RuntimeUpdater ni siquiera se compila en ese target.
                 var pythonPathEntries = [libPath]
+                #if !APPSTORE
                 if let overridePath = RuntimeUpdater.activeOverridePath() {
                     pythonPathEntries.insert(overridePath, at: 0)
                 }
+                #endif
                 let existing = env["PYTHONPATH"] ?? ""
                 let bundlePath = pythonPathEntries.joined(separator: ":")
                 env["PYTHONPATH"] = existing.isEmpty ? bundlePath : bundlePath + ":" + existing
             }
+            // Fase 25: sin .pyc dentro del .app — bajo sandbox el bundle es
+            // de solo lectura y, en Developer ID, escribir en él rompe la firma.
+            env["PYTHONDONTWRITEBYTECODE"] = "1"
+            #if !APPSTORE
             // Fase 17: Chromium vendorizado dentro de playwright/driver/package/
             // .local-browsers/ — debe coincidir con el valor usado en build time
             // por bundle-playwright.sh, o Playwright no encuentra los binarios.
             env["PLAYWRIGHT_BROWSERS_PATH"] = "0"
+            #endif
             process.currentDirectoryURL = URL(fileURLWithPath: scriptFile)
                 .deletingLastPathComponent()
         case .userDefaults:
@@ -215,7 +224,9 @@ final class PythonBridge {
 
         // -- Decodificación JSON ------------------------------------------
         if stdout.isEmpty {
-            throw ExtractionError.emptyOutput
+            // Sin stdout, stderr suele traer la causa real (p. ej. un
+            // ModuleNotFoundError, como en la Parte A del spike de la Fase 24).
+            throw ExtractionError.emptyOutput(detail: Self.stderrSummary(stderr))
         }
 
         let result: ExtractionResult
@@ -279,7 +290,10 @@ extension PythonBridge {
 
     // Lee UserDefaults directamente (no self.pythonPath) para evitar dependencia
     // de @MainActor en el contexto async de run() (Pitfall 3 RESEARCH fase 9).
+    // La variante App Store solo usa el bundle: un intérprete externo no
+    // puede ejecutarse dentro del sandbox.
     internal func resolvedPaths() -> (python: String, script: String, source: PathSource)? {
+        #if !APPSTORE
         let udPython = UserDefaults.standard.string(forKey: "pythonPath") ?? ""
         let udScript = UserDefaults.standard.string(forKey: "scriptPath") ?? ""
         if !udPython.isEmpty,
@@ -288,6 +302,7 @@ extension PythonBridge {
            FileManager.default.fileExists(atPath: udScript) {
             return (python: udPython, script: udScript, source: .userDefaults)
         }
+        #endif
         guard let bundlePython = Self.bundledPythonPath(),
               let bundleScript = Self.bundledScriptPath() else { return nil }
         return (python: bundlePython, script: bundleScript, source: .bundle)

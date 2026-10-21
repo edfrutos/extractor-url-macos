@@ -6,6 +6,11 @@
 #
 # Requiere: lipo (Xcode SDK), lipomerge (pip install lipomerge==0.1.1)
 # Se invoca desde Xcode Run Script Build Phase.
+#
+# EXTRACTOR_VARIANT=appstore (lo exporta la fase de build del target
+# «ExtractorApp AppStore», Fase 25): sin Playwright, sin _tkinter ni Tcl/Tk,
+# y python3.13 firmado con app-sandbox + inherit. Sin la variable, el
+# resultado es el de siempre (Developer ID).
 set -euo pipefail
 
 # Xcode elimina /opt/homebrew/bin del PATH — restaurarlo para python3/lipomerge
@@ -15,6 +20,12 @@ export PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"
 PYTHON_VERSION="3.13.14"
 PYTHON_MINOR="3.13"          # para paths lib/python3.13/
 PBS_RELEASE="20260610"
+
+VARIANT="${EXTRACTOR_VARIANT:-}"
+if [[ -n "${VARIANT}" && "${VARIANT}" != "appstore" ]]; then
+  echo "ERROR: EXTRACTOR_VARIANT desconocida: ${VARIANT} (solo «appstore» o vacía)"
+  exit 1
+fi
 
 # ── Variables de entorno Xcode ────────────────────────────────────────────────
 # Cuando se invoca desde Xcode, estas variables están disponibles.
@@ -84,7 +95,7 @@ LIBDYNLOAD_X86="${X86_DIR}/python/lib/python${PYTHON_MINOR}/lib-dynload"
 
 if [[ -d "${LIBDYNLOAD_ARM}" && -d "${LIBDYNLOAD_X86}" ]]; then
   while IFS= read -r arm_so; do
-    rel="${arm_so#${ARM_DIR}/python/}"
+    rel="${arm_so#"${ARM_DIR}"/python/}"
     x86_so="${X86_DIR}/python/${rel}"
     dest="${PYTHON_DEST}/${rel}"
     if [[ -f "${x86_so}" ]]; then
@@ -136,12 +147,32 @@ echo "Instalando deps vendorizadas..."
 # vendoriza scripts/bundle-playwright.sh tampoco lo es (decisión de alcance
 # de la Fase 17 — un solo árbol, la arquitectura nativa del Mac de build).
 # Forzar universal2 aquí sería inconsistente sin aportar nada.
-echo "Instalando playwright (arquitectura nativa)..."
-"${BUNDLED_PYTHON}" -m pip install \
-  --target "${VENDORED_LIB}" \
-  --only-binary :all: \
-  --quiet \
-  "playwright==1.62.0"
+# La variante App Store no lleva Chromium (no puede ejecutarse en sandbox).
+if [[ "${VARIANT}" == "appstore" ]]; then
+  echo "Variante appstore: sin playwright"
+else
+  echo "Instalando playwright (arquitectura nativa)..."
+  "${BUNDLED_PYTHON}" -m pip install \
+    --target "${VENDORED_LIB}" \
+    --only-binary :all: \
+    --quiet \
+    "playwright==1.62.0"
+fi
+
+# ── Variante App Store: fuera _tkinter y Tcl/Tk ──────────────────────────────
+# Rechazo real documentado: _tkinter enlaza Tcl, cuyos símbolos App Review
+# marca como API no pública (foro Apple 758567). La app no usa la GUI tkinter.
+# Misma lista que validó App Store Connect en el spike de la Fase 24.
+if [[ "${VARIANT}" == "appstore" ]]; then
+  echo "Variante appstore: quitando _tkinter y Tcl/Tk..."
+  find "${PYTHON_DEST}" -name '_tkinter*.so' -delete
+  rm -rf "${PYTHON_DEST}/lib/python${PYTHON_MINOR}/tkinter" \
+    "${PYTHON_DEST}/lib/python${PYTHON_MINOR}/idlelib" \
+    "${PYTHON_DEST}/lib/python${PYTHON_MINOR}/turtledemo" \
+    "${PYTHON_DEST}/lib/python${PYTHON_MINOR}/turtle.py"
+  find "${PYTHON_DEST}/lib" -maxdepth 1 \( -iname 'tcl*' -o -iname 'tk*' -o -iname 'itcl*' \
+    -o -iname 'thread*' -o -iname 'libtcl*' -o -iname 'libtk*' \) -exec rm -rf {} +
+fi
 
 # ── Codesigning bottom-up (BUNDLE-01) ────────────────────────────────────────
 # Orden obligatorio: .so → .dylib → python3.13 → (Xcode firma el .app)
@@ -175,9 +206,18 @@ find "${PYTHON_DEST}" -name "*.dylib" | while IFS= read -r f; do
   codesign --force $CSIGN_EXTRA --sign "${IDENTITY}" "${f}" 2>/dev/null || true
 done
 
-# 3. Ejecutable python3.13
-# shellcheck disable=SC2086
-codesign --force $CSIGN_EXTRA --sign "${IDENTITY}" "${BUNDLED_PYTHON}"
+# 3. Ejecutable python3.13. En la variante App Store hereda el sandbox de la
+#    app: solo app-sandbox + inherit (cualquier otra clave hace que libsecinit
+#    lo aborte, ver scripts/appstore/python-child.entitlements).
+CHILD_ENTITLEMENTS="${PROJECT_DIR}/../../scripts/appstore/python-child.entitlements"
+if [[ "${VARIANT}" == "appstore" ]]; then
+  # shellcheck disable=SC2086
+  codesign --force $CSIGN_EXTRA --entitlements "${CHILD_ENTITLEMENTS}" \
+    --sign "${IDENTITY}" "${BUNDLED_PYTHON}"
+else
+  # shellcheck disable=SC2086
+  codesign --force $CSIGN_EXTRA --sign "${IDENTITY}" "${BUNDLED_PYTHON}"
+fi
 
 echo "Codesigning: OK"
 
@@ -187,6 +227,27 @@ echo "Python ${PYTHON_VERSION} bundle listo — archs: ${ARCHS}"
 
 echo "${ARCHS}" | grep -q "x86_64" || { echo "ERROR BUNDLE-01: falta x86_64 en python${PYTHON_MINOR}"; exit 1; }
 echo "${ARCHS}" | grep -q "arm64"  || { echo "ERROR BUNDLE-01: falta arm64 en python${PYTHON_MINOR}";  exit 1; }
+
+if [[ "${VARIANT}" == "appstore" ]]; then
+  LEFTOVER_TCL=$(find "${PYTHON_DEST}" \( -name '_tkinter*' -o -iname 'libtcl*' -o -iname 'libtk*' \) -print)
+  if [[ -n "${LEFTOVER_TCL}" ]]; then
+    echo "ERROR MASBUILD-02: quedan restos de Tcl/Tk:"
+    echo "${LEFTOVER_TCL}"
+    exit 1
+  fi
+  if [[ -e "${VENDORED_LIB}/playwright" ]]; then
+    echo "ERROR MASBUILD-02: playwright no debe ir en la variante appstore"
+    exit 1
+  fi
+  # Variable intermedia: con pipefail, grep -q cortando la tubería haría
+  # fallar a codesign por SIGPIPE.
+  CHILD_ENT_DUMP=$(codesign -d --entitlements - "${BUNDLED_PYTHON}" 2>/dev/null || true)
+  if [[ "${CHILD_ENT_DUMP}" != *com.apple.security.inherit* ]]; then
+    echo "ERROR MASBUILD-03: python${PYTHON_MINOR} sin com.apple.security.inherit"
+    exit 1
+  fi
+  echo "Variante appstore: sin Tcl/Tk ni playwright, intérprete con inherit"
+fi
 
 VENDORED_COUNT=$(find "${VENDORED_LIB}" -maxdepth 1 -mindepth 1 -type d | wc -l | tr -d ' ')
 echo "Deps vendorizadas: ${VENDORED_COUNT} paquetes en ${VENDORED_LIB}"

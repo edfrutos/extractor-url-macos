@@ -5,7 +5,8 @@ enum ExtractionError: Error, LocalizedError {
     case processLaunchFailed(underlying: Error)
     case extractionFailed(message: String)
     case jsonDecodeFailed(underlying: Error)
-    case emptyOutput
+    /// Sin salida en stdout; `detail` resume stderr si trae algo.
+    case emptyOutput(detail: String?)
     /// El proceso no completó dentro del tiempo límite y fue terminado.
     case timeout
 
@@ -19,8 +20,9 @@ enum ExtractionError: Error, LocalizedError {
             return "El extractor Python devolvió un error: \(message)"
         case .jsonDecodeFailed(let error):
             return "Respuesta JSON inválida del CLI: \(error.localizedDescription)"
-        case .emptyOutput:
-            return "El proceso terminó sin producir salida."
+        case .emptyOutput(let detail):
+            guard let detail else { return "El proceso terminó sin producir salida." }
+            return "El proceso terminó sin producir salida.\nDetalle: \(detail)"
         case .timeout:
             return "La extracción superó el tiempo límite y fue cancelada."
         }
