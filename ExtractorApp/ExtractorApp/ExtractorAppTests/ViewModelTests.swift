@@ -113,4 +113,26 @@ final class ViewModelTests: XCTestCase {
         // Sin title ni contenido → "export.<ext>"
         XCTAssertEqual(result, "export.txt")
     }
+
+    // MARK: - Fase 26
+
+    func testExtractClearsRenderWarning() async throws {
+        let vm = ExtractionViewModel()
+        vm.renderWarning = "aviso anterior"
+        vm.urlString = "https://example.com"
+        vm.extract()
+        XCTAssertNil(vm.renderWarning)
+    }
+
+    func testWebURLAddsHTTPSWhenSchemeIsMissing() {
+        XCTAssertEqual(
+            ExtractionViewModel.webURL(from: "quotes.toscrape.com/js/")?.absoluteString,
+            "https://quotes.toscrape.com/js/"
+        )
+        XCTAssertEqual(
+            ExtractionViewModel.webURL(from: "http://example.com")?.absoluteString,
+            "http://example.com"
+        )
+        XCTAssertNil(ExtractionViewModel.webURL(from: ""))
+    }
 }

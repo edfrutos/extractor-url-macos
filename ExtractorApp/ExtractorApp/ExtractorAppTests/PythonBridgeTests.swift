@@ -393,4 +393,100 @@ final class PythonBridgeTests: XCTestCase {
         }
         // paths == nil también es correcto (sin bundle); lo importante es no retornar .userDefaults
     }
+
+    // MARK: - Fase 26: render externo (js_render_needed, --file + --base-url)
+
+    func testJSRenderNeededDecodes_trueFalseAndMissing() throws {
+        func decode(_ extra: String) throws -> ExtractionResult {
+            let json = """
+            {"status":"success","url":"https://example.com","content":"x"\(extra)}
+            """
+            return try JSONDecoder().decode(ExtractionResult.self, from: Data(json.utf8))
+        }
+        XCTAssertTrue(try decode(#","js_render_needed":true"#).needsJSRender)
+        XCTAssertFalse(try decode(#","js_render_needed":false"#).needsJSRender)
+        let missing = try decode("")
+        XCTAssertNil(missing.jsRenderNeeded)
+        XCTAssertFalse(missing.needsJSRender)
+    }
+
+    func testRunReturnsErrorResult_whenJSRenderNeeded() async throws {
+        // Un selector que aún no existe en la SPA sin hidratar: el render
+        // puede arreglarlo, así que run() devuelve el resultado en vez de lanzar.
+        let jsonPayload = """
+        {"status":"error","url":"https://example.com/spa","error_message":"No se pudo extraer el contenido de la URL.","js_render_needed":true}
+        """
+        let tmp = FileManager.default.temporaryDirectory
+            .appendingPathComponent("rendererr_\(UUID().uuidString).sh")
+        try "#!/bin/sh\nprintf '\(jsonPayload)'"
+            .write(to: tmp, atomically: true, encoding: .utf8)
+        try FileManager.default.setAttributes(
+            [.posixPermissions: 0o755],
+            ofItemAtPath: tmp.path
+        )
+        defer { try? FileManager.default.removeItem(at: tmp) }
+
+        let bridge = PythonBridge()
+        bridge.pythonPath = "/bin/sh"
+        bridge.scriptPath = tmp.path
+
+        let result = try await bridge.run(
+            url: "https://example.com/spa",
+            outputType: "markdown",
+            externalJS: true
+        )
+
+        XCTAssertFalse(result.isSuccess)
+        XCTAssertTrue(result.needsJSRender)
+    }
+
+    func testArguments_forURLWithExternalJSAndJSOff() {
+        let arguments = PythonBridge.arguments(
+            script: "/s/extractor_url.py",
+            source: .url("https://example.com"),
+            outputType: "markdown",
+            selector: "article",
+            timeout: 15,
+            externalJS: true,
+            jsOff: true
+        )
+        XCTAssertEqual(arguments, [
+            "/s/extractor_url.py", "https://example.com",
+            "--type", "markdown", "--json",
+            "--selector", "article",
+            "--timeout", "15",
+            "--js-external", "--no-js",
+        ])
+    }
+
+    func testArguments_forURLByDefault_hasNoRenderFlags() {
+        let arguments = PythonBridge.arguments(
+            script: "/s/extractor_url.py",
+            source: .url("https://example.com"),
+            outputType: "text",
+            selector: nil,
+            timeout: 10
+        )
+        XCTAssertEqual(arguments, [
+            "/s/extractor_url.py", "https://example.com",
+            "--type", "text", "--json", "--timeout", "10",
+        ])
+    }
+
+    func testArguments_forRenderedHTML_useFileAndBaseURL() {
+        let file = URL(fileURLWithPath: "/tmp/render-1.html")
+        let arguments = PythonBridge.arguments(
+            script: "/s/extractor_url.py",
+            source: .renderedHTML(file: file, baseURL: "https://quotes.toscrape.com/js/"),
+            outputType: "markdown",
+            selector: nil,
+            timeout: 15
+        )
+        XCTAssertEqual(arguments, [
+            "/s/extractor_url.py",
+            "--file", "/tmp/render-1.html",
+            "--base-url", "https://quotes.toscrape.com/js/",
+            "--type", "markdown", "--json", "--timeout", "15",
+        ])
+    }
 }

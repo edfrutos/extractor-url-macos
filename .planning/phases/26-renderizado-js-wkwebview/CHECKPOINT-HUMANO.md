@@ -17,8 +17,9 @@ created: "2026-10-21"
 
 ## B. App Store: render con WKWebView (WKJS-02/03)
 
-1. Esquema **ExtractorApp AppStore**: ⌘R. Activa en la consola el log de
-   `PythonBridge` si lo tienes desactivado.
+1. Esquema **ExtractorApp AppStore**: ⌘R. Ten a la vista la consola de
+   Xcode: las líneas `[PythonBridge] Launching:` muestran cada llamada a
+   Python (como en el log de la Fase 25).
 2. Extrae `https://quotes.toscrape.com/js/` como Markdown. **Esperado:**
    - Salen las citas («The world as we have created it…»).
    - En la consola hay dos lanzamientos de Python: el segundo con `--file`

@@ -454,12 +454,18 @@ struct ContentView: View {
             .padding(.vertical, 40)
 
         } else if vm.resultContent != nil {
-            WebPreviewView(
-                htmlContent: vm.htmlForPreview,
-                contentReady: $vm.contentReady,
-                viewModel: vm
-            )
-            .frame(minHeight: 200)
+            VStack(spacing: 0) {
+                if let warning = vm.renderWarning {
+                    renderWarningRow(warning)
+                    Divider().opacity(0.5)
+                }
+                WebPreviewView(
+                    htmlContent: vm.htmlForPreview,
+                    contentReady: $vm.contentReady,
+                    viewModel: vm
+                )
+                .frame(minHeight: 200)
+            }
 
         } else if let errorMsg = vm.errorMessage {
             VStack(alignment: .leading, spacing: 10) {
@@ -509,6 +515,23 @@ struct ContentView: View {
         } else {
             emptyState
         }
+    }
+
+    /// Fase 26: el render con WKWebView falló; el resultado es el HTML sin
+    /// JavaScript. Informa sin bloquear el resultado ni la exportación.
+    private func renderWarningRow(_ warning: String) -> some View {
+        HStack(alignment: .top, spacing: 8) {
+            Image(systemName: "exclamationmark.triangle")
+                .foregroundStyle(.orange)
+            Text(warning)
+                .font(.callout)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.horizontal, 16)
+        .padding(.vertical, 10)
+        .accessibilityElement(children: .combine)
     }
 
     private var emptyState: some View {

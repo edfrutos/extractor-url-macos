@@ -20,24 +20,58 @@ final class PythonBridge {
 
     enum PathSource: Equatable { case bundle, userDefaults }
 
+    /// Qué se le pasa a la CLI: una URL, o un HTML ya renderizado por
+    /// `WebRenderer` junto con la URL de la que salió (Fase 26).
+    /// `nonisolated`: lo usa `arguments(...)`, que no depende del MainActor.
+    nonisolated enum Source: Equatable {
+        case url(String)
+        case renderedHTML(file: URL, baseURL: String)
+    }
+
     // MARK: - Run
+
+    /// Atajo para extraer una URL (el caso de siempre).
+    func run(
+        url: String,
+        outputType: String,
+        selector: String? = nil,
+        timeout: Int = 15,
+        externalJS: Bool = false,
+        jsOff: Bool = false
+    ) async throws -> ExtractionResult {
+        try await run(
+            source: .url(url),
+            outputType: outputType,
+            selector: selector,
+            timeout: timeout,
+            externalJS: externalJS,
+            jsOff: jsOff
+        )
+    }
 
     /// Lanza el CLI Python con --json y devuelve el resultado decodificado.
     ///
     /// - Parameters:
-    ///   - url:       URL a extraer.
+    ///   - source:    URL a extraer o HTML ya renderizado.
     ///   - outputType: "text" | "html" | "markdown".
     ///   - selector:  Selector CSS opcional.
     ///   - timeout:   Segundos máximos de espera para el script Python (por defecto 15).
     ///               Swift añade 5 s de margen antes de forzar terminación.
     ///               Timeout Swift real: si el proceso no termina en `timeout + 5` segundos, se envían señales escalonadas hasta forzar su finalización.
+    ///   - externalJS: `--js-external`: la CLI no usa Playwright y avisa con
+    ///               `js_render_needed` si la página necesita JavaScript.
+    ///   - jsOff:    `--no-js`: nunca pide render.
     /// - Throws: `ExtractionError` tipado.
-    /// - Returns: `ExtractionResult` con los datos extraídos.
+    /// - Returns: `ExtractionResult` con los datos extraídos. Con `externalJS`,
+    ///   un resultado de error que pide render se devuelve en vez de lanzarse:
+    ///   el render puede arreglarlo (p. ej. un selector que aún no existe).
     func run(
-        url: String,
+        source: Source,
         outputType: String,
         selector: String? = nil,
-        timeout: Int = 15
+        timeout: Int = 15,
+        externalJS: Bool = false,
+        jsOff: Bool = false
     ) async throws -> ExtractionResult {
 
         // -- Resolución de rutas (UserDefaults-first / bundle fallback) ----
@@ -51,13 +85,15 @@ final class PythonBridge {
         let process = Process()
         process.executableURL = URL(fileURLWithPath: pythonExec)
 
-        var arguments = [scriptFile, url, "--type", outputType, "--json"]
-        if let sel = selector {
-            arguments += ["--selector", sel]
-        }
-        // Timeout interno del script; Swift añade margen de 5 s adicionales.
-        arguments += ["--timeout", "\(timeout)"]
-        process.arguments = arguments
+        process.arguments = Self.arguments(
+            script: scriptFile,
+            source: source,
+            outputType: outputType,
+            selector: selector,
+            timeout: timeout,
+            externalJS: externalJS,
+            jsOff: jsOff
+        )
 
         // Entorno según origen de rutas
         var env = ProcessInfo.processInfo.environment
@@ -241,7 +277,7 @@ final class PythonBridge {
             throw ExtractionError.jsonDecodeFailed(underlying: wrapped)
         }
 
-        guard result.isSuccess else {
+        guard result.isSuccess || result.needsJSRender else {
             // error_message del JSON es genérico ("No se pudo extraer…"); la
             // causa real (HTTP 403, timeout, DNS…) solo llega por stderr.
             var message = result.errorMessage ?? "Error desconocido"
@@ -252,6 +288,39 @@ final class PythonBridge {
         }
 
         return result
+    }
+
+    /// Argumentos de la CLI para una extracción; función pura para poder
+    /// probarla sin lanzar procesos.
+    nonisolated static func arguments(
+        script: String,
+        source: Source,
+        outputType: String,
+        selector: String?,
+        timeout: Int,
+        externalJS: Bool = false,
+        jsOff: Bool = false
+    ) -> [String] {
+        var arguments = [script]
+        switch source {
+        case .url(let url):
+            arguments.append(url)
+        case .renderedHTML(let file, let baseURL):
+            arguments += ["--file", file.path, "--base-url", baseURL]
+        }
+        arguments += ["--type", outputType, "--json"]
+        if let selector {
+            arguments += ["--selector", selector]
+        }
+        // Timeout interno del script; Swift añade margen de 5 s adicionales.
+        arguments += ["--timeout", "\(timeout)"]
+        if externalJS {
+            arguments.append("--js-external")
+        }
+        if jsOff {
+            arguments.append("--no-js")
+        }
+        return arguments
     }
 
     /// Primeras líneas útiles de stderr (sin líneas vacías ni los recuadros

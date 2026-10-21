@@ -98,6 +98,6 @@ milestone se replantea antes de invertir en él.
 |-------|----------------|--------|-----------|
 | 24. Spike — Python embebido bajo App Sandbox | 1/1 | Complete | 2026-10-20 |
 | 25. Variante de build App Store | 2/2 | Complete | 2026-10-21 |
-| 26. Renderizado JavaScript con WKWebView | 0 | Not started | - |
+| 26. Renderizado JavaScript con WKWebView | 2/2 | Checkpoint humano | - |
 | 27. Funciones de la app bajo sandbox | 0 | Not started | - |
 | 28. App Store Connect y envío | 0 | Not started | - |

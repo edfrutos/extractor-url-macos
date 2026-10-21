@@ -28,6 +28,8 @@ final class ExtractionViewModel: ObservableObject {
     @Published var resultOutputType: String? = nil
     @Published var isExporting: Bool = false
     @Published var exportErrorMessage: String? = nil
+    // Fase 26: el render con WKWebView falló y se muestra el contenido sin JS.
+    @Published var renderWarning: String? = nil
 
     // Phase 6 (D-01): proveedor del WKWebView visible — registrado desde WebPreviewView.makeNSView
     var webViewProvider: (() -> WKWebView?)? = nil
@@ -47,6 +49,32 @@ final class ExtractionViewModel: ObservableObject {
     // Parámetros de la última extracción, para reconvertir a Markdown al exportar.
     private var lastSelector: String? = nil
     private var lastTimeout: Int = 15
+    // HTML renderizado con WKWebView en la última extracción (Fase 26): el
+    // export a Markdown debe reconvertir este, no volver al HTML estático.
+    private var lastRenderedPage: RenderedPage? = nil
+
+    /// HTML ya renderizado y la URL de la que salió.
+    private struct RenderedPage {
+        let html: String
+        let baseURL: String
+    }
+
+    /// Resultado de una extracción, con el render si lo hubo.
+    private struct ExtractionOutcome {
+        let result: ExtractionResult
+        let renderedPage: RenderedPage?
+        let warning: String?
+    }
+
+    /// Solo la variante App Store renderiza el JavaScript con WKWebView; la
+    /// Developer ID sigue con Playwright dentro de la CLI.
+    private static var usesExternalJS: Bool {
+        #if APPSTORE
+        return true
+        #else
+        return false
+        #endif
+    }
 
     // MARK: - Actions
 
@@ -56,6 +84,8 @@ final class ExtractionViewModel: ObservableObject {
 
         // D-09: limpiar estado anterior antes de lanzar
         errorMessage = nil
+        renderWarning = nil
+        lastRenderedPage = nil
         resultContent = nil
         sourceURL = nil
         resultOutputType = nil
@@ -72,30 +102,116 @@ final class ExtractionViewModel: ObservableObject {
         lastSelector = selector
         lastTimeout = timeoutValue
 
-        Task.detached(priority: .userInitiated) { [weak self] in
+        // En el MainActor: WebRenderer usa un WKWebView. PythonBridge.run es
+        // async y no bloquea el hilo principal mientras espera al proceso.
+        Task { [weak self] in
+            guard let self else { return }
             do {
-                let result = try await self?.bridge.run(
+                let outcome = try await self.runExtraction(
                     url: url,
                     outputType: type,
                     selector: selector,
                     timeout: timeoutValue
                 )
-                await MainActor.run { [weak self] in
-                    guard let self else { return }
-                    self.resultContent = result?.content
-                    self.pageTitle = result?.title
-                    self.sourceURL = result?.url
-                    self.resultOutputType = type
-                    self.isExtracting = false
-                }
+                self.resultContent = outcome.result.content
+                self.pageTitle = outcome.result.title
+                self.sourceURL = outcome.result.url
+                self.resultOutputType = type
+                self.lastRenderedPage = outcome.renderedPage
+                self.renderWarning = outcome.warning
+                self.isExtracting = false
             } catch {
-                await MainActor.run { [weak self] in
-                    guard let self else { return }
-                    self.handleError(error)
-                    self.isExtracting = false
-                }
+                self.handleError(error)
+                self.isExtracting = false
             }
         }
+    }
+
+    /// Extrae `url` y, si la CLI lo pide (`js_render_needed`, solo en App
+    /// Store), renderiza la página con WKWebView y convierte ese HTML. Si el
+    /// render falla, se queda con el contenido sin JavaScript y un aviso.
+    private func runExtraction(
+        url: String,
+        outputType: String,
+        selector: String?,
+        timeout: Int
+    ) async throws -> ExtractionOutcome {
+        let firstPass = try await bridge.run(
+            url: url,
+            outputType: outputType,
+            selector: selector,
+            timeout: timeout,
+            externalJS: Self.usesExternalJS
+        )
+        guard firstPass.needsJSRender, let pageURL = Self.webURL(from: firstPass.url) else {
+            return ExtractionOutcome(result: firstPass, renderedPage: nil, warning: nil)
+        }
+
+        let renderedPage: RenderedPage
+        do {
+            let page = try await WebRenderer().render(
+                url: pageURL,
+                timeout: TimeInterval(timeout)
+            )
+            renderedPage = RenderedPage(html: page.html, baseURL: page.finalURL.absoluteString)
+        } catch {
+            // La primera pasada era provisional (sin historial): se repite sin
+            // JS para dejar la entrada de historial y un resultado definitivo.
+            let staticResult = try await bridge.run(
+                url: url,
+                outputType: outputType,
+                selector: selector,
+                timeout: timeout,
+                externalJS: true,
+                jsOff: true
+            )
+            let warning = "No se pudo ejecutar el JavaScript de la página "
+                + "(\(error.localizedDescription)). Se muestra el contenido sin "
+                + "JavaScript, que puede estar incompleto."
+            return ExtractionOutcome(result: staticResult, renderedPage: nil, warning: warning)
+        }
+
+        let result = try await runRendered(
+            renderedPage,
+            outputType: outputType,
+            selector: selector,
+            timeout: timeout
+        )
+        return ExtractionOutcome(result: result, renderedPage: renderedPage, warning: nil)
+    }
+
+    /// URL cargable en WKWebView. La CLI acepta `example.com` sin esquema (le
+    /// antepone https://) y devuelve la URL tal como se escribió.
+    static func webURL(from string: String) -> URL? {
+        let trimmed = string.trimmingCharacters(in: .whitespaces)
+        let lowercased = trimmed.lowercased()
+        let withScheme = lowercased.hasPrefix("http://") || lowercased.hasPrefix("https://")
+            ? trimmed
+            : "https://" + trimmed
+        guard let url = URL(string: withScheme), url.host != nil else { return nil }
+        return url
+    }
+
+    /// Pasa a la CLI un HTML ya renderizado mediante un archivo temporal.
+    private func runRendered(
+        _ page: RenderedPage,
+        outputType: String,
+        selector: String?,
+        timeout: Int
+    ) async throws -> ExtractionResult {
+        // El temporal vive en el contenedor de la app (sandbox), que el
+        // intérprete hereda. Va con BOM: outerHTML conserva el <meta charset>
+        // original y, sin BOM, Python decodificaría el UTF-8 con ese charset.
+        let file = FileManager.default.temporaryDirectory
+            .appendingPathComponent("render-\(UUID().uuidString).html")
+        try ("\u{FEFF}" + page.html).write(to: file, atomically: true, encoding: .utf8)
+        defer { try? FileManager.default.removeItem(at: file) }
+        return try await bridge.run(
+            source: .renderedHTML(file: file, baseURL: page.baseURL),
+            outputType: outputType,
+            selector: selector,
+            timeout: timeout
+        )
     }
 
     /// Elige un archivo HTML local y lo extrae como URL file:// — el CLI lo
@@ -304,12 +420,22 @@ final class ExtractionViewModel: ObservableObject {
         isExporting = true
         defer { isExporting = false }
         do {
-            let result = try await bridge.run(
-                url: url,
-                outputType: "markdown",
-                selector: lastSelector,
-                timeout: lastTimeout
-            )
+            let result: ExtractionResult
+            if let page = lastRenderedPage {
+                result = try await runRendered(
+                    page,
+                    outputType: "markdown",
+                    selector: lastSelector,
+                    timeout: lastTimeout
+                )
+            } else {
+                result = try await bridge.run(
+                    url: url,
+                    outputType: "markdown",
+                    selector: lastSelector,
+                    timeout: lastTimeout
+                )
+            }
             guard let markdown = result.content, !markdown.isEmpty else {
                 exportErrorMessage = "La conversión a Markdown no devolvió contenido."
                 return nil

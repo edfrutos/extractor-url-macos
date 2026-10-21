@@ -279,3 +279,28 @@ def test_argumentos_invalidos_salen_con_codigo_2(
         extractor_url.main()
 
     assert mensaje in capsys.readouterr().err
+
+
+def test_html_renderizado_con_bom_ignora_el_charset_declarado(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+    entorno: Path,  # pylint: disable=unused-argument
+    tmp_path: Path,
+) -> None:
+    """La app escribe el outerHTML en UTF-8 con BOM; el <meta charset> original no manda."""
+    html = (
+        '<html><head><meta charset="iso-8859-1"><title>Canción</title></head>'
+        "<body><main><p>Canción española con eñe y el símbolo del euro: €.</p>"
+        "</main></body></html>"
+    )
+    rendered = tmp_path / "render.html"
+    rendered.write_bytes(b"\xef\xbb\xbf" + html.encode("utf-8"))
+
+    _, output = _run_cli(
+        monkeypatch, capsys,
+        "--file", str(rendered), "--base-url", "https://example.com/", "--type", "text",
+    )
+
+    assert "Canción española con eñe" in output["content"]
+    assert "€" in output["content"]
+    assert output["title"] == "Canción"
