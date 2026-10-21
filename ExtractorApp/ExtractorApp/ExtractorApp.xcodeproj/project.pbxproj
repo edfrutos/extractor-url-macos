@@ -10,6 +10,8 @@
 		6938562E2FDFF363008D32EB /* extractor_url.py in CopyFiles */ = {isa = PBXBuildFile; fileRef = 6938562D2FDFF363008D32EB /* extractor_url.py */; };
 		693856302FDFF374008D32EB /* core.py in CopyFiles */ = {isa = PBXBuildFile; fileRef = 6938562F2FDFF374008D32EB /* core.py */; };
 		69981AD43036EB5100B1EE3E /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = 69981AD33036EB5100B1EE3E /* Sparkle */; };
+		25A50001300000000000000B /* core.py in CopyFiles */ = {isa = PBXBuildFile; fileRef = 6938562F2FDFF374008D32EB /* core.py */; };
+		25A50001300000000000000C /* extractor_url.py in CopyFiles */ = {isa = PBXBuildFile; fileRef = 6938562D2FDFF363008D32EB /* extractor_url.py */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -34,6 +36,17 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		25A500013000000000000008 /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = scripts;
+			dstSubfolderSpec = 7;
+			files = (
+				25A50001300000000000000B /* core.py in CopyFiles */,
+				25A50001300000000000000C /* extractor_url.py in CopyFiles */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
@@ -41,15 +54,31 @@
 		6938562F2FDFF374008D32EB /* core.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; name = core.py; path = ../../core.py; sourceTree = "<group>"; };
 		694A971B2FDAB1D900884317 /* ExtractorApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ExtractorApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		7B5C0001FDAB1D900884317 /* ExtractorAppTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ExtractorAppTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		25A500013000000000000002 /* ExtractorApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ExtractorApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
 		C51F44011A2B3C4D5E6F7A01 /* Exceptions for "ExtractorApp" folder in "ExtractorApp" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
+				"AppStore-Info.plist",
+				"ExtractorApp-AppStore.entitlements",
 				Info.plist,
+				PrivacyInfo.xcprivacy,
 			);
 			target = 694A971A2FDAB1D900884317 /* ExtractorApp */;
+		};
+		25A50001300000000000000D /* Exceptions for "ExtractorApp" folder in "ExtractorApp AppStore" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				"AppStore-Info.plist",
+				"ExtractorApp-AppStore.entitlements",
+				ExtractorApp.entitlements,
+				Info.plist,
+				Models/Services/RuntimeUpdater.swift,
+				Views/CheckForUpdatesView.swift,
+			);
+			target = 25A500013000000000000001 /* ExtractorApp AppStore */;
 		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
@@ -58,6 +87,7 @@
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
 				C51F44011A2B3C4D5E6F7A01 /* Exceptions for "ExtractorApp" folder in "ExtractorApp" target */,
+				25A50001300000000000000D /* Exceptions for "ExtractorApp" folder in "ExtractorApp AppStore" target */,
 			);
 			path = ExtractorApp;
 			sourceTree = "<group>";
@@ -85,6 +115,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		25A500013000000000000007 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -105,6 +142,7 @@
 			children = (
 				694A971B2FDAB1D900884317 /* ExtractorApp.app */,
 				7B5C0001FDAB1D900884317 /* ExtractorAppTests.xctest */,
+				25A500013000000000000002 /* ExtractorApp.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -167,6 +205,30 @@
 			productReference = 7B5C0001FDAB1D900884317 /* ExtractorAppTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
+		25A500013000000000000001 /* ExtractorApp AppStore */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 25A500013000000000000003 /* Build configuration list for PBXNativeTarget "ExtractorApp AppStore" */;
+			buildPhases = (
+				25A500013000000000000006 /* Sources */,
+				25A500013000000000000007 /* Frameworks */,
+				25A500013000000000000008 /* CopyFiles */,
+				25A500013000000000000009 /* Resources */,
+				25A50001300000000000000A /* Bundle Python Runtime (App Store) */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				694A971D2FDAB1D900884317 /* ExtractorApp */,
+			);
+			name = "ExtractorApp AppStore";
+			packageProductDependencies = (
+			);
+			productName = ExtractorApp;
+			productReference = 25A500013000000000000002 /* ExtractorApp.app */;
+			productType = "com.apple.product-type.application";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -183,6 +245,9 @@
 					7B5C0005FDAB1D900884317 = {
 						CreatedOnToolsVersion = 26.5;
 						TestTargetID = 694A971A2FDAB1D900884317;
+					};
+					25A500013000000000000001 = {
+						CreatedOnToolsVersion = 26.5;
 					};
 				};
 			};
@@ -205,12 +270,20 @@
 			targets = (
 				694A971A2FDAB1D900884317 /* ExtractorApp */,
 				7B5C0005FDAB1D900884317 /* ExtractorAppTests */,
+				25A500013000000000000001 /* ExtractorApp AppStore */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
 		694A97192FDAB1D900884317 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		25A500013000000000000009 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -260,6 +333,26 @@
 			shellPath = /bin/bash;
 			shellScript = "set -euo pipefail\n\"${PROJECT_DIR}/../../scripts/bundle-playwright.sh\"\n\n";
 		};
+		25A50001300000000000000A /* Bundle Python Runtime (App Store) */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"$(PROJECT_DIR)/scripts/bundle-python.sh\n",
+			);
+			name = "Bundle Python Runtime (App Store)";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(BUILT_PRODUCTS_DIR)/$(CONTENTS_FOLDER_PATH)/Resources/python/bin/python3.13\n",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/bash;
+			shellScript = "set -euo pipefail\nexport EXTRACTOR_VARIANT=appstore\n\"${PROJECT_DIR}/../../scripts/bundle-python.sh\"\n";
+		};
 /* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
@@ -271,6 +364,13 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		7B5C0003FDAB1D900884317 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		25A500013000000000000006 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -534,6 +634,94 @@
 			};
 			name = Release;
 		};
+		25A500013000000000000004 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = (
+					arm64,
+					x86_64,
+				);
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = "ExtractorApp/ExtractorApp-AppStore.entitlements";
+				CODE_SIGN_INJECT_BASE_ENTITLEMENTS = NO;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CONFIGURATION_BUILD_DIR = "$(BUILD_DIR)/$(CONFIGURATION)-appstore";
+				CURRENT_PROJECT_VERSION = 13;
+				ENABLE_APP_SANDBOX = YES;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_OUTGOING_NETWORK_CONNECTIONS = YES;
+				ENABLE_PREVIEWS = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
+				ENABLE_USER_SELECTED_FILES = readwrite;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "ExtractorApp/AppStore-Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = "Extractor URL";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 13.5;
+				MARKETING_VERSION = 2.3;
+				PRODUCT_BUNDLE_IDENTIFIER = com.edefrutos.ExtractorApp.appstore;
+				PRODUCT_NAME = ExtractorApp;
+				REGISTER_APP_GROUPS = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "APPSTORE $(inherited)";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		25A500013000000000000005 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = (
+					arm64,
+					x86_64,
+				);
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = "ExtractorApp/ExtractorApp-AppStore.entitlements";
+				CODE_SIGN_INJECT_BASE_ENTITLEMENTS = NO;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CONFIGURATION_BUILD_DIR = "$(BUILD_DIR)/$(CONFIGURATION)-appstore";
+				CURRENT_PROJECT_VERSION = 13;
+				ENABLE_APP_SANDBOX = YES;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_OUTGOING_NETWORK_CONNECTIONS = YES;
+				ENABLE_PREVIEWS = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
+				ENABLE_USER_SELECTED_FILES = readwrite;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "ExtractorApp/AppStore-Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = "Extractor URL";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 13.5;
+				MARKETING_VERSION = 2.3;
+				PRODUCT_BUNDLE_IDENTIFIER = com.edefrutos.ExtractorApp.appstore;
+				PRODUCT_NAME = ExtractorApp;
+				REGISTER_APP_GROUPS = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "APPSTORE $(inherited)";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -560,6 +748,15 @@
 			buildConfigurations = (
 				7B5C0006FDAB1D900884317 /* Debug */,
 				7B5C0007FDAB1D900884317 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		25A500013000000000000003 /* Build configuration list for PBXNativeTarget "ExtractorApp AppStore" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				25A500013000000000000004 /* Debug */,
+				25A500013000000000000005 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

@@ -299,6 +299,39 @@ necesita ningún flag ni modo nuevo para esto; simplemente publicar un
 release ya cubre ambos usos (actualización automática + descarga
 directa) a la vez, porque son el mismo artefacto.
 
+## 3.9. Variante App Store
+
+La versión de la Mac App Store sale del mismo código, con el target y el
+esquema **ExtractorApp AppStore** (bundle ID
+`com.edefrutos.ExtractorApp.appstore`, nombre visible «Extractor URL»):
+App Sandbox, sin Sparkle, sin Chromium, sin actualizador de dependencias
+ni rutas manuales a otro Python. En Xcode compila en
+`Build/Products/<Debug|Release>-appstore/` para no pisar el `.app` de la
+variante Developer ID. `release-macos.sh` no la toca.
+
+Requisitos (una sola vez): certificados «Apple Distribution» y «3rd Party
+Mac Developer Installer» en el Keychain y el perfil «Extractor URL
+AppStore» descargado de developer.apple.com.
+
+1. Sube `CURRENT_PROJECT_VERSION` en los dos bloques Debug/Release del
+   target **ExtractorApp AppStore** (en Xcode: target → Build Settings →
+   Current Project Version). App Store Connect rechaza un build ya subido,
+   y **el 13 ya está usado** (spike de la Fase 24). `release-macos.sh`
+   solo sube el del target Developer ID.
+2. Genera el paquete:
+
+   ```bash
+   APPSTORE_IDENTITY="Apple Distribution: Eugenio de Frutos Sanchez (V29BTBRY6G)" \
+   INSTALLER_IDENTITY="3rd Party Mac Developer Installer: Eugenio de Frutos Sanchez (V29BTBRY6G)" \
+   scripts/package-appstore.sh
+   ```
+
+   Si el perfil no está en `~/Downloads/Extractor_URL_AppStore.provisionprofile`,
+   añade `PROVISIONING_PROFILE=/ruta/al/perfil`.
+3. Sube `.build-cache/appstore/ExtractorURL-<versión>-<build>.pkg` con
+   Transporter (`open -a Transporter …` y «Entregar»). La carpeta
+   `.build-cache` está oculta en Finder.
+
 ## 4. Verificación post-release
 
 ```bash

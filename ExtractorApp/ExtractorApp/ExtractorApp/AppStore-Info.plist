@@ -6,6 +6,8 @@
 	<array>
 		<string>es</string>
 	</array>
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 	<key>NSHumanReadableCopyright</key>
 	<string></string>
 </dict>
