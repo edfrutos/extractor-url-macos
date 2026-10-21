@@ -27,7 +27,7 @@ See: .planning/PROJECT.md (updated 2026-10-20)
 Phase: 27 — Funciones de la app bajo sandbox (sin planificar). Fase 26 completa 2026-10-21. Fase 25 completa 2026-10-21.
 Plan: — (Fase 24 completa 2026-10-20: Python embebido extrae con App Sandbox y App Store Connect acepta el paquete; build 2.3 (13) en TestFlight, sin enviar a revisión. Ver `24-01-SUMMARY.md`.)
 Status: v11.0 definido y aprobado (2026-10-20). Research en `.planning/research/APPSTORE.md`; requisitos SBX/MASBUILD/WKJS/SBXFEAT/STORE en `REQUIREMENTS.md`.
-Last activity: 2026-10-21 — Fase 25 completa: checkpoint humano superado (`25-variante-build-appstore/CHECKPOINT-HUMANO.md`). Antes, 2026-10-20 — auditoría local/GitHub sin pendientes; v2.3 documentado como v10.0; definición de v11.0.
+Last activity: 2026-10-21 — Fase 26 completa: render JS con WKWebView en App Store, checkpoint superado (`26-renderizado-js-wkwebview/CHECKPOINT-HUMANO.md`). Antes, Fase 25 completa. Antes, 2026-10-20 — auditoría local/GitHub sin pendientes; v2.3 documentado como v10.0; definición de v11.0.
 
 ```
 v11.0 Progress: [######----] 60% — 3/5 fases.
