@@ -67,18 +67,30 @@ Solo se pide a partir de la segunda versión publicada.
 ## Capturas
 
 Una de 1280×800, 1440×900, 2560×1600 o 2880×1800 (16:10), de 1 a 10.
-La forma más sencilla es redimensionar la ventana a 1440×900 puntos o
-capturar la pantalla completa en un monitor 16:10.
+`scripts/appstore/captura-appstore.sh <nombre>` deja la ventana en
+1440×900 puntos y la captura (2880×1800 en Retina) en
+`~/Desktop/appstore-<nombre>.png`.
 
-1. **Markdown de un artículo**: resultado de una página con títulos, listas
-   e imágenes.
-2. **Página con JavaScript**: `quotes.toscrape.com/js/` con las 10 citas.
-3. **Selector CSS**: la misma página acotada a un fragmento.
-4. **Historial**: la lista de extracciones anteriores.
-5. **Exportar**: el selector «Exportar como» (Markdown, HTML, PDF) con el
-   panel de guardar abierto.
+Contenido propio para no mostrar marcas ni textos de terceros:
 
-Modo claro, sin datos personales en el historial ni en la barra de menús.
+- Artículo de demostración (texto e ilustraciones originales):
+  <https://edfrutos.github.io/extractor-url-macos/demo/articulo.html>
+- `https://quotes.toscrape.com/js/`: sitio público pensado para practicar
+  extracción.
+
+| # | Escena | Cómo |
+|---|---|---|
+| 1 | Markdown de un artículo | URL del artículo de demostración, Markdown, sin selector → Extraer. |
+| 2 | Página con JavaScript | `https://quotes.toscrape.com/js/`, Markdown → Extraer (salen las 10 citas). |
+| 3 | Selector CSS | URL del artículo, selector `#receta` → Extraer (solo «Paso a paso»). |
+| 4 | Historial | Tras las anteriores, abre el historial con las 3 entradas. |
+| 5 | Exportar | Artículo extraído, «Exportar como» en PDF, pulsa «Exportar» y captura con el panel de guardar abierto. |
+
+Antes de capturar:
+
+- Modo claro (Ajustes del Sistema → Apariencia).
+- Historial limpio de pruebas antiguas o personales.
+- Nada personal en el nombre de la carpeta del panel de guardar.
 
 ## Privacidad de la app
 
