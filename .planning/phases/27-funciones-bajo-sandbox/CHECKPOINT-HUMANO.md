@@ -1,7 +1,8 @@
 ---
 phase: 27-funciones-bajo-sandbox
 type: checkpoint-humano
-status: pending
+status: passed
+verified: "2026-10-23"
 created: "2026-10-21"
 ---
 
@@ -55,3 +56,10 @@ Guarda los tres en una carpeta cualquiera, por ejemplo el Escritorio.
   Chromium.
 
 Pégame las cuatro parejas de mensajes si alguna no coincide.
+
+## Resultado (2026-10-23)
+
+El usuario confirma «checkpoint OK»: A–E superados sin incidencias
+(compilación y tests, export Markdown/HTML/PDF, «Copiar» y ⌘⇧C, historial
+tras relanzar, reabrir HTML local con panel y paridad de errores entre
+variantes).

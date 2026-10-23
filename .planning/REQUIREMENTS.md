@@ -33,11 +33,11 @@ JS en la variante App Store vía `WKWebView`; app gratuita. Ver
 
 ### SBXFEAT — Funciones de la app bajo sandbox (Phase 27)
 
-- [ ] **SBXFEAT-01**: Exportar a Markdown, HTML y PDF funciona en la variante App Store.
-- [ ] **SBXFEAT-02**: «Abrir HTML…» funciona con el acceso concedido por `NSOpenPanel`.
-- [ ] **SBXFEAT-03**: El historial se guarda y se recupera dentro del contenedor de la app.
-- [ ] **SBXFEAT-04**: Copiar al portapapeles usa `NSPasteboard` desde la app (sin `pbcopy`).
-- [ ] **SBXFEAT-05**: Los errores (red, 403, selector, timeout) se muestran igual que en la variante Developer ID.
+- [x] **SBXFEAT-01**: Exportar a Markdown, HTML y PDF funciona en la variante App Store.
+- [x] **SBXFEAT-02**: «Abrir HTML…» funciona con el acceso concedido por `NSOpenPanel`.
+- [x] **SBXFEAT-03**: El historial se guarda y se recupera dentro del contenedor de la app.
+- [x] **SBXFEAT-04**: Copiar al portapapeles usa `NSPasteboard` desde la app (sin `pbcopy`).
+- [x] **SBXFEAT-05**: Los errores (red, 403, selector, timeout) se muestran igual que en la variante Developer ID.
 
 ### STORE — App Store Connect y envío (Phase 28)
 
