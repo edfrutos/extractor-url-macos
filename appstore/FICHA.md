@@ -11,6 +11,7 @@ número entre paréntesis es el recuento de caracteres y el límite de Apple.
 | Subtítulo (30/30) | Páginas web a Markdown y texto |
 | Bundle ID | `com.edefrutos.ExtractorApp.appstore` |
 | SKU | `extractor-url-appstore` |
+| Versión | 2.3 (igual que `MARKETING_VERSION` del build; App Store Connect propone 1.0) |
 | Categoría principal | Productividad |
 | Categoría secundaria | Herramientas para desarrolladores |
 | Copyright | © 2026 Eugenio de Frutos Sánchez |
