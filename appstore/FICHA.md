@@ -84,7 +84,7 @@ Contenido propio para no mostrar marcas ni textos de terceros:
 | 2 | Página con JavaScript | `https://quotes.toscrape.com/js/`, Markdown → Extraer (salen las 10 citas). |
 | 3 | Selector CSS | URL del artículo, selector `#receta` → Extraer (solo «Paso a paso»). |
 | 4 | Historial | Tras las anteriores, abre el historial con las 3 entradas. |
-| 5 | Exportar | Artículo extraído, «Exportar como» en PDF, pulsa «Exportar» y captura con el panel de guardar abierto. |
+| 5 | Exportar | Artículo extraído y una captura normal para fijar la ventana. Después, «Exportar como» en PDF → «Exportar» y, con el panel abierto, `captura-appstore.sh --sin-redimensionar 5-exportar`. |
 
 Antes de capturar:
 

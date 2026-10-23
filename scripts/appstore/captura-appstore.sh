@@ -8,6 +8,13 @@
 #
 # USO:
 #   scripts/appstore/captura-appstore.sh <nombre>   # → ~/Desktop/appstore-<nombre>.png
+#   scripts/appstore/captura-appstore.sh --sin-redimensionar <nombre>
+#
+# Con --sin-redimensionar no mueve ni redimensiona nada: busca la ventana de
+# la app que ya mide 1440×900 y captura su rectángulo con todo lo que haya
+# encima. Sirve para el panel de guardar, que bajo sandbox es otra ventana y,
+# sin esta opción, sería la que se redimensiona. Haz antes una captura normal
+# para dejar la ventana en 1440×900 y después abre el panel.
 #
 # Requisitos:
 #   - La app abierta (proceso «ExtractorApp»).
@@ -18,13 +25,19 @@
 #     (p. ej., «Más espacio» en un portátil).
 set -euo pipefail
 
-NAME="${1:?Uso: $0 <nombre>   (p. ej. 1-articulo)}"
+RESIZE=1
+if [[ "${1:-}" == "--sin-redimensionar" ]]; then
+	RESIZE=0
+	shift
+fi
+NAME="${1:?Uso: $0 [--sin-redimensionar] <nombre>   (p. ej. 1-articulo)}"
 PROCESS="${PROCESS:-ExtractorApp}"
 WIDTH=1440
 HEIGHT=900
 OUT="${HOME}/Desktop/appstore-${NAME}.png"
 
-geometry="$(osascript <<OSA
+if ((RESIZE)); then
+	geometry="$(osascript <<OSA
 tell application "System Events" to tell process "${PROCESS}"
 	set frontmost to true
 	set position of front window to {0, 0}
@@ -35,7 +48,28 @@ tell application "System Events" to tell process "${PROCESS}"
 	return (x as text) & "," & (y as text) & "," & (w as text) & "," & (h as text)
 end tell
 OSA
-)"
+	)"
+else
+	geometry="$(osascript <<OSA
+tell application "System Events" to tell process "${PROCESS}"
+	repeat with win in windows
+		set {w, h} to size of win
+		if w is ${WIDTH} and h is ${HEIGHT} then
+			set {x, y} to position of win
+			return (x as text) & "," & (y as text) & "," & (w as text) & "," & (h as text)
+		end if
+	end repeat
+	return ""
+end tell
+OSA
+	)"
+	if [[ -z "${geometry}" ]]; then
+		echo "Error: ninguna ventana de ${PROCESS} mide ${WIDTH}×${HEIGHT} puntos." >&2
+		echo "Cierra el panel, haz una captura normal para dejar la ventana a" >&2
+		echo "esa medida y vuelve a abrir el panel." >&2
+		exit 1
+	fi
+fi
 IFS=, read -r x y w h <<<"${geometry}"
 
 if ((w != WIDTH || h != HEIGHT)); then
