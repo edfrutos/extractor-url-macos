@@ -111,6 +111,12 @@ Decisiones relevantes para v6.0:
 - ~~XCTest tras `306a4d0`/`d31e1e6`~~ — **HECHO 2026-10-19**: ⌘U en Mac real, 53 tests, 3 skipped, 0 fallos.
 - Recomendado no bloqueante: si se reabre POLISH-02 en el futuro, probar `defaults write com.apple.dt.Xcode IDEPackageSupportUseBuiltinSCM 1` + reinicio de Xcode (ver `18-RESEARCH.md`).
 
+- **Conversor Markdown (detectado 2026-10-23 al preparar `docs/demo/articulo.html`, sin arreglar; después de v11.0):**
+  - Las tablas salen sin la fila separadora `|---|`, así que no son Markdown válido.
+  - Las imágenes `.svg` y las que van dentro de `<figure>` desaparecen: trafilatura solo acepta avif/bmp/gif/heic/jpg/png/webp y elimina `<figure>`.
+  - Los saltos de línea del código fuente dentro de `<strong>`/`<li>` se conservan en el Markdown.
+  - La demo los esquiva (PNG, `<p><img></p>`, sin tabla, párrafos en una línea).
+
 ### Blockers/Concerns
 
 - Ninguno bloqueante. v6.0, v7.0 y v8.0 completos y cerrados. Sin milestone activo. SC4/SC6 de la Fase 23 quedaron como criterios condicionales a un release futuro (ver Pending Todos), no como bloqueos.
