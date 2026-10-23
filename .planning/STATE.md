@@ -24,7 +24,7 @@ See: .planning/PROJECT.md (updated 2026-10-20)
 
 ## Current Position
 
-Phase: 28 — App Store Connect y envío (28-01 hecho; 28-02 en curso: ficha rellenada; faltan build 14, precio y derechos sobre el contenido para enviar a revisión). Fase 27 completa 2026-10-23. Fase 26 completa 2026-10-21. Fase 25 completa 2026-10-21.
+Phase: 28 — App Store Connect y envío (28-01 hecho; 28-02 en curso: ficha rellenada; build 2.3 (14) subido; faltan seleccionarlo, precio y derechos sobre el contenido para enviar a revisión). Fase 27 completa 2026-10-23. Fase 26 completa 2026-10-21. Fase 25 completa 2026-10-21.
 Plan: — (Fase 24 completa 2026-10-20: Python embebido extrae con App Sandbox y App Store Connect acepta el paquete; build 2.3 (13) en TestFlight, sin enviar a revisión. Ver `24-01-SUMMARY.md`.)
 Status: v11.0 definido y aprobado (2026-10-20). Research en `.planning/research/APPSTORE.md`; requisitos SBX/MASBUILD/WKJS/SBXFEAT/STORE en `REQUIREMENTS.md`.
 Last activity: 2026-10-23 — Fase 27 completa: funciones de la app bajo sandbox, checkpoint superado (`27-funciones-bajo-sandbox/CHECKPOINT-HUMANO.md`). Antes, 2026-10-21 — Fase 26 completa: render JS con WKWebView en App Store, checkpoint superado (`26-renderizado-js-wkwebview/CHECKPOINT-HUMANO.md`). Antes, Fase 25 completa. Antes, 2026-10-20 — auditoría local/GitHub sin pendientes; v2.3 documentado como v10.0; definición de v11.0.

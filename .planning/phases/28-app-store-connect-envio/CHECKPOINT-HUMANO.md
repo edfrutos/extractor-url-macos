@@ -51,5 +51,7 @@ Store.
   «Publicar esta versión manualmente». **«Añadir a revisión» rechazado**
   por tres campos: sin build seleccionado, sin precio y sin derechos sobre
   el contenido.
-- **Pendiente:** respuesta de App Review → publicar → enlace de la Mac App
+- **2026-10-23:** build 2.3 (14) subido a App Store Connect.
+- **Pendiente:** seleccionar el build 14, precio gratis, derechos sobre el
+  contenido, enviar → respuesta de App Review → publicar → enlace de la Mac App
   Store en `docs/index.html` y `README.md` → cerrar v11.0.
