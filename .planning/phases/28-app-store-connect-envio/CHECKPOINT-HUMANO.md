@@ -48,7 +48,8 @@ Store.
 
 - **2026-10-23:** ficha rellenada (textos de `appstore/FICHA.md`, versión
   2.3, capturas con `captura-appstore.sh` y la página de demostración) y
-  versión **enviada a revisión** con «Publicar esta versión manualmente».
-  Tras la aprobación queda en «Pendiente de publicación del desarrollador».
+  «Publicar esta versión manualmente». **«Añadir a revisión» rechazado**
+  por tres campos: sin build seleccionado, sin precio y sin derechos sobre
+  el contenido.
 - **Pendiente:** respuesta de App Review → publicar → enlace de la Mac App
   Store en `docs/index.html` y `README.md` → cerrar v11.0.
