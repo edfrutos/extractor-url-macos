@@ -52,6 +52,7 @@ Store.
   por tres campos: sin build seleccionado, sin precio y sin derechos sobre
   el contenido.
 - **2026-10-23:** build 2.3 (14) subido a App Store Connect.
-- **Pendiente:** seleccionar el build 14, precio gratis, derechos sobre el
-  contenido, enviar → respuesta de App Review → publicar → enlace de la Mac App
+- **2026-10-23:** build 14 seleccionado, precio gratis y derechos sobre el
+  contenido configurados. **Enviada a App Review** (publicación manual).
+- **Pendiente:** respuesta de App Review → publicar → enlace de la Mac App
   Store en `docs/index.html` y `README.md` → cerrar v11.0.
