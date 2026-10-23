@@ -84,6 +84,7 @@ milestone se replantea antes de invertir en él.
 **Goal**: Publicar la variante App Store.
 **Depends on**: Phase 26, Phase 27
 **Requirements**: STORE-01, STORE-02, STORE-03, STORE-04, STORE-05, STORE-06
+**Plans**: 28-01-PLAN.md (GitHub Pages con privacidad y soporte, `appstore/FICHA.md`, copyright, subida con `altool` y `APPSTORE_BUILD` en `package-appstore.sh`, RELEASING §3.9) + 28-02-PLAN.md (subida, TestFlight, ficha y envío; humano) + CHECKPOINT-HUMANO.md
 **Success Criteria** (what must be TRUE):
 
   1. Certificados, perfil y registro de la app listos.
@@ -101,4 +102,4 @@ milestone se replantea antes de invertir en él.
 | 25. Variante de build App Store | 2/2 | Complete | 2026-10-21 |
 | 26. Renderizado JavaScript con WKWebView | 2/2 | Complete | 2026-10-21 |
 | 27. Funciones de la app bajo sandbox | 1/1 | Complete | 2026-10-23 |
-| 28. App Store Connect y envío | 0 | Not started | - |
+| 28. App Store Connect y envío | 0/2 | Planned | - |
