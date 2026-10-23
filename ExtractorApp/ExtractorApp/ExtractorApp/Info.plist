@@ -7,7 +7,7 @@
 		<string>es</string>
 	</array>
 	<key>NSHumanReadableCopyright</key>
-	<string></string>
+	<string>© 2026 Eugenio de Frutos Sánchez</string>
 	<key>SUFeedURL</key>
 	<string>https://raw.githubusercontent.com/edfrutos/extractor-url-macos/main/appcast.xml</string>
 	<key>SUPublicEDKey</key>

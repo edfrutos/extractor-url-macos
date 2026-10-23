@@ -309,28 +309,54 @@ ni rutas manuales a otro Python. En Xcode compila en
 `Build/Products/<Debug|Release>-appstore/` para no pisar el `.app` de la
 variante Developer ID. `release-macos.sh` no la toca.
 
-Requisitos (una sola vez): certificados «Apple Distribution» y «3rd Party
-Mac Developer Installer» en el Keychain y el perfil «Extractor URL
-AppStore» descargado de developer.apple.com.
+Requisitos (una sola vez):
 
-1. Sube `CURRENT_PROJECT_VERSION` en los dos bloques Debug/Release del
-   target **ExtractorApp AppStore** (en Xcode: target → Build Settings →
-   Current Project Version). App Store Connect rechaza un build ya subido,
-   y **el 13 ya está usado** (spike de la Fase 24). `release-macos.sh`
-   solo sube el del target Developer ID.
-2. Genera el paquete:
+- Certificados «Apple Distribution» y «3rd Party Mac Developer Installer»
+  en el Keychain.
+- El perfil «Extractor URL AppStore» descargado de developer.apple.com.
+- Para subir desde el script, una **clave de la API de App Store Connect**:
+  1. App Store Connect → Usuarios y acceso → Integraciones → App Store
+     Connect API → «+». Nombre «extractor-url-upload», acceso «Developer».
+  2. Descarga el `.p8` (solo se puede una vez) y guárdalo como
+     `~/.appstoreconnect/private_keys/AuthKey_<KEY_ID>.p8`.
+  3. Anota el Key ID y el Issuer ID (arriba de la lista de claves).
+
+Para cada versión:
+
+1. Elige un número de build mayor que el último subido. **Hasta el 13 ya
+   están usados** (spike de la Fase 24). `APPSTORE_BUILD` lo aplica al
+   archivar sin tocar el proyecto. `release-macos.sh` solo sube el del
+   target Developer ID.
+2. Genera, valida y sube el paquete:
 
    ```bash
    APPSTORE_IDENTITY="Apple Distribution: Eugenio de Frutos Sanchez (V29BTBRY6G)" \
    INSTALLER_IDENTITY="3rd Party Mac Developer Installer: Eugenio de Frutos Sanchez (V29BTBRY6G)" \
+   APPSTORE_BUILD=14 UPLOAD=1 ASC_KEY_ID=<KEY_ID> ASC_ISSUER_ID=<ISSUER_ID> \
    scripts/package-appstore.sh
    ```
 
-   Si el perfil no está en `~/Downloads/Extractor_URL_AppStore.provisionprofile`,
-   añade `PROVISIONING_PROFILE=/ruta/al/perfil`.
-3. Sube `.build-cache/appstore/ExtractorURL-<versión>-<build>.pkg` con
-   Transporter (`open -a Transporter …` y «Entregar»). La carpeta
-   `.build-cache` está oculta en Finder.
+   - Si el perfil no está en `~/Downloads/Extractor_URL_AppStore.provisionprofile`,
+     añade `PROVISIONING_PROFILE=/ruta/al/perfil`.
+   - Sin `UPLOAD=1`, el script termina en
+     `.build-cache/appstore/ExtractorURL-<versión>-<build>.pkg` (carpeta
+     oculta en Finder). Súbelo con Transporter (`open -a Transporter …` y
+     «Entregar»).
+   - Con `UPLOAD=1`, el script se niega a subir un build de 13 o menos.
+3. Cuando el build aparezca en TestFlight, pruébalo en un Mac real antes de
+   enviarlo a revisión.
+4. Ficha, capturas, privacidad, edades y notas para App Review: textos en
+   [`appstore/FICHA.md`](appstore/FICHA.md).
+
+Páginas públicas (GitHub Pages, carpeta `docs/` de `main`):
+
+- Inicio: <https://edfrutos.github.io/extractor-url-macos/>
+- Privacidad: <https://edfrutos.github.io/extractor-url-macos/privacidad.html>
+- Soporte: <https://edfrutos.github.io/extractor-url-macos/soporte.html>
+
+Si cambia lo que la app hace con los datos, actualiza `docs/privacidad.html`
+y su fecha, `PrivacyInfo.xcprivacy` y la etiqueta de privacidad en App Store
+Connect.
 
 ## 4. Verificación post-release
 

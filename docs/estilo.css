@@ -1,0 +1,86 @@
+:root {
+  --fondo: #ffffff;
+  --texto: #1d1d1f;
+  --suave: #6e6e73;
+  --borde: #d2d2d7;
+  --enlace: #0066cc;
+  --caja: #f5f5f7;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --fondo: #1c1c1e;
+    --texto: #f5f5f7;
+    --suave: #a1a1a6;
+    --borde: #3a3a3c;
+    --enlace: #4da3ff;
+    --caja: #2c2c2e;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--fondo);
+  color: var(--texto);
+  font: 17px/1.55 -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial,
+    sans-serif;
+}
+
+main {
+  max-width: 44rem;
+  margin: 0 auto;
+  padding: 2.5rem 1rem 4rem;
+}
+
+nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 1.25rem;
+  margin-bottom: 2.5rem;
+  font-size: 15px;
+}
+
+h1 {
+  font-size: 2rem;
+  line-height: 1.2;
+  margin: 0 0 0.5rem;
+}
+
+h2 {
+  font-size: 1.25rem;
+  margin: 2.25rem 0 0.5rem;
+}
+
+h3 {
+  font-size: 1.05rem;
+  margin: 1.5rem 0 0.25rem;
+}
+
+a {
+  color: var(--enlace);
+}
+
+.entradilla {
+  color: var(--suave);
+  font-size: 1.15rem;
+  margin-top: 0;
+}
+
+.caja {
+  background: var(--caja);
+  border: 1px solid var(--borde);
+  border-radius: 12px;
+  padding: 1rem 1.25rem;
+}
+
+footer {
+  margin-top: 3rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--borde);
+  color: var(--suave);
+  font-size: 14px;
+}
