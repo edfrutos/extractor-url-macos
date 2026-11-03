@@ -199,6 +199,16 @@ while IFS= read -r f; do
 done <"${macho_list}"
 echo "Sin _tkinter, Tcl/Tk ni Playwright: OK"
 
+# Guideline 2.5.2 (rechazo del 2026-11-01): bundle-python.sh quita el esquema
+# de urllib/parse.py; aquí se comprueba sobre el .app ya firmado.
+itms_hits="$(grep -rl --binary-files=text 'itms-services' "${APP}" || true)"
+if [[ -n "${itms_hits}" ]]; then
+	echo "Error: el .app contiene la cadena itms-services (guideline 2.5.2):" >&2
+	echo "${itms_hits}" >&2
+	exit 1
+fi
+echo "Sin itms-services: OK"
+
 python_bin="${PY}/bin/python3.13"
 child_ents="$(codesign -d --entitlements - "${python_bin}" 2>/dev/null || true)"
 if [[ "${child_ents}" != *com.apple.security.inherit* ]]; then

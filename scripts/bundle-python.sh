@@ -174,6 +174,31 @@ if [[ "${VARIANT}" == "appstore" ]]; then
     -o -iname 'thread*' -o -iname 'libtcl*' -o -iname 'libtk*' \) -exec rm -rf {} +
 fi
 
+# ── Variante App Store: fuera el esquema itms-services ───────────────────────
+# Rechazo real (2026-11-01, guideline 2.5.2): App Review detecta la cadena
+# «itms-services» en urllib/parse.py y lo trata como instalar apps. Es el mismo
+# parche que aplica CPython con --with-app-store-compliance (gh-120522). Se
+# recompila el .pyc porque el antiguo también contiene la cadena.
+if [[ "${VARIANT}" == "appstore" ]]; then
+  echo "Variante appstore: quitando itms-services de urllib/parse.py..."
+  URLLIB_PARSE="${PYTHON_DEST}/lib/python${PYTHON_MINOR}/urllib/parse.py"
+  chmod u+w "${URLLIB_PARSE}"
+  "${BUNDLED_PYTHON}" - "${URLLIB_PARSE}" <<'PYEOF'
+import pathlib
+import sys
+
+path = pathlib.Path(sys.argv[1])
+text = path.read_text(encoding="utf-8")
+patched = text.replace(", 'itms-services'", "")
+if patched == text:
+    sys.exit("ERROR MASBUILD-02: no se encontró 'itms-services' en parse.py")
+path.write_text(patched, encoding="utf-8")
+PYEOF
+  find "${PYTHON_DEST}/lib/python${PYTHON_MINOR}/urllib/__pycache__" \
+    -name 'parse.*.pyc' -delete 2>/dev/null || true
+  "${BUNDLED_PYTHON}" -m py_compile "${URLLIB_PARSE}"
+fi
+
 # ── Codesigning bottom-up (BUNDLE-01) ────────────────────────────────────────
 # Orden obligatorio: .so → .dylib → python3.13 → (Xcode firma el .app)
 # EXPANDED_CODE_SIGN_IDENTITY: "-" en builds locales, Developer ID en release/archive.
@@ -233,6 +258,12 @@ if [[ "${VARIANT}" == "appstore" ]]; then
   if [[ -n "${LEFTOVER_TCL}" ]]; then
     echo "ERROR MASBUILD-02: quedan restos de Tcl/Tk:"
     echo "${LEFTOVER_TCL}"
+    exit 1
+  fi
+  LEFTOVER_ITMS=$(grep -rl --binary-files=text 'itms-services' "${PYTHON_DEST}" || true)
+  if [[ -n "${LEFTOVER_ITMS}" ]]; then
+    echo "ERROR MASBUILD-02: queda la cadena itms-services (guideline 2.5.2):"
+    echo "${LEFTOVER_ITMS}"
     exit 1
   fi
   if [[ -e "${VENDORED_LIB}/playwright" ]]; then
