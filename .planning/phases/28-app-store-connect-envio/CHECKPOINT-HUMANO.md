@@ -47,7 +47,7 @@ Store.
 ## Progreso
 
 - **2026-10-23:** ficha rellenada (textos de `appstore/FICHA.md`, versión
-  2.3, capturas con `captura-appstore.sh` y la página de demostración) y
+  2.3, capturas con `captura-extractor-url.sh` y la página de demostración) y
   «Publicar esta versión manualmente». **«Añadir a revisión» rechazado**
   por tres campos: sin build seleccionado, sin precio y sin derechos sobre
   el contenido.
