@@ -54,5 +54,14 @@ Store.
 - **2026-10-23:** build 2.3 (14) subido a App Store Connect.
 - **2026-10-23:** build 14 seleccionado, precio gratis y derechos sobre el
   contenido configurados. **Enviada a App Review** (publicación manual).
-- **Pendiente:** respuesta de App Review → publicar → enlace de la Mac App
+- **2026-11-01:** App Review rechaza 2.3 (14) por la guideline 2.5.2
+  (`itms-services` en `urllib/parse.py`). Corregido en los scripts; build 15
+  subida y reenviada (submission `a5cf180e`).
+- **2026-11-03:** nuevo rechazo por las guidelines 4.3 y 4.2.6; la 2.5.2 ya no
+  aparece. App Review pide no reenviar y contestar 9 preguntas. Respuesta
+  redactada en `appstore/RESPUESTA-APP-REVIEW-4.3.txt` (3.365 de 4.000
+  caracteres; copia local, sin versionar).
+- **2026-11-03, 19:31:** respuesta enviada a App Review. El 2026-11-06, Apple
+  aún no ha contestado (2.3 (15) sigue como «Rechazado», 4.3.0).
+- **Pendiente:** contestación de App Review → publicar → enlace de la Mac App
   Store en `docs/index.html` y `README.md` → cerrar v11.0.
