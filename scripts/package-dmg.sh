@@ -153,6 +153,15 @@ _final_checks() {
 # ── Main ───────────────────────────────────────────────────────────────────
 [[ "$(uname -s)" == "Darwin" ]] || _fail "este script solo funciona en macOS."
 
+# Comprobar las credenciales antes de crear el DMG: un 401 de notarytool
+# solo aparecería tras varios minutos de hdiutil.
+if ! xcrun notarytool history --keychain-profile "${NOTARY_PROFILE}" >/dev/null 2>&1; then
+	echo "Error: el perfil de notarización '${NOTARY_PROFILE}' no existe o Apple rechaza sus credenciales." >&2
+	echo "Vuelve a guardarlo con una contraseña específica de app válida:" >&2
+	echo "  xcrun notarytool store-credentials \"${NOTARY_PROFILE}\" --apple-id <tu-apple-id> --team-id <TEAM_ID> --password <contraseña-de-app>" >&2
+	exit 1
+fi
+
 _resolve_app
 _check_app
 _create_dmg
