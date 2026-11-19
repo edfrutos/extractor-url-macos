@@ -299,6 +299,33 @@ necesita ningún flag ni modo nuevo para esto; simplemente publicar un
 release ya cubre ambos usos (actualización automática + descarga
 directa) a la vez, porque son el mismo artefacto.
 
+### DMG para efjdev.com
+
+La página <https://efjdev.com/extractor-url/> ofrece la descarga directa
+como DMG. Después de `scripts/release-macos.sh <version>`, en el mismo Mac:
+
+```bash
+scripts/package-dmg.sh 2.3
+```
+
+El script toma el `.app` que `release-macos.sh` ya firmó, notarizó y
+grapó (`.build-cache/release/export/ExtractorApp.app` o, si es de otra
+versión, `.build-cache/release/ExtractorApp-<version>.zip`), sin
+recompilar. Después:
+
+1. Comprueba que la app tiene firma válida, ticket grapado y el visto
+   bueno de Gatekeeper.
+2. Crea `ExtractorURL-<version>.dmg` (volumen «Extractor URL», con el
+   acceso directo a Aplicaciones).
+3. Firma el DMG con el mismo Developer ID, lo notariza con el perfil
+   `ExtractorApp-Notary` y le grapa el ticket.
+4. Lo valida con `spctl --type open` e imprime su tamaño y SHA-256.
+
+Sube el DMG por Plesk/SFTP a `/httpdocs/wp-content/uploads/descargas/` y
+actualiza el enlace y el texto del botón «Descarga directa» de la página.
+Sparkle sigue usando el `.zip` de GitHub Releases; el DMG es solo para la
+primera instalación.
+
 ## 3.9. Variante App Store
 
 La versión de la Mac App Store sale del mismo código, con el target y el
@@ -348,15 +375,19 @@ Para cada versión:
 4. Ficha, capturas, privacidad, edades y notas para App Review: textos en
    [`appstore/FICHA.md`](appstore/FICHA.md).
 
-Páginas públicas (GitHub Pages, carpeta `docs/` de `main`):
+Páginas públicas (WordPress en efjdev.com):
 
-- Inicio: <https://edfrutos.github.io/extractor-url-macos/>
-- Privacidad: <https://edfrutos.github.io/extractor-url-macos/privacidad.html>
-- Soporte: <https://edfrutos.github.io/extractor-url-macos/soporte.html>
+- Inicio, descargas y preguntas frecuentes: <https://efjdev.com/extractor-url/>
+- Privacidad (apartado «Extractor-URL»): <https://efjdev.com/privacidad/>
+- Soporte y contacto: <https://efjdev.com/soporte/>
 
-Si cambia lo que la app hace con los datos, actualiza `docs/privacidad.html`
-y su fecha, `PrivacyInfo.xcprivacy` y la etiqueta de privacidad en App Store
-Connect.
+Las antiguas páginas de GitHub Pages (`docs/index.html`, `privacidad.html`,
+`soporte.html`) solo redirigen a efjdev.com. `docs/demo/` sigue en GitHub
+Pages porque la usan las capturas de la App Store.
+
+Si cambia lo que la app hace con los datos, actualiza el apartado de
+Extractor-URL de <https://efjdev.com/privacidad/> y su fecha,
+`PrivacyInfo.xcprivacy` y la etiqueta de privacidad en App Store Connect.
 
 ## 4. Verificación post-release
 

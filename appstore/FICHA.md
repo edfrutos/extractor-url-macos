@@ -16,9 +16,9 @@ número entre paréntesis es el recuento de caracteres y el límite de Apple.
 | Categoría secundaria | Herramientas para desarrolladores |
 | Copyright | © 2026 Eugenio de Frutos Sánchez |
 | Precio | Gratis (sin compras dentro de la app) |
-| URL de privacidad | https://edfrutos.github.io/extractor-url-macos/privacidad.html |
-| URL de soporte | https://edfrutos.github.io/extractor-url-macos/soporte.html |
-| URL de marketing | https://edfrutos.github.io/extractor-url-macos/ |
+| URL de privacidad | https://efjdev.com/privacidad/ |
+| URL de soporte | https://efjdev.com/soporte/ |
+| URL de marketing | https://efjdev.com/extractor-url/ |
 
 ## Texto promocional (137/170)
 
