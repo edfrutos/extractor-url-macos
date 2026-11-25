@@ -3,7 +3,7 @@
 
 ---
 
-## Active (v11.0 — Mac App Store)
+## v11.0 — Mac App Store (completado 2026-11-25)
 
 Decisiones del usuario (2026-10-20): conviven Developer ID/Sparkle y App Store;
 JS en la variante App Store vía `WKWebView`; app gratuita. Ver
@@ -41,12 +41,12 @@ JS en la variante App Store vía `WKWebView`; app gratuita. Ver
 
 ### STORE — App Store Connect y envío (Phase 28)
 
-- [ ] **STORE-01**: Certificados Apple Distribution + Mac Installer Distribution y perfil Mac App Store listos; app registrada en App Store Connect.
-- [ ] **STORE-02**: Ficha en español: nombre, subtítulo, descripción, palabras clave, capturas de Mac, categoría, clasificación por edades, precio gratuito.
-- [ ] **STORE-03**: Política de privacidad y URL de soporte publicadas; etiqueta de privacidad «Datos no recopilados».
-- [ ] **STORE-04**: Script reproducible de subida (archivar → exportar para App Store → subir), documentado en `RELEASING.md` junto al de Developer ID.
-- [ ] **STORE-05**: Build probado por TestFlight en un Mac real antes del envío.
-- [ ] **STORE-06**: La app es aprobada por App Review y queda publicada en la Mac App Store.
+- [x] **STORE-01**: Certificados Apple Distribution + Mac Installer Distribution y perfil Mac App Store listos; app registrada en App Store Connect.
+- [x] **STORE-02**: Ficha en español: nombre, subtítulo, descripción, palabras clave, capturas de Mac, categoría, clasificación por edades, precio gratuito.
+- [x] **STORE-03**: Política de privacidad y URL de soporte publicadas; etiqueta de privacidad «Datos no recopilados».
+- [x] **STORE-04**: Script reproducible de subida (archivar → exportar para App Store → subir), documentado en `RELEASING.md` junto al de Developer ID.
+- [x] **STORE-05**: Build probado por TestFlight en un Mac real antes del envío.
+- [x] **STORE-06**: La app es aprobada por App Review y queda publicada en la Mac App Store.
 
 ## Out of Scope (v11.0)
 

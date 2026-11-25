@@ -1,7 +1,7 @@
 
 
 
-## v11.0 — Mac App Store
+## v11.0 — Mac App Store ✅ (2026-11-25)
 
 ## Overview
 
@@ -20,7 +20,7 @@ milestone se replantea antes de invertir en él.
 - [x] **Phase 25: Variante de build App Store** - Configuración/esquema propios con flag; exclusiones, entitlements y manifiesto de privacidad.
 - [x] **Phase 26: Renderizado JavaScript con WKWebView** - HTML renderizado por `WKWebView` → Python, con la heurística actual.
 - [x] **Phase 27: Funciones de la app bajo sandbox** - Export, «Abrir HTML…», historial, portapapeles y errores bajo sandbox.
-- [ ] **Phase 28: App Store Connect y envío** - Certificados, ficha, privacidad, script de subida, TestFlight, aprobación.
+- [x] **Phase 28: App Store Connect y envío** - Certificados, ficha, privacidad, script de subida, TestFlight, aprobación.
 
 ### Phase 24: Spike — Python embebido bajo App Sandbox
 
@@ -102,4 +102,4 @@ milestone se replantea antes de invertir en él.
 | 25. Variante de build App Store | 2/2 | Complete | 2026-10-21 |
 | 26. Renderizado JavaScript con WKWebView | 2/2 | Complete | 2026-10-21 |
 | 27. Funciones de la app bajo sandbox | 1/1 | Complete | 2026-10-23 |
-| 28. App Store Connect y envío | 1/2 | Checkpoint humano | - |
+| 28. App Store Connect y envío | 2/2 | Complete | 2026-11-25 |

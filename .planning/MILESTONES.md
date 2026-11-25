@@ -207,3 +207,19 @@ que la copia local y `STATE.md`/`ROADMAP.md` no reflejaban.
 - `release-macos.sh`: sube deltas y depura el appcast (`833c24f`).
 
 **Phases:** 0 (sin fases GSD) | **Requirements:** sin REQ-IDs (trabajo retroactivo)
+
+---
+
+## v11.0 — Mac App Store ✅ (2026-11-25)
+
+**Goal:** publicar ExtractorApp en la Mac App Store sin retirar la distribución Developer ID + Sparkle.
+
+**Shipped:**
+- Python embebido bajo App Sandbox (spike y decisión documentada).
+- Variante App Store con target y esquema propios: sin Sparkle, runtime updater ni Chromium.
+- JavaScript con `WKWebView`, con degradación a HTML estático.
+- Export, «Abrir HTML…», historial y «Copiar» dentro del sandbox.
+- `package-appstore.sh`: subida reproducible y comprobación de `itms-services`.
+- **App publicada**: [Extractor URL 2.3 (15)](https://apps.apple.com/es/app/extractor-url/id6825046299?mt=12), gratis, desde el 2026-11-19, tras dos rechazos de App Review (2.5.2; 4.3 y 4.2.6).
+
+**Phases:** 5 (24→28) | **Requirements:** SBX-01→04, MASBUILD-01→05, WKJS-01→04, SBXFEAT-01→05, STORE-01→06 (todos validados)

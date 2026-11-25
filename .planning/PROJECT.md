@@ -104,7 +104,7 @@ Convertir páginas web en Markdown útil y limpio de forma fiable, repetible y s
 
 El proyecto tiene dos capas: el motor Python (`core.py` + `extractor_url.py`) y la app nativa SwiftUI (`ExtractorApp/`). La app lanza el motor vía `Foundation.Process()` con `--json`. v3.0 eliminó la dependencia del usuario de instalar Python y configurar rutas. v4.0 amplió el motor Python para extraer contenido de páginas que requieren JavaScript (SPAs). v5.0 añadió auto-actualización a la app SwiftUI (Sparkle). v6.0 cubrió el backlog diferido de v4.0/v5.0: historial y cola de extracciones, control manual del fallback JS, canales beta de Sparkle, Playwright embebido en el bundle, y pulido técnico menor. v7.0 cubre el backlog diferido restante de v6.0: flags de filtrado de contenido CLI, rollouts por fases de Sparkle, auto-actualización del runtime Python embebido, y notarización para distribución pública vía web (no App Store).
 
-## Current Milestone: v11.0 — Mac App Store
+## Last Milestone: v11.0 — Mac App Store ✅ (2026-11-25)
 
 Publicar ExtractorApp en la Mac App Store como **segunda variante**, sin
 retirar la distribución Developer ID + Sparkle de GitHub. La variante App
@@ -207,8 +207,10 @@ Milestone v8.0 completado y cerrado (2026-08-27): Fase 23 (verificación de rele
 
 Este documento evoluciona en transiciones de fase y límites de milestone.
 
+Milestone v11.0 (Mac App Store) completado y cerrado (2026-11-25): Fases 24–28. Extractor URL 2.3 (15) publicada gratis en la Mac App Store el 2026-11-19, confirmada por el usuario en la App Store y en TestFlight. Ver `.planning/phases/28-app-store-connect-envio/28-02-SUMMARY.md` y `MILESTONES.md`.
+
 **Después de cada fase:** mover requirements validados a Validated, añadir decisiones a Key Decisions.
 **Después de cada milestone:** revisar Core Value, auditar Out of Scope, actualizar Context.
 
 ---
-*Last updated: 2026-10-20 — v11.0 (Mac App Store) definido: fases 24–28. v9.0/v10.0 (releases 2.2/2.3) documentados retroactivamente.*
+*Last updated: 2026-11-25 — v11.0 (Mac App Store) cerrado. Definido el 2026-10-20: fases 24–28. v9.0/v10.0 (releases 2.2/2.3) documentados retroactivamente.*

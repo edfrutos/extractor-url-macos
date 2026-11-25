@@ -1,7 +1,7 @@
 ---
 phase: 28-app-store-connect-envio
 type: checkpoint-humano
-status: pending
+status: passed
 created: "2026-10-23"
 ---
 
@@ -63,5 +63,15 @@ Store.
   caracteres; copia local, sin versionar).
 - **2026-11-03, 19:31:** respuesta enviada a App Review. El 2026-11-06, Apple
   aún no ha contestado (2.3 (15) sigue como «Rechazado», 4.3.0).
-- **Pendiente:** contestación de App Review → publicar → enlace de la Mac App
-  Store en `docs/index.html` y `README.md` → cerrar v11.0.
+- **2026-11-19:** Extractor URL 2.3 **publicada en la Mac App Store**, gratis:
+  <https://apps.apple.com/es/app/extractor-url/id6825046299?mt=12>. Comprobado el
+  2026-11-25 en la ficha pública y en la API de búsqueda de Apple (bundle
+  `com.edefrutos.ExtractorApp.appstore`). La API no da el número de build ni
+  la contestación de App Review.
+- **2026-11-25:** enlace añadido a `README.md`. `docs/index.html` ya solo
+  redirige a <https://efjdev.com/extractor-url/>, que enlaza a la ficha.
+- **2026-11-25:** el usuario confirma que la 2.3 (15) está a la venta y
+  funcionando en la App Store, y también en TestFlight (STORE-05). No consta
+  la fecha de la prueba en TestFlight. **Checkpoint superado; v11.0 cerrada.**
+- **Para la próxima versión:** cambiar en App Store Connect las URL de
+  github.io por las de `appstore/FICHA.md`.

@@ -58,12 +58,14 @@ gestiona la UI, el filesystem y la exportación.
 - Preview del Markdown renderizado en `WKWebView`.
 - Export a `.md`, `.html` autocontenido (CSS/JS inline, dark mode automático)
   y `.pdf` vectorial con texto seleccionable.
-- Universal binary (arm64 + x86_64), Hardened Runtime ON, App Sandbox OFF,
-  deployment target macOS 13.0+.
+- Universal binary (arm64 + x86_64), Hardened Runtime ON, deployment target
+  macOS 13.5+. App Sandbox OFF en la descarga directa y ON en la variante de
+  la Mac App Store.
 - Runtime Python embebido en el propio `.app`: el usuario no necesita
   instalar Python ni configurar rutas — funciona de serie desde el primer
-  lanzamiento (v3.0). Playwright/Chromium (fallback JS del motor) queda
-  fuera del bundle por su peso; la app sigue funcionando igual sin él.
+  lanzamiento (v3.0). La descarga directa incluye además Playwright/Chromium
+  para el fallback JS, en la arquitectura del Mac de build (v6.0); la
+  variante de la Mac App Store usa `WKWebView`.
 - Auto-actualización vía Sparkle 2: comprobación automática en segundo
   plano (cada 24h) + ítem de menú "Buscar actualizaciones…"; releases
   firmados con EdDSA y notarizados por Apple, publicados en GitHub
@@ -122,15 +124,18 @@ fases y criterios de éxito, `STATE.md` es el punto de retomo entre sesiones.
 | v4.0 — Contenido Dinámico (JS) | ✅ Completado | Fallback automático a Playwright para SPAs sobre el motor Python, verificado con `pytest` real (28 tests) |
 | v5.0 — Auto-actualización (Sparkle) | ✅ Completado | Sparkle 2 integrado en la app, pipeline de release (`scripts/release-macos.sh`) con firma Developer ID + notarización + appcast EdDSA, primer release real publicado |
 | v6.0 — Historial y Distribución Completa | ✅ Completado | Historial/cola de extracciones, flag manual `--js`/`--no-js`, canales beta de Sparkle, Chromium embebido en el bundle, pulido técnico |
-| v7.0 — Flags CLI, rollouts, auto-actualización, distribución pública | 🔄 En marcha | `--no-images`/`--no-links`/`--clipboard`, rollouts por fases de Sparkle, actualización de dependencias Python puras sin release completo, distribución pública notarizada vía descarga directa |
+| v7.0 — Flags CLI, rollouts, auto-actualización, distribución pública | ✅ Completado | `--no-images`/`--no-links`/`--clipboard`, rollouts por fases de Sparkle, actualización de dependencias Python puras sin release completo, distribución pública notarizada vía descarga directa |
+| v8.0 — Verificación de release real | ✅ Completado | Release público v2.1 verificado, firma y notarización del Chromium embebido endurecidas |
+| v9.0 — Release v2.2 | ✅ Completado | Caché y JS corregidos, accesibilidad y HIG en SwiftUI, icono actualizado |
+| v10.0 — Release v2.3 | ✅ Completado | Conversión de HTML local (`--file` y «Abrir HTML…»), reintento ante 401/403, errores con detalle |
+| v11.0 — Mac App Store | ✅ Completado | Variante con App Sandbox y `WKWebView`, publicada gratis en la Mac App Store (2.3) |
 
-**Fuera de alcance (decisión explícita):** distribución en el Mac App
-Store — el resto del backlog que aparecía aquí (historial/cola, flag
-manual `--js`/`--no-js`, Playwright/Chromium embebido, canales
-beta/rollouts de Sparkle) se completó en v6.0/v7.0, ver la tabla de
-milestones abajo.
+**Mac App Store:** la app está publicada, gratis, en la
+[Mac App Store](https://apps.apple.com/es/app/extractor-url/id6825046299?mt=12).
+Es una variante con App Sandbox: sin Sparkle ni Chromium, y con
+`WKWebView` para las páginas con JavaScript (ver `RELEASING.md` §3.9).
 
-**Descarga:** el `.app` firmado con Developer ID y notarizado por Apple
+**Descarga directa:** el `.app` firmado con Developer ID y notarizado por Apple
 se publica en
 [GitHub Releases](https://github.com/edfrutos/extractor-url-macos/releases)
 — descarga directa, sin configuración adicional (ver `RELEASING.md`
