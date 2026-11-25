@@ -27,7 +27,7 @@
 # USO:
 #   APPSTORE_IDENTITY="Apple Distribution: …" \
 #   INSTALLER_IDENTITY="3rd Party Mac Developer Installer: …" \
-#   APPSTORE_BUILD=14 UPLOAD=1 ASC_KEY_ID=… ASC_ISSUER_ID=… \
+#   APPSTORE_BUILD=16 UPLOAD=1 ASC_KEY_ID=… ASC_ISSUER_ID=… \
 #   scripts/package-appstore.sh
 #
 # Variables de entorno:
@@ -110,9 +110,9 @@ INFO="${APP}/Contents/Info.plist"
 VERSION="$("${PLISTBUDDY}" -c "Print :CFBundleShortVersionString" "${INFO}")"
 BUILD="$("${PLISTBUDDY}" -c "Print :CFBundleVersion" "${INFO}")"
 echo "Versión ${VERSION} (${BUILD})"
-# Los builds hasta el 13 ya están usados en App Store Connect (spike de la
-# Fase 24).
-if ((BUILD <= 13)); then
+# Los builds hasta el 15 ya están usados en App Store Connect (el 15 es el de
+# la 2.3 publicada).
+if ((BUILD <= 15)); then
 	echo "Aviso: el build ${BUILD} ya está usado en App Store Connect y lo" >&2
 	echo "rechazará. Usa APPSTORE_BUILD=<n> con un número mayor." >&2
 	if [[ "${UPLOAD}" == "1" ]]; then

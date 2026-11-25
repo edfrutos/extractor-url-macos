@@ -19,6 +19,9 @@ graphify-out/
 .vscode/
 xcuserdata/
 
+# Salida de SwiftPM/Swift Build
+.build/
+
 # Python bundle build cache (tarballs ~24 MB cada uno, regenerados en build time)
 .build-cache/
 

@@ -350,8 +350,8 @@ Requisitos (una sola vez):
 
 Para cada versión:
 
-1. Elige un número de build mayor que el último subido. **Hasta el 13 ya
-   están usados** (spike de la Fase 24). `APPSTORE_BUILD` lo aplica al
+1. Elige un número de build mayor que el último subido. **Hasta el 15 ya
+   están usados** (el 15 es el de la 2.3 publicada). `APPSTORE_BUILD` lo aplica al
    archivar sin tocar el proyecto. `release-macos.sh` solo sube el del
    target Developer ID.
 2. Genera, valida y sube el paquete:
@@ -359,7 +359,7 @@ Para cada versión:
    ```bash
    APPSTORE_IDENTITY="Apple Distribution: Eugenio de Frutos Sanchez (V29BTBRY6G)" \
    INSTALLER_IDENTITY="3rd Party Mac Developer Installer: Eugenio de Frutos Sanchez (V29BTBRY6G)" \
-   APPSTORE_BUILD=14 UPLOAD=1 ASC_KEY_ID=<KEY_ID> ASC_ISSUER_ID=<ISSUER_ID> \
+   APPSTORE_BUILD=16 UPLOAD=1 ASC_KEY_ID=<KEY_ID> ASC_ISSUER_ID=<ISSUER_ID> \
    scripts/package-appstore.sh
    ```
 
@@ -369,7 +369,7 @@ Para cada versión:
      `.build-cache/appstore/ExtractorURL-<versión>-<build>.pkg` (carpeta
      oculta en Finder). Súbelo con Transporter (`open -a Transporter …` y
      «Entregar»).
-   - Con `UPLOAD=1`, el script se niega a subir un build de 13 o menos.
+   - Con `UPLOAD=1`, el script se niega a subir un build de 15 o menos.
 3. Cuando el build aparezca en TestFlight, pruébalo en un Mac real antes de
    enviarlo a revisión.
 4. Ficha, capturas, privacidad, edades y notas para App Review: textos en
